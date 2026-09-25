@@ -94,7 +94,7 @@ async function main() {
 }
 function run(a) { const r = spawnSync('ffmpeg', a.map(String), { stdio: ['ignore', 'inherit', 'inherit'] }); if (r.status) throw new Error('ffmpeg failed'); }
 function encode() {
-  const dir = path.join(OUT, 'frames'), out = path.resolve(args.out || path.join(OUT, 'video.mp4'));
+  const dir = path.join(OUT, 'frames'), out = path.resolve(ROOT, args.out || path.join(OUT, 'video.mp4'));   // --out is relative to the job folder
   run(['-y', '-hide_banner', '-loglevel', 'warning', '-stats', '-framerate', FPS, '-i', path.join(dir, '%05d.jpg'), '-i', AUDIO,
     '-c:v', 'libx264', '-preset', 'slow', '-crf', args.crf || 17, '-profile:v', 'high', '-pix_fmt', 'yuv420p', '-movflags', '+faststart',
     '-c:a', 'aac', '-b:a', '256k', '-shortest', out]);
