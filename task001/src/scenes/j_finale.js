@@ -34,7 +34,7 @@ function J_stage(t, lt) {
   stageBG2(t);
   // guests at the edges
   shoggoth(170, 860, 150, { mask: 1, wiggle: 1 + kick });
-  if (typeof D_basilisk === 'function') try { D_basilisk(t, 1650, 520, .5); } catch (e) { }
+  if (typeof D_dragonHead === 'function') D_dragonHead(1690, 560, 105, t, { chomp: pulse(t, .5), rot: -.1 + Math.sin(t * 4) * .06 });
   kid(1800, 1040, .42, { look: 1 });
   // the dance line, bigger than any earlier chorus
   danceLine(t, { move: frac(b / 16) < .5 ? 'pdoom' : 'hype', x: 1060, y: 580, s: 33, spread: 380, clawdS: 125, face: { eyes: 'star' } });

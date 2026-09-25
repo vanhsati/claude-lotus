@@ -69,7 +69,7 @@ shot(C_T1, C_T2, (t, lt) => {
   C_streamlines(t, { from: 0, to: 6 });
   const hx = 1150, hy = C_laminarY(5, hx, t) - 50, a = Math.atan2(C_laminarY(5, hx + 60, t) - C_laminarY(5, hx - 60, t), 120);
   withT(hx, hy, -Math.PI / 2 + a + Math.sin(t * 1.3) * .03, 1, () =>
-    idolBody(0, 0, 42, C_FLOAT_POSE, { face: { eyes: 'happy', mouth: clamp(VOX(t) * 1.3 - .2), blush: 1, look: [0, -.3] } }));
+    idolBody(0, 0, 48, C_FLOAT_POSE, { face: { eyes: 'happy', mouth: clamp(VOX(t) * 1.3 - .2), blush: 1, look: [0, -.3] } }));
   C_streamlines(t, { from: 6, to: C_NLINES });
   camEnd();
   // TENDER type laid on the streamlines, word by word
@@ -89,7 +89,7 @@ shot(C_T1, C_T2, (t, lt) => {
 
 // ---------- C2: vortex → finite-time blowup (41.18–44.82) ----------
 const C_TB = wordTimes(LY[13])[4].t;       // "begun": the blowup
-const C_VC = [1010, 540];                   // vortex centre
+const C_VC = [1000, 590];                   // vortex centre
 // Twist grows like 1/(T* − t): a literal finite-time blowup.
 function C_twist(t) { const s = Math.max(.035, C_TB + .03 - t); return clamp(2.4 / s - 2.4 / (C_TB + .03 - C_T2), 0, 70); }
 function C_warp(x, y, tw, sq) {
@@ -118,14 +118,14 @@ function C_vortex(t, blast) {
 function C_spiralText(t, ws) {
   const str = "SINGULARITY'S", t0 = ws[3].t, t1 = ws[4].t, n = str.length;
   if (t < t0 - .05 || t > C_TB + .02) return;
-  const b = .62, du = .16, drain = Math.pow(clamp((t - t0) / (C_TB - t0)), 3) * 14 * du + (t - t0) * .08;   // slide inward, accelerating
+  const b = .62, du = .16, drain = Math.pow(clamp((t - t0) / (C_TB - t0)), 7) * 16 * du + (t - t0) * .1;   // slide inward, accelerating
   const rot = (t - t0) * .3;
   for (let i = 0; i < n; i++) {
-    const tl = lerp(t0 - .04, t1 - .25, i / (n - 1)); if (t < tl) continue;
-    const u = i * du + drain, r = 640 * Math.exp(-b * u), a = Math.PI * 1.2 + u + rot;
+    const tl = lerp(t0 - .04, t0 + .75, i / (n - 1)); if (t < tl) continue;
+    const u = i * du + drain, r = 470 * Math.exp(-b * u), a = Math.PI * 1.18 + u + rot;
     if (r < 26) continue;
-    const x = C_VC[0] + Math.cos(a) * r, y = C_VC[1] + Math.sin(a) * r * .92;
-    const k = backOut(clamp((t - tl) / .18)), sz = r * .36;
+    const x = C_VC[0] + Math.cos(a) * r, y = C_VC[1] + Math.sin(a) * r * .82;
+    const k = backOut(clamp((t - tl) / .18)), sz = r * .42;
     withT(x, y, a + Math.PI / 2 + .04, k, () => rtext(str[i], 0, sz * .36, { font: FONT.hero(sz), color: PAL.paperHi, align: 'center', op: 'source-over', mis: [sz * .04, sz * .03, PAL.pink], stroke: PAL.blueDk, sw: sz * .07 }));
   }
 }
@@ -177,15 +177,15 @@ shot(C_T2, C_T3, (t, lt) => {
   // BEGUN: stamped out of the blast
   if (!pre) {
     const st = stampK(t, C_TB, .16);
-    withT(C_VC[0] - 20, 690, -.035, st.s * (1 + kick * .03), () => rtext('BEGUN', 0, 0, { font: FONT.hero(400), color: PAL.ink, align: 'center', op: 'source-over', mis: [14, 10, PAL.pink], stroke: PAL.paperHi, sw: 16, alpha: st.a }));
-    withT(C_VC[0] - 20, 410, .02, 1, () => rtext('SINGULARITY’S', 0, 0, { font: FONT.hero(150), color: PAL.paperHi, align: 'center', op: 'source-over', mis: [6, 5, PAL.pink], alpha: clamp((t - C_TB - .1) / .15) }));
+    withT(C_VC[0] - 20, 740, -.035, st.s * (1 + kick * .03), () => rtext('BEGUN', 0, 0, { font: FONT.hero(400), color: PAL.ink, align: 'center', op: 'source-over', mis: [14, 10, PAL.pink], stroke: PAL.paperHi, sw: 16, alpha: st.a }));
+    withT(C_VC[0] - 20, 385, .02, 1, () => rtext('SINGULARITY’S', 0, 0, { font: FONT.hero(140), color: PAL.blueDk, align: 'center', op: 'source-over', mis: [6, 5, PAL.pink], stroke: PAL.paperHi, sw: 12, alpha: clamp((t - C_TB - .1) / .15) }));
     // ‖u‖ → ∞ on the next beat
     const t0 = beatT(95);
     if (t > t0) withT(290, 560, -.06, lerp(1.4, 1, easeOut((t - t0) / .15)), () => {
       cut(() => pathPoly([[-230, -80], [230, -86], [236, 70], [-226, 76]]), { fill: PAL.yellow, lift: 10 });
       rtext('‖u‖ → ∞', 0, 26, { font: '800 84px "JetBrains Mono", "DejaVu Sans Mono"', color: PAL.ink, align: 'center' });
     });
-    stamp(1690, 300, 'SETTLED?', t, beatT(96), { size: 54, rot: .1, color: PAL.red });
+    stamp(1560, 350, 'SETTLED?', t, beatT(96), { size: 54, rot: .1, color: PAL.red });
   }
 }, { seed: 22, dark: true, inT: 'jolt' });
 
@@ -261,8 +261,8 @@ shot(C_T3, C_T4, (t, lt) => {
   camEnd();
   // type: the calm lower-right field (the curve climbs through the upper half)
   { const f = FONT.serifI(60), a0 = clamp((t - ws[0].t + .03) / .1), a1 = clamp((t - ws[1].t + .03) / .1);
-    if (a0 > 0) rtext('And', 1060, 500, { font: f, color: PAL.ink, alpha: a0, align: 'right' });
-    if (a1 > 0) rtext('you’re', 1060, 560, { font: f, color: PAL.ink, alpha: a1, align: 'right' }); }
+    if (a0 > 0) rtext('And', 1640, 500, { font: f, color: PAL.ink, alpha: a0, align: 'right' });
+    if (a1 > 0) rtext('you’re', 1800, 500, { font: f, color: PAL.ink, alpha: a1, align: 'right' }); }
   stampText('OPTIMIZING', 1800, 700, t, ws[2].t - .03, { font: FONT.hero(200), color: PAL.ink, align: 'right', mis: [8, 6, PAL.pink] });
   const tA = ws[3].t - .03;
   if (t >= tA) {
@@ -274,7 +274,7 @@ shot(C_T3, C_T4, (t, lt) => {
       inkStroke(() => { X.beginPath(); X.moveTo(x0 - 20 - off * .4, y); X.lineTo(x0 - 20 - off * .4 - len, y); }, i % 2 ? PAL.pink : PAL.ink, 4 + hash(i * 9) * 6, { alpha: .8, op: 'multiply', cap: 'butt' });
     }
     withT(1800 + (1 - easeOut(k)) * 260, 915, -.015, 1, () => rtext('ACCELERATING', 0, 0, { font: fnt, color: PAL.pink, sx: stretch, align: 'right', mis: [10, 6, PAL.ink] }));
-    { const a = clamp((t - tA - .12) / .1); if (a > 0) withT(1660, 500, .08, lerp(1.4, 1, easeOut(a)), () => rtext('가속', 0, 0, { font: FONT.kr(130), color: PAL.orange, align: 'center', alpha: a, mis: [6, 5, PAL.pink] })); }
+    { const a = clamp((t - tA - .12) / .1); if (a > 0) withT(400, 610, -.06, lerp(1.4, 1, easeOut(a)), () => rtext('가속', 0, 0, { font: FONT.kr(130), color: PAL.orange, align: 'center', alpha: a, mis: [6, 5, PAL.pink] })); }
   }
   // MACHINE sticker (upper left, once the curve has moved on)
   { const t0 = beatT(102); if (t > t0) withT(560, 330, -.05, lerp(1.4, 1, easeOut((t - t0) / .14)), () => {
