@@ -3,6 +3,7 @@
 const F = {
   hero: 'Anton', logo: 'Unbounded', serif: 'Instrument Serif', mono: 'JetBrains Mono', ui: 'Inter',
   kr: 'Noto Sans KR', jp: 'Noto Sans JP', sc: 'Noto Sans SC', blk: 'Archivo Black',
+  vn: 'Playfair Display', vnSans: 'Be Vietnam Pro',   // Vietnamese-capable (vietnamese subset: ư ơ ặ ế …)
 };
 function font(fam, size, weight = 400, style = 'normal') { return `${style} ${weight} ${size}px "${fam}"`; }
 const FONT = {
@@ -11,6 +12,10 @@ const FONT = {
   mono: s => font(F.mono, s, 400), monoB: s => font(F.mono, s, 800),
   ui: s => font(F.ui, s, 800), uiB: s => font(F.ui, s, 900), uiM: s => font(F.ui, s, 500),
   kr: s => font(F.kr, s, 900), jp: s => font(F.jp, s, 900), sc: s => font(F.sc, s, 900), blk: s => font(F.blk, s),
+  // Vietnamese display serif (Playfair Display 400/700/900 + italics) and grotesk (Be Vietnam Pro 500/800/900)
+  vn: s => font(F.vn, s, 900), vnB: s => font(F.vn, s, 700), vnR: s => font(F.vn, s, 400),
+  vnI: s => font(F.vn, s, 700, 'italic'), vnIR: s => font(F.vn, s, 400, 'italic'),
+  vnSans: s => font(F.vnSans, s, 900), vnSansB: s => font(F.vnSans, s, 800), vnSansM: s => font(F.vnSans, s, 500),
 };
 
 // Letter layout: returns [{ch, x, w}] with x = left edge relative to the start, plus total width.

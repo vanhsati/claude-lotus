@@ -42,6 +42,8 @@ window.ready = (async () => {
   await document.fonts.load(FONT.serifI(40)); await document.fonts.load(FONT.serif(40)); await document.fonts.load(FONT.mono(40)); await document.fonts.load(FONT.monoB(40));
   await document.fonts.load(FONT.ui(40)); await document.fonts.load(FONT.uiB(40)); await document.fonts.load(FONT.uiM(40)); await document.fonts.load(FONT.blk(40));
   await document.fonts.load(font(F.kr, 40, 900), '특이점'); await document.fonts.load(font(F.jp, 40, 900), '死神の目'); await document.fonts.load(font(F.sc, 40, 900), '你好');
+  const VN = 'Anh đang đến đây, em ơi SƠN MÀI ặếữỹ';
+  for (const f of [FONT.vn(40), FONT.vnB(40), FONT.vnR(40), FONT.vnI(40), FONT.vnIR(40), FONT.vnSans(40), FONT.vnSansB(40), FONT.vnSansM(40), FONT.hero(40), FONT.ui(40), FONT.uiB(40)]) await document.fonts.load(f, VN);
   buildTextures();
   await loadScenes();
   if (Q.get('test')) window.TEST = window.TESTS[Q.get('test')];

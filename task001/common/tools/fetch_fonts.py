@@ -1,7 +1,10 @@
 # Downloads the Google Fonts used by the video into fonts/ and writes fonts/fonts.css with local URLs.
 import re, urllib.request, os, sys
 UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0 Safari/537.36'
-FAMS=["Anton","Unbounded:wght@400;900","Instrument+Serif:ital@0;1","JetBrains+Mono:wght@400;800","Inter:wght@500;800;900","Archivo+Black"]
+FAMS=["Anton","Unbounded:wght@400;900","Instrument+Serif:ital@0;1","JetBrains+Mono:wght@400;800","Inter:wght@500;800;900","Archivo+Black",
+      # job002 (Vietnamese lyrics): display serif + grotesk with the vietnamese subset
+      "Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700","Be+Vietnam+Pro:wght@500;800;900"]
+SUBSETS=('latin','latin-ext','vietnamese')  # vietnamese = U+1EA0-1EF9 etc. (ư ơ ặ ế …), not in latin-ext
 KR_TEXT="피둠특이점가속종말우리는끝났어돌아왔다초지능예언의눈사랑해"  # Korean glyphs used in the video
 def get(u):
     return urllib.request.urlopen(urllib.request.Request(u,headers={'User-Agent':UA})).read()
@@ -10,7 +13,7 @@ css_out=[]
 def process(css, keep_all=False):
     for block in re.findall(r'(/\* [^*]+ \*/\s*@font-face \{[^}]+\}|@font-face \{[^}]+\})', css):
         sub=re.match(r'/\* ([^*]+) \*/', block)
-        if not keep_all and (not sub or sub.group(1).strip() not in ('latin','latin-ext')): continue
+        if not keep_all and (not sub or sub.group(1).strip() not in SUBSETS): continue
         fam=re.search(r"font-family: '([^']+)'",block).group(1); w=re.search(r'font-weight: (\d+)',block).group(1)
         st=re.search(r'font-style: (\w+)',block).group(1); url=re.search(r'url\((https[^)]+)\)',block).group(1)
         tag=(sub.group(1).strip() if sub else 'text').replace(' ','')
