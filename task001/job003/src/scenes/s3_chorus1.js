@@ -57,9 +57,9 @@ function S3_neonWords(t, words, o) {
 function S3_cap(t, i, o = {}) {
   const L = S3_line(i); if (!L) return;
   const words = S3_words(i, o.a ?? 0, o.b ?? 99); if (!words.length) return;
-  const t0 = o.from ?? L[0] - .08, t1 = o.until ?? L[1];
-  if (t < t0 || t > t1 + .12) return;
-  const I = clamp((t - t0) / .1) * (1 - clamp((t - t1) / .12));
+  const t0 = o.from ?? L[0] - .03, t1 = o.until ?? L[1];
+  if (t < t0 || t > t1 + .07) return;
+  const I = clamp((t - t0) / .08) * (1 - clamp((t - t1) / .07));
   const size = o.size ?? 52, y = o.y ?? 1008;
   // a soft dark bed so the caption reads over bright reflections
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); X.globalAlpha = .55 * I;
@@ -72,12 +72,12 @@ function S3_cap(t, i, o = {}) {
 // all small captions of the section, by time
 function S3_caps(t) {
   const L = S3_LN(); if (L.length < 9) return;
-  S3_cap(t, 0, { a: 4, from: S3_B26 - .1, until: L[1][0] - .06, color: SK_PAL.neonWhite });   // "bước chân khép màn" (the rest was brushed on the silk)
-  S3_cap(t, 1, { until: L[2][0] - .06 });
-  S3_cap(t, 2, { until: L[3][0] - .06, color: '#FF7AC4' });
+  S3_cap(t, 0, { a: 4, from: S3_B26 - .1, until: L[1][0] - .1, color: SK_PAL.neonWhite });   // "bước chân khép màn" (the rest was brushed on the silk)
+  S3_cap(t, 1, { until: L[2][0] - .1 });
+  S3_cap(t, 2, { until: L[3][0] - .1, color: '#FF7AC4' });
   S3_cap(t, 3, { b: 5, until: barT(29) - .1 });                                        // "Biết đi về chốn đâu" (the hook follows as a title)
-  S3_cap(t, 4, { until: L[5][0] - .06, color: '#FF7AC4' });
-  S3_cap(t, 6, { until: L[7][0] - .06 });
+  S3_cap(t, 4, { until: L[5][0] - .1, color: '#FF7AC4' });
+  S3_cap(t, 6, { until: L[7][0] - .1 });
   S3_cap(t, 7, { b: 5, until: barT(33) - .1, color: '#FF7AC4' });                      // "Biết ai còn nhớ ai"
 }
 
@@ -162,7 +162,7 @@ function S3_silk(t) {
   // the memory: an indigo night wash, a rose pool where the tears fall, the weeping face (painted once)
   S3_painted('face', () => {
     skWash(() => S3_blob(W / 2, 170, 1150, 330, 3), SK_PAL.indigo, { a: .5, edge: .5, grad: [0, -60, 0, 520], gradTo: .05, feather: .6, rough: .7, seed: 31, scale: 3, color2: SK_PAL.cobalt, mix: .3 });
-    skWash(() => S3_blob(1370, 760, 300, 200, 5), SK_PAL.rose, { a: .34, edge: .55, feather: .45, rough: .6, seed: 32, scale: 3, color2: SK_PAL.indigo, mix: .25 });
+    skWash(() => S3_blob(1370, 900, 330, 130, 5), SK_PAL.rose, { a: .3, edge: .55, feather: .45, rough: .6, seed: 32, scale: 3, color2: SK_PAL.indigo, mix: .25 });
     skFacePortrait(1370, 470, 215, S3_T0, { tears: .9, eyes: 'down', mouth: 0 });
     skSeal(650, 830, 46, 'LỤA', {});
   });
@@ -250,7 +250,7 @@ function S3_shotE(t, lt) {
   camEnd();
   S3_rain(t, lights, { n: 180 });
   S3_caps(t);
-  S3_cutFlash(t, barT(29), '#FFD6F0', .5);
+  S3_cutFlash(t, barT(29), '#FFD6F0', .22);
 }
 
 // ---------- S3F · the face withers ----------
@@ -301,8 +301,8 @@ function S3_shotG(t, lt) {
   S3_refl(() => {
   S3_signs(t, S3_HZ, 1 - .5 * clamp((t - 80.1) / .8));
   if (ws.length === 4) {
-    S3_neonWords(t, ws.slice(0, 2), { x: W / 2, y: 330, size: 230, color: S3_PINK, seed: 81, pre: .05, off, offRate: .05, flicker: .1 });
-    S3_neonWords(t, ws.slice(2, 4), { x: W / 2, y: 565, size: 230, color: S3_CYAN, seed: 84, pre: .05, off: off + .3, offRate: .05, broken: 1, flicker: .15 });
+    S3_neonWords(t, ws.slice(0, 2), { x: W / 2, y: 330, size: 230, color: S3_PINK, seed: 81, pre: .05, off, offRate: .05, flicker: .1, stop: 80.95 });
+    S3_neonWords(t, ws.slice(2, 4), { x: W / 2, y: 565, size: 230, color: S3_CYAN, seed: 84, pre: .05, off: off + .3, offRate: .05, broken: 1, flicker: .15, stop: 80.95 });
   }
   // after the sign dies, the face appears far down the street, small and cold
   if (fo > 0) skFaceNeon(960, 470, 95, t, { on: fo >= 1 ? 1 : fo * .8, eyes: 'down', colors: { petal: '#7FA8FF' }, tearT: S3_beats(80.6, barT(32), 2) });
@@ -355,18 +355,18 @@ function S3_shotI(t, lt) {
   const ws = S3_words(7, 5, 9, true), wc = S3_words(8, 0, 4, true);
   S3_refl(() => {
   if (ws.length === 4) {
-    S3_neonWords(t, ws.slice(0, 2), { x: cx, y: 360, size: 190, color: S3_CYAN, off: fallT0 - .34, offRate: .016, stop: fallT0 - .02, seed: 95, pre: .12 });
-    S3_neonWords(t, ws.slice(2, 4), { x: cx, y: 565, size: 190, color: SK_PAL.neonWhite, off: fallT0 - .24, offRate: .016, stop: fallT0 - .02, seed: 97, pre: .12, broken: 3 });
+    S3_neonWords(t, ws.slice(0, 2), { x: cx, y: 360, size: 190, color: S3_CYAN, off: fallT0 - .34, offRate: .016, stop: fallT0 - .04, seed: 95, pre: .12 });
+    S3_neonWords(t, ws.slice(2, 4), { x: cx, y: 565, size: 190, color: SK_PAL.neonWhite, off: fallT0 - .24, offRate: .016, stop: fallT0 - .04, seed: 97, pre: .12, broken: 3 });
   }
   if (wc.length === 4) {
-    S3_neonWords(t, wc.slice(0, 2), { x: cx, y: 360, size: 205, color: S3_PINK, seed: 101, pre: .05, rate: .05 });
+    S3_neonWords(t, wc.slice(0, 2), { x: cx, y: 360, size: 205, color: S3_PINK, seed: 101, pre: 0, rate: .05 });
     S3_neonWords(t, wc.slice(2, 4), { x: cx, y: 580, size: 205, color: S3_PINK, seed: 104, pre: .05, rate: .05, broken: 1, flicker: .15 });
   }
   }, .5);
   camEnd();
   S3_rain(t, lights, { n: 220 });
   S3_caps(t);
-  S3_cutFlash(t, barT(33), '#FFD6F0', .5);
+  S3_cutFlash(t, barT(33), '#FFD6F0', .22);
 }
 
 shot(S3_T0, S3_B26, S3_shotA, { seed: 301 });

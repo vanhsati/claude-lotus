@@ -24,7 +24,7 @@ function S1_camApply(c) {
 // under another camera (a pure scale + offset), so each snapshot is used near its own zoom. Deterministic, so it is a cache.
 const S1_SNAP = {};
 const S1_CAMS = {
-  wide: { x: S1_FX, y: S1_FY - 40, zoom: 1.15 }, mid: { x: S1_FX + 180, y: S1_FY - 10, zoom: 1.75 }, eye: { x: S1_EYE[0] + 40, y: S1_EYE[1] + 90, zoom: 2.9 },
+  wide: { x: S1_FX, y: S1_FY - 40, zoom: 1.15 }, mid: { x: S1_FX + 160, y: S1_FY - 20, zoom: 1.6 }, mid2: { x: S1_FX + 130, y: S1_FY - 30, zoom: 2.1 }, eye: { x: S1_EYE[0] + 20, y: S1_EYE[1] + 40, zoom: 2.6 },
   scroll: { x: 972, y: 536, zoom: 1.03 }, C: { x: 1215, y: 540, zoom: 1.05 }, screen: { x: W / 2, y: H / 2, zoom: 1 },
 };
 function S1_snap(id, cam, fn) {
@@ -41,9 +41,19 @@ function S1_put(img, cam, c, alpha = 1, op = 'multiply', ctx = X) {
   ctx.save(); ctx.setTransform(r, 0, 0, r, ox, oy); ctx.globalAlpha = alpha; ctx.globalCompositeOperation = op; ctx.imageSmoothingQuality = 'high';
   ctx.drawImage(img, 0, 0); ctx.restore();
 }
-function S1_pickCam(zoom) { return zoom > 2.35 ? 'eye' : zoom > 1.32 ? 'mid' : 'wide'; }
+// the sharpest face snapshot that holds everything of the face this camera can see
+function S1_pickCam(c) {
+  const fb = [S1_FX - S1_R * 1.95, S1_FY - S1_R * 1.95, S1_FX + S1_R * 1.95, S1_FY + S1_R * 1.6];
+  const view = z => [z.x - W / 2 / z.zoom, z.y - H / 2 / z.zoom, z.x + W / 2 / z.zoom, z.y + H / 2 / z.zoom];
+  const v = view(c), need = [Math.max(v[0], fb[0]), Math.max(v[1], fb[1]), Math.min(v[2], fb[2]), Math.min(v[3], fb[3])];
+  for (const k of ['eye', 'mid2', 'mid']) {
+    const cc = S1_CAMS[k]; if (cc.zoom > c.zoom * 1.12) continue;
+    const q = view(cc); if (q[0] <= need[0] + 1 && q[1] <= need[1] + 1 && q[2] >= need[2] - 1 && q[3] >= need[3] - 1) return k;
+  }
+  return c.zoom > 1.3 ? 'mid' : 'wide';
+}
 function S1_face(c, alpha = 1, op = 'multiply', ctx = X) {
-  const cam = S1_pickCam(c.zoom);
+  const cam = S1_pickCam(c);
   S1_put(S1_snap('face', cam, () => skFacePortrait(S1_FX, S1_FY, S1_R, 0, { eyes: 'down', tears: 0, seed: 3, blush: .9 })), cam, c, alpha, op, ctx);
 }
 
@@ -265,7 +275,7 @@ function S1_city(t) {   // the neon street behind the silk (drawn in world space
   tube(() => X.arc(760, 170, 62, 0, TAU), SK_PAL.neonCyan, 9, I * .9);
 }
 function S1_backlight(t) {
-  const up = easeOut(clamp((t - S1_TC) / .5)), grow = .5 + .35 * clamp((t - S1_TC) / 7.2);
+  const up = easeOut(clamp((t - S1_TC) / .5)), grow = .55 + .4 * clamp((t - S1_TC) / 7.2);
   const drain = 1 - .75 * easeInOut(clamp((t - (S1_END - .62)) / .5));
   return clamp((grow + KICK(t) * .14) * up * drain);
 }

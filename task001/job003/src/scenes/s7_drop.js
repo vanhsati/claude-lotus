@@ -48,7 +48,7 @@ function S7_put(c, cam, alpha = 1, op = 'source-over') {
 }
 // Keep a camera inside the painting (the cached canvases end at the frame edge).
 function S7_cam(c) {
-  const z = Math.max(1.015, c.zoom ?? 1), m = 8 + (c.shake || 0) + Math.abs(c.rot || 0) * 600, hw = W / 2 / z + m / z, hh = H / 2 / z + m / z;
+  const z = Math.max(1.015 + Math.abs(c.rot || 0) * 1.8 + (c.shake || 0) / 400, c.zoom ?? 1), m = 8 + (c.shake || 0), hw = W / 2 / z + m / z, hh = H / 2 / z + m / z;
   return { ...c, zoom: z, x: clamp(c.x ?? W / 2, hw, W - hw), y: clamp(c.y ?? H / 2, hh, H - hh) };
 }
 // A neon strike: dark, sputtering, then lit (0..1).

@@ -390,17 +390,22 @@ function S4_v2Painting() {
   skInk([[[1480, 700, .9], [1482, 560], [1480, 440, .6]]], { w: 7, seed: 75, dry: .3 });
   skWash(() => { X.moveTo(1450, 720); X.lineTo(1510, 720); X.lineTo(1540, 1080); X.lineTo(1420, 1080); X.closePath(); }, S4_P.ochre, { a: .3, feather: .6, seed: 76, grad: [0, 720, 0, 1080], gradTo: .1 });
   skInk([[[40, 702, .4], [900, 698], [1880, 703, .4]]], { w: 3, alpha: .5, dry: .6, color: S4_P.ink, seed: 77 });
-  // two figures under one umbrella on the shore path
-  const ux = 1180, uy = 560;
-  skWash(() => { X.ellipse(ux - 34, uy + 110, 30, 100, .03, 0, TAU); X.moveTo(ux + 70, uy + 115); X.ellipse(ux + 40, uy + 115, 30, 96, -.03, 0, TAU); }, S4_P.ink, { a: .55, edge: .7, seed: 78, color2: S4_P.indigo, mix: .5 });
-  skWash(() => { X.moveTo(ux - 150, uy); X.quadraticCurveTo(ux, uy - 150, ux + 150, uy); X.quadraticCurveTo(ux, uy - 30, ux - 150, uy); }, S4_P.rose, { a: .6, edge: .8, seed: 79, color2: S4_P.cinnabar, mix: .3 });
-  skInk([[[ux - 150, uy, .5], [ux - 60, uy - 110], [ux + 60, uy - 110], [ux + 150, uy, .5]], [[ux, uy - 80], [ux + 4, uy + 120, .5]]], { w: 4, dry: .35, seed: 80 });
-  skWash(() => { X.ellipse(ux - 34, uy + 30, 20, 22, 0, 0, TAU); X.moveTo(ux + 60, uy + 34); X.ellipse(ux + 40, uy + 34, 20, 22, 0, 0, TAU); }, S4_P.ink, { a: .6, edge: .6, seed: 81 });
+  // two figures under one umbrella on the shore path (ink silhouettes, áo dài long and loose)
+  const ux = 1180, uy = 470;
+  skWash(() => {
+    pathSmooth([[ux - 70, uy + 60], [ux - 40, uy + 50], [ux - 22, uy + 140], [ux - 12, uy + 330], [ux - 30, uy + 345], [ux - 92, uy + 340], [ux - 80, uy + 150]]);
+    pathSmooth([[ux + 20, uy + 64], [ux + 58, uy + 58], [ux + 82, uy + 150], [ux + 96, uy + 336], [ux + 70, uy + 348], [ux + 10, uy + 340], [ux + 12, uy + 150]]);
+  }, S4_P.ink, { a: .5, edge: .7, seed: 78, color2: S4_P.indigo, mix: .55 });
+  skWash(() => { X.ellipse(ux - 52, uy + 30, 22, 26, 0, 0, TAU); X.moveTo(ux + 62, uy + 34); X.ellipse(ux + 40, uy + 34, 22, 26, 0, 0, TAU); }, S4_P.ink, { a: .62, edge: .6, seed: 81 });
+  skWash(() => { X.moveTo(ux - 190, uy - 10); X.quadraticCurveTo(ux, uy - 190, ux + 190, uy - 10); X.quadraticCurveTo(ux, uy - 50, ux - 190, uy - 10); }, S4_P.rose, { a: .62, edge: .85, seed: 79, color2: S4_P.cinnabar, mix: .35 });
+  skInk([[[ux - 190, uy - 10, .5], [ux - 80, uy - 135], [ux + 80, uy - 135], [ux + 190, uy - 10, .5]], [[ux, uy - 100], [ux + 6, uy + 120, .5]]], { w: 4.5, dry: .35, seed: 80 });
+  // their reflection, broken by the rain
+  skWash(() => { X.ellipse(ux, 790, 120, 40, 0, 0, TAU); }, S4_P.ink, { a: .16, edge: .4, feather: .6, seed: 82 });
 }
 function S4_v2(t) {
   const lt = t - S4_CUTS.v2, Z = 1.02 + lt * .012, F = [960 + lt * 12, 540];
   S4_place(S4_render('v2', 1, [960, 540], S4_v2Painting), 1, [960, 540], Z, F, [0, 0]);
-  X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); skRainInk(t, { n: 190, dots: 40, len: 44, angle: .16, speed: 900 }); X.restore();
+  X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); skRainInk(t, { n: 260, dots: 46, len: 52, angle: .16, speed: 900, alpha: 1.5, w: 1.9, dotSize: 1.3 }); X.restore();
   S4_bleed(t, .4, 'rt');
   S4_rows(t, 9, [
     { a: 0, b: 2, m: 'ink', size: 170, x: 100, y: 330 },
@@ -408,7 +413,7 @@ function S4_v2(t) {
   ]);
 }
 // V3: the dream, eyes closed, blooms of colour on the beat
-const S4_V3F = [1260, 480], S4_V3R = 250;
+const S4_V3F = [1340, 490], S4_V3R = 240;
 function S4_v3Painting() {
   skSilk(0);
   skWash(() => X.ellipse(1260, 500, 600, 480, 0, 0, TAU), S4_P.indigo, { a: .16, edge: .4, feather: .6, seed: 91, scale: 4, color2: S4_P.rose, mix: .5 });
@@ -421,8 +426,8 @@ function S4_v3(t) {
   S4_inCam(Z, F, [0, 0], () => S4_V3B.forEach(([x, y, r, c], i) => skBloom(x, y, r, S4_P[c], t, S4_CUTS.v3 + .15 + i * BEAT, { seed: 90 + i, dur: 1.8, color2: i % 2 ? S4_P.rose : undefined, mix: .4 })));
   S4_bleed(t, .45, 'rb');
   S4_rows(t, 10, [
-    { a: 0, b: 2, m: 'ink', size: 170, x: 90, y: 300 },
-    { a: 3, b: 7, m: 'ink', size: 54, x: 110, y: 400 },
+    { a: 0, b: 2, m: 'ink', size: 160, x: 80, y: 300 },
+    { a: 3, b: 7, m: 'ink', size: 54, x: 100, y: 400 },
   ]);
 }
 // V4: the song on a stave, struck through
@@ -478,7 +483,7 @@ function S4_v5Painting() {
   for (let i = 0; i < 5; i++) {
     const u = Math.pow(.62, i), side = i % 2 ? 1 : -1, bx = S4_VP[0] + side * (820 * u + 20), by = S4_VP[1] + 560 * u, hgt = 520 * u;
     skInk([[[bx, by, 1], [bx, by - hgt, .5]]], { w: Math.max(2, 8 * u), seed: 125 + i, dry: .3 });
-    skWash(() => X.ellipse(bx, by - hgt, 90 * u + 8, 90 * u + 8, 0, 0, TAU), S4_P.ochre, { a: .35, feather: .7, seed: 130 + i, op: 'source-over', alpha: .6 });
+    skWash(() => skLobePath(bx, by - hgt, 60 * u + 8, 130 + i, 9, 48), S4_P.ochre, { a: .42, edge: .9, feather: .5, seed: 130 + i, color2: S4_P.sienna, mix: .3 });
   }
 }
 function S4_v5(t) {

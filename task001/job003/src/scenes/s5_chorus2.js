@@ -66,20 +66,21 @@ function S5_flash(lt, col = S5_P.neonPink, a = .5) {
 function S5_layer(name, m, fn) { return skOn(skLay(name), m, null, fn); }
 function S5_blit(L, op = 'lighter', a = 1) { X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalAlpha = a; X.globalCompositeOperation = op; X.drawImage(L, 0, 0); X.restore(); }
 // mirror layer L below the world line y (under matrix m) into the wet street: rippled strips, faded, puddles only.
+// Runs at half resolution, only below the mirror line.
 function S5_reflect(L, m, y, o = {}) {
-  const cw = L.width, ch = L.height, sc = skScale(m), gy = Math.round(m.d * y + m.f), st = o.stretch ?? 1.2, fade = (o.fade ?? 380) * sc, t = o.t ?? T;
-  if (gy >= ch) return;
-  const Q = skLay('S5_rq', 1), q = Q.x, hs = Math.max(2, Math.round(3 * SX)), amp = (o.ripple ?? 1) * 2.4 * sc;
-  q.clearRect(0, 0, cw, ch);
-  for (let sy = Math.max(0, gy); sy < ch; sy += hs) {
+  const cw = L.width, ch = L.height, sc = skScale(m), gy = Math.max(0, Math.round(m.d * y + m.f)), st = o.stretch ?? 1.2, fade = (o.fade ?? 380) * sc, t = o.t ?? T;
+  if (gy >= ch - 2) return;
+  const Q = skLay('S5_rq', .5), q = Q.x, qw = Q.width, qh = Q.height, hs = Math.max(2, Math.round(4 * SX)), amp = (o.ripple ?? 1) * 2.4 * sc;
+  q.clearRect(0, Math.floor(gy * .5) - 2, qw, qh);
+  for (let sy = gy; sy < ch; sy += hs) {
     const d = sy - gy, a = (o.a ?? .7) * Math.exp(-d / fade); if (a < .01) break;
-    const src = gy - d / st; if (src < 0) break;
+    const src = gy - d / st; if (src < hs) break;
     const dist = d / sc, dx = (noise1(dist / 14 + t * 1.3) * .65 + noise1(dist / 4.5 - t * 2.1) * .35) * amp * (1 + dist * .012) + (o.wave ? o.wave(dist) * sc : 0);
-    q.globalAlpha = a; q.drawImage(L, 0, src - hs / st, cw, hs / st, dx, sy, cw, hs);
+    q.globalAlpha = a; q.drawImage(L, 0, src - hs / st, cw, hs / st, dx * .5, sy * .5, qw, hs * .5 + .5);
   }
   q.globalAlpha = 1;
-  if (o.wet !== false) { const b = skNightBake(S5_HZ); q.globalCompositeOperation = 'destination-in'; q.drawImage(b.wet, 0, 0, cw, ch); q.globalCompositeOperation = 'source-over'; }
-  S5_blit(Q, o.op || 'lighter', 1);
+  if (o.wet !== false) { const b = skNightBake(S5_HZ); q.globalCompositeOperation = 'destination-in'; q.drawImage(b.wet, 0, gy, b.wet.width, b.wet.height - gy, 0, gy * .5, qw, qh - gy * .5); q.globalCompositeOperation = 'source-over'; }
+  X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalCompositeOperation = o.op || 'lighter'; X.drawImage(Q, 0, gy * .5, qw, qh - gy * .5, 0, gy, cw, ch - gy); X.restore();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -109,10 +110,24 @@ function S5_caption(t, o = {}) {
 // the mask: painted onto a layer (so it can be lit by the neon and broken into shards), with neon light on the glaze
 // ---------------------------------------------------------------------------------------------------------------------
 const S5_MASK_AT = [-.32, -.62];
+// The porcelain itself is cached per (shot, crack step): skMask is painted once at the shot's reference camera `ref`
+// (a full-frame canvas) and re-placed every frame with the live camera (a few % of zoom / a small roll). Deterministic.
+const S5_MC = new Map();
+function S5_maskCached(key, ref, x, y, R, crack, glow) {
+  const cq = Math.round(crack * 100) / 100, k = [key, cq, glow, SX, x, y, R, ref.a, ref.e, ref.f].join('|');
+  let c = S5_MC.get(k); if (c) { S5_MC.delete(k); S5_MC.set(k, c); return c; }
+  c = mkCanvas(Math.round(W * SX), Math.round(H * SX));
+  const prev = X; X = c.getContext('2d'); X.setTransform(ref.a, ref.b, ref.c, ref.d, ref.e, ref.f);
+  try { skMask(x, y, R, { crack: cq, glow, ground: 'dark', at: S5_MASK_AT }); } finally { X = prev; }
+  S5_MC.set(k, c); while (S5_MC.size > 6) S5_MC.delete(S5_MC.keys().next().value);
+  return c;
+}
 function S5_maskLayer(t, m, x, y, R, o = {}) {
-  const crack = o.crack ?? S5_crack(t);
+  const crack = o.crack ?? S5_crack(t), glow = o.glow ?? S5_P.neonPink, ref = o.ref || m;
+  const C = S5_maskCached(o.key || 'm', ref, x, y, R, crack, glow);
+  const rel = m.multiply(new DOMMatrix().translate(x + (o.dx || 0), y + (o.dy || 0)).rotate((o.rot || 0) * 180 / Math.PI).translate(-x, -y)).multiply(ref.inverse());
   return S5_layer(o.layer || 'S5_mk', m, () => {
-    skMask(x, y, R, { crack, glow: o.glow ?? S5_P.neonPink, ground: 'dark', rot: o.rot || 0, at: S5_MASK_AT });
+    X.save(); X.setTransform(rel.a, rel.b, rel.c, rel.d, rel.e, rel.f); X.imageSmoothingQuality = 'high'; X.drawImage(C, 0, 0); X.restore();
     // the neon lights the porcelain: pink from the left, cyan from the right, a white-hot bloom on the crack hits
     X.save(); X.globalCompositeOperation = 'source-atop';
     const gl = X.createLinearGradient(x - R, y, x + R, y);
