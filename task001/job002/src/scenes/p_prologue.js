@@ -71,7 +71,7 @@ const P_EGG1 = P_SHARDS[P_SHARDS.length - 1].t;
 
 // Title letters: carved (a dark channel), then gilded, one every 1.5 beats from bar 9.
 const P_TFONT = () => FONT.vn(196), P_TTRACK = 6;
-const P_TL = [['COME', 110, 430], ['MY WAY', 110, 636]];
+const P_TL = [['COME', 150, 430], ['MY WAY', 150, 636]];
 const P_LETTERS = (() => {
   const out = []; let n = 0;
   P_TL.forEach(([str], li) => { for (let ci = 0; ci < str.length; ci++) { if (str[ci] === ' ') continue; const tc = barT(9) + n * BEAT * 1.5; out.push({ li, ci, tc, tg: tc + BEAT }); n++; } });
@@ -361,10 +361,10 @@ function P_title(t, o = {}) {
 function P_captions(t, a = 1) {
   const k1 = P_ease(t, 25.2, 26.4, easeOut) * a, k2 = P_ease(t, 26.2, 27.4, easeOut) * a;
   if (k1 > 0) {
-    X.save(); X.strokeStyle = `rgba(217,164,65,${.8 * k1})`; X.lineWidth = 1.6; X.beginPath(); X.moveTo(118, 700); X.lineTo(118 + 560 * k1, 700); X.stroke(); X.restore();
-    P_small('sơn mài', 116, 770, FONT.vnI(52), LQ_PAL.egg, { alpha: k1 });
+    X.save(); X.strokeStyle = `rgba(217,164,65,${.8 * k1})`; X.lineWidth = 1.6; X.beginPath(); X.moveTo(158, 700); X.lineTo(158 + 560 * k1, 700); X.stroke(); X.restore();
+    P_small('sơn mài', 156, 770, FONT.vnI(52), LQ_PAL.egg, { alpha: k1 });
   }
-  if (k2 > 0) P_small('Sơn Tùng M-TP  ×  Tyga', 118, 826, FONT.vnSansM(34), LQ_PAL.goldHi, { alpha: k2, tracking: 2 });
+  if (k2 > 0) P_small('Sơn Tùng M-TP  ×  Tyga', 158, 826, FONT.vnSansM(34), LQ_PAL.goldHi, { alpha: k2, tracking: 2 });
 }
 // Silhouette schedule: a faint sketch until P2c, then it deepens; the gold rim flares on the 20.75 hit.
 const P_silA = t => .12 + .88 * P_ease(t, 17.0, 21.2);
@@ -412,8 +412,8 @@ shot(beatT(22), 16.93, (t, lt) => {
 function P_camWide(t) {
   const k = P_ease(t, 16.93, 21.8, easeInOut);
   let z = lerp(1.5, 1.0, k), x = lerp(1240, 960, k), y = lerp(520, 540, k);
-  z += Math.max(0, t - 21.8) * .006; x += Math.max(0, t - 21.8) * 4;
-  if (t > P_T3) { const k3 = P_ease(t, P_T3, P_END, easeIn); z += k3 * .06; x += k3 * 40; y += k3 * 20; z += pulse(t, .3) * .008 * P_ease(t, P_T3, P_T3 + 2); }
+  z += Math.max(0, t - 21.8) * .004; y += Math.sin(t * .2) * 6;
+  if (t > P_T3) { const k3 = P_ease(t, P_T3, P_END, easeIn); z += k3 * .04; y += k3 * 20; z += pulse(t, .3) * .008 * P_ease(t, P_T3, P_T3 + 2); }
   return { zoom: z, x, y, rot: Math.sin(t * .11) * .006 };
 }
 
@@ -547,19 +547,19 @@ function P_sandK(t) {
 shot(P_T3, P_END, (t, lt) => {
   const c = P_camWide(t), k = P_sandK(t);
   camBegin({ ...c, shake: SNARE(t) * 3 });
-  lqReveal(() => { P_street(t); P_idol(t); }, () => { P_panel(t, {}); }, k, 13, { from: 'right', angle: -.42, halo: '#7a3a18', haloW: 7 });
+  lqReveal(() => { P_street(t); P_idol(t); }, () => { P_panel(t, {}); }, k, 13, { from: 'right', angle: -.42, halo: '#7a3a18', haloW: 7, n: 90, res: .4 });
   // dark scrim behind the title while it's up
   const tOut = P_ease(t, beatT(66) - .1, 37.1, easeIn);
-  X.save(); X.globalAlpha = .5 * (1 - tOut) * k; const g = X.createRadialGradient(480, 560, 60, 480, 560, 620); g.addColorStop(0, 'rgba(8,5,4,1)'); g.addColorStop(1, 'rgba(8,5,4,0)'); X.fillStyle = g; X.fillRect(-200, 0, 1400, 1200); X.restore();
+  X.save(); X.globalAlpha = .5 * (1 - tOut) * k; const g = X.createRadialGradient(520, 560, 60, 520, 560, 620); g.addColorStop(0, 'rgba(8,5,4,1)'); g.addColorStop(1, 'rgba(8,5,4,0)'); X.fillStyle = g; X.fillRect(-200, 0, 1400, 1200); X.restore();
   // the title polishes: dull → mirror gold, glint sweeps on the beat, full flare on bar 16; then sanded off
   const dull = .4 * (1 - P_ease(t, P_T3, barT(16), easeInOut)), gl = t < barT(16) ? .1 + beatP(t) * .9 : clamp((t - barT(16)) / .8);
   const drawTitle = () => { P_title(t, { dull, glint: gl, glintW: t > barT(16) - .05 && t < barT(16) + 1 ? 520 : undefined }); P_captions(t); };
   if (tOut <= 0) drawTitle();
-  else if (tOut < 1) lqReveal(() => {}, drawTitle, tOut, 21, { region: [60, 180, 900, 700], from: 'left', angle: -.3, halo: null, name: 'P_t' });
+  else if (tOut < 1) lqReveal(() => {}, drawTitle, tOut, 21, { region: [100, 180, 900, 700], from: 'left', angle: -.3, halo: null, name: 'P_t' });
   camEnd();
   // bar 16: the title reaches full gold, a flake burst from it
   camBegin(c);
-  if (t < beatT(67)) P_flakes(t, barT(16), [[260, 360], [520, 380], [700, 560], [420, 590]], { n: 50, seed: 16, speed: 900, size: 12 });
+  if (t < beatT(67)) P_flakes(t, barT(16), [[300, 360], [560, 380], [740, 560], [460, 590]], { n: 50, seed: 16, speed: 900, size: 12 });
   camEnd();
   P_flash(hit(t, barT(16), .25) * .5);
 }, { seed: 5 });

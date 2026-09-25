@@ -82,6 +82,16 @@ function V_tender(L, x, y, t, o = {}) {
   X.restore();
   return cx;
 }
+// A small place label naming the painting (Be Vietnam Pro, gold hairline), top right.
+function V_place(str, t, t0, t1, o = {}) {
+  const k = clamp((t - t0) / .3) * (1 - clamp((t - t1) / .3)); if (k <= 0) return;
+  const fnt = FONT.vnSansM(26), w = textW(str, fnt, 3), x = (o.x ?? W - 70) - w, y = o.y ?? 78;
+  X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); X.globalAlpha = k;
+  X.strokeStyle = 'rgba(217,164,65,.8)'; X.lineWidth = 1.3; X.beginPath(); X.moveTo(x - 60, y - 9); X.lineTo(x - 16, y - 9); X.stroke();
+  X.fillStyle = LQ_PAL.gold; X.beginPath(); X.moveTo(x - 64, y - 14); X.lineTo(x - 59, y - 9); X.lineTo(x - 64, y - 4); X.lineTo(x - 69, y - 9); X.closePath(); X.fill();
+  rtext(str, x, y, { font: fnt, color: LQ_PAL.goldHi, op: 'source-over', tracking: 3 });
+  X.restore();
+}
 // A gold glint across the whole panel on a cut.
 function V_glint(t, t0, o = {}) {
   const k = (t - t0) / (o.dur || .32); if (k < 0 || k > 1) return;
@@ -249,8 +259,9 @@ function V1_paint(t) {
     X.restore();
   }
   V_caption(t, LY[1]);
+  V_place('Phố cổ Hà Nội', t, V_S0, 38.3);
 }
-shot(V_S0, V_S1, (t) => V1_paint(t), { seed: 371 });
+shot(V_S0, V_S1, (t) => { V1_paint(t); V_glint(t, V_S0, { a: .22 }); }, { seed: 371 });
 
 // ---------- V2: the window lattice cage ----------
 const V2_BARS = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4].map(i => 960 + (i + .5) * 118);
@@ -399,6 +410,13 @@ function V3c_paint(t) {
     }
   });
   camEnd();
+  // two gold hearts on a silver line: a pulse runs between them on every beat
+  { const A = [230, 300], B = [900, 300], con = clamp((t - V_S4) / .4);
+    X.save(); X.strokeStyle = 'rgba(201,204,209,.7)'; X.lineWidth = 3; X.setLineDash([14, 12]); X.lineDashOffset = -t * 60; X.beginPath(); X.moveTo(A[0] + 70, A[1]); X.lineTo(lerp(A[0] + 70, B[0] - 70, con), B[1]); X.stroke(); X.restore();
+    const p = beatP(t), px = lerp(A[0] + 70, B[0] - 70, p % 2), pk = t > beats[0] ? 1 : 0;
+    if (pk) { X.save(); X.globalCompositeOperation = 'screen'; const g = X.createRadialGradient(px, A[1], 0, px, A[1], 40); g.addColorStop(0, 'rgba(244,246,248,.9)'); g.addColorStop(1, 'rgba(0,0,0,0)'); X.fillStyle = g; X.fillRect(px - 40, A[1] - 40, 80, 80); X.restore(); }
+    for (const [c, i] of [[A, 0], [B, 1]]) withT(c[0], c[1] + 10, 0, 1 + pulse(t, .3) * .12 * (i ? hit(t, beatT(beatN(t)) , .3) + .5 : 1), () => lqGold(() => heartPath(0, 0, 58), { scale: .25, glint: .4 + i * .2, bevel: 2, lift: 5 }));
+  }
   V_tender(LY[6], 110, 520, t, { size: 60, words: 3 });
   V_inlay('CELLULAR', 90, 760, t, tc, { size: 190, material: 'silver', from: 1.35, dustCol: LQ_PAL.silverHi });
 }
@@ -490,6 +508,7 @@ function V4b_paint(t) {
   if (t > th - .2) { const k = clamp((t - th + .2) / .2), y = 900 - 470 - 190 - (1 - easeIn(k)) * 800; withT(1420, y, Math.sin(t * 3) * .05, 1 + hit(t, th, .3) * .2, () => lqGold(() => heartPath(0, 0, 80), { scale: .3, glint: .5, bevel: 2, lift: 8 })); }
   camEnd();
   V_caption(t, LY[8]); V_caption(t, LY[9]);
+  V_place('Chợ đêm', t, V_S6 + .1, V_S7 + 1);
 }
 shot(V_S6, V_S7, (t) => { V4b_paint(t); V_glint(t, V_S6); }, { seed: 377 });
 
@@ -528,6 +547,7 @@ function V5_paint(t) {
   // gold dust in the sunbeam
   if (sun > 0) { X.save(); X.fillStyle = LQ_PAL.goldHi; for (let i = 0; i < 60; i++) { const px = 1100 + hash(i * 3.1) * 820, py = frac(hash(i * 1.7) - t * .1) * 1080; X.globalAlpha = sun * .7 * hash(i * 5.3); X.fillRect(px, py, 3, 3); } X.restore(); }
   V_caption(t, LY[10]);
+  V_place('Trâu trong bão', t, V_S7 + .3, 61.4);
   // LY[11]: COME RAIN (silver), OR THE SHINE (gold), I gotchya
   if (t > ws[0].t - .05) {
     X.save(); const g = X.createLinearGradient(0, 0, 0, 480); g.addColorStop(0, 'rgba(7,5,4,.55)'); g.addColorStop(1, 'rgba(7,5,4,0)'); X.fillStyle = g; X.globalAlpha = clamp((t - ws[0].t + .05) / .1); X.fillRect(0, 0, 1400, 480); X.restore();

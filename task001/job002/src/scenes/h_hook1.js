@@ -195,10 +195,8 @@ function H1_fn(t, lt) {
     if (t >= a && t < b) { const u = (t - a) / (b - a); spin = TAU * easeInOut(clamp((u - .08) / .92)); next = i + 1; k = clamp((u - .2) / .72); sc = i; }
   }
   if (next >= 0) {
-    const z = 1 - bump(k) * .12;
-    lqReveal(() => H_sceneAt(next, t, spin), () => H_sceneAt(sc, t, spin), k, 11 + next, { angle: spin - .4, from: 'center', halo: LQ_PAL.goldDk, haloA: .8 });
+    lqReveal(() => H_sceneAt(next, t, spin), () => H_sceneAt(sc, t, spin), k, 11 + next, { angle: spin - .4, from: 'center', halo: LQ_PAL.goldDk, haloA: .8, res: .35 });
     X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); X.globalCompositeOperation = 'screen'; X.fillStyle = `rgba(246,200,120,${bump(k) * .12})`; X.fillRect(0, 0, W, H); X.restore();
-    void z;
   } else H_sceneAt(sc, t, 0);
   // the section opens by sanding the verse away onto the drum
   if (lt < .5) {
@@ -331,7 +329,7 @@ shot(H_HOOK, 73.928, (t, lt) => {
     H_lines(t, w, [[0, 1, 2]], { x: W / 2, ys: [120], sizes: [60], font: FONT.vnSans, material: 'egg', space: 1.1 });
     H_lines(t, w, [[3, 4]], { x: W / 2, ys: [345], sizes: [250] });
   };
-  if (lt < .5) lqReveal(bottom, () => H_sceneTender(t, 0), easeOut(lt / .45), 31, { from: 'center', angle: -.5, halo: LQ_PAL.goldDk, haloA: .9 });
+  if (lt < .5) lqReveal(bottom, () => H_sceneTender(t, 0), easeOut(lt / .45), 31, { from: 'center', angle: -.5, halo: LQ_PAL.goldDk, haloA: .9, res: .35 });
   else bottom();
   H_glintCut(t, H_HOOK, .35);
 }, { seed: 723, dark: true });
@@ -420,7 +418,7 @@ shot(83.609, 85.246, (t, lt) => {
   const w = H_W[21]; if (!w.length) return;
   H_lines(t, w, [[0, 1, 2]], { x: 110, align: 'left', ys: [180], sizes: [60], font: FONT.vnSans, material: 'egg' });
   H_lines(t, w, [[3, 4]], { x: 100, align: 'left', ys: [420], sizes: [230] });
-  H_echo(t, H_wayT(21), 'WAY', { x: 330, y: 790, size: 290, vx: 700, vy: 560, shrink: .58 });
+  H_echo(t, H_wayT(21), 'WAY', { x: 330, y: 790, size: 290, vx: 330, vy: 540, shrink: .58 });
   H_glintCut(t, 83.609);
 }, { seed: 836, dark: true });
 

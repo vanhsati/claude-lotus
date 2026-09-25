@@ -596,3 +596,12 @@ shot(D2_T3, D2_TEND, (t, lt) => {
   D2_sweep(t, D2_T3, .25, .45);
   D2_sweep(t, D2_w(72, 0, 194.75), .5, .35);
 }, { seed: 661 });
+TESTS.d2perf = t => {
+  const flush = () => X.getImageData(0, 0, 1, 1), out = [];
+  for (const tt of [157.9, 159.6, 160.8, 163.3, 164.8, 166.8, 172, 174, 176.5, 177.3, 177.8, 178.6, 180.5, 184, 186.5, 189.5, 193.9, 196.3]) {
+    const sh = shotAt(tt); const ms = [];
+    for (let i = 0; i < 3; i++) { const a = performance.now(); T = tt + i * .033; X.setTransform(SX, 0, 0, SX, 0, 0); paintShot(sh, tt + i * .033); flush(); ms.push(Math.round(performance.now() - a)); }
+    out.push(tt + ':' + ms.join('/'));
+  }
+  console.error('d2perf ' + out.join('  '));
+};

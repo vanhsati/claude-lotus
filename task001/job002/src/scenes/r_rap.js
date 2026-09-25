@@ -173,10 +173,10 @@ function R1_scene(t) {
   X.save(); X.fillStyle = LQ_PAL.gold; X.globalAlpha = .55; X.fillRect(-200, 879, W + 400, 2); X.restore();
   // bass rings on the floor (the dance floor answers the kick)
   X.save(); X.strokeStyle = LQ_PAL.silver;
-  for (let j = 0; j < 3; j++) { const bt = beatT(beatN(t) - j), k = (t - bt) / (BEAT * 3); if (t < R1_ARRIVE) break; X.globalAlpha = (1 - k) * .45; X.lineWidth = 2; X.beginPath(); X.ellipse(1010, 905, 120 + k * 700, (120 + k * 700) * .1, 0, 0, TAU); X.stroke(); }
+  for (let j = 0; j < 3; j++) { const bt = beatT(beatN(t) - j), k = (t - bt) / (BEAT * 3); if (t < R1_ARRIVE) break; X.globalAlpha = (1 - k) * .45; X.lineWidth = 2; X.beginPath(); X.ellipse(1030, 905, 120 + k * 700, (120 + k * 700) * .1, 0, 0, TAU); X.stroke(); }
   X.restore();
   // the time machine skids in from the left
-  const ka = clamp((t - R_T0) / (R1_ARRIVE - R_T0)), cx = t < R1_ARRIVE ? lerp(-700, 1530, expoOut(ka * 1.0)) : 1530 + Math.sin((t - R1_ARRIVE) * 30) * 8 * Math.exp(-(t - R1_ARRIVE) * 6);
+  const ka = clamp((t - R_T0) / (R1_ARRIVE - R_T0)), cx = t < R1_ARRIVE ? lerp(-700, 1600, expoOut(ka * 1.0)) : 1600 + Math.sin((t - R1_ARRIVE) * 30) * 8 * Math.exp(-(t - R1_ARRIVE) * 6);
   const trail = t < R1_ARRIVE ? 1 : 1 - clamp((t - R1_ARRIVE) / .7), doors = backOut(clamp((t - 107.9) / .3));
   const spin = (cx + 700) / (.084 * 760) / Math.max(.01, t) ;
   lqTimeMachine(cx, 900, 760, t, { doors, spin, trail, lights: t < R1_ARRIVE ? 1 : .6 + .4 * pulse(t), glint: frac(t * .35 + .1) });
@@ -185,7 +185,7 @@ function R1_scene(t) {
   // the silver Clawd hops out of the door and lands in front
   if (t >= R1_HOP[0]) {
     const p = clamp((t - R1_HOP[0]) / (R1_HOP[1] - R1_HOP[0])), landed = t >= R1_HOP[1];
-    let x = lerp(cx - 60, 1010, easeInOut(p)), jump = Math.sin(p * Math.PI) * 240, s = lerp(.5, 1, easeOut(p)) * 300;
+    let x = lerp(cx - 60, 1030, easeInOut(p)), jump = Math.sin(p * Math.PI) * 260, s = lerp(.5, 1, easeOut(p)) * 370;
     let o = { glint: frac(t * .3 + .5), step: landed ? beatF(t) : 0, arms: [.8, .8], squash: landed ? hit(t, R1_HOP[1], .25) * .6 : -.1 };
     if (landed) {
       let i = -1; ws.forEach((w, j) => { if (t >= w.t) i = j; });
@@ -205,7 +205,7 @@ function R1_scene(t) {
   camEnd();
   // dance-mat tiles with the stamped words, one per beat (camera-free: the type is inlaid in the panel)
   ['LEFT', 'RIGHT', 'BACK', 'FORTH'].forEach((str, i) => {
-    const w = ws[i], cy = 205 + i * 180, tx = 92, ts = 142;
+    const w = ws[i], cy = 200 + i * 196, tx = 88, ts = 158;
     if (t < w.t) return;
     const k = clamp((t - w.t) / .13), s = lerp(1.4, 1, easeOut(k));
     const lit = t >= w34[0].t ? ((beatN(t) % 4) + 4) % 4 === i : t < (ws[i + 1] ? ws[i + 1].t : w34[0].t);
@@ -216,7 +216,7 @@ function R1_scene(t) {
       (lit ? lqGold : lqSilver)(() => R1_arrowPath(0, 0, ts * .78, R1_ARROW[i]), { lift: 5, scale: .3, glint: frac(t * .6 + i * .25), bounds: [-ts / 2, -ts / 2, ts, ts] });
       if (hk > 0) { X.save(); X.globalCompositeOperation = 'screen'; const g = X.createRadialGradient(0, 0, 10, 0, 0, ts * 1.2); g.addColorStop(0, `rgba(246,214,140,${.55 * hk})`); g.addColorStop(1, 'rgba(246,214,140,0)'); X.fillStyle = g; X.fillRect(-ts * 1.3, -ts * 1.3, ts * 2.6, ts * 2.6); X.restore(); }
     });
-    R_word(str, tx + ts + 40, cy + 54, t, w.t, { size: 150 });
+    R_word(str, tx + ts + 40, cy + 63, t, w.t, { size: 174 });
   });
   R_cap(t, LY[34]);
 }
@@ -228,18 +228,19 @@ function R1_scene(t) {
 const R2_KARST = (() => {
   const out = [];
   for (let i = 0; i < 16; i++) {
-    const x = -60 + i * 135 + (hash(i * 3.1) - .5) * 60, near = i % 2, hgt = (80 + hash(i * 7.3) * 200) * (x < 900 ? .55 : 1) * (near ? .8 : 1.15), w = 110 + hash(i * 1.9) * 90;
+    const x = -60 + i * 135 + (hash(i * 3.1) - .5) * 60, near = i % 2, hgt = (150 + hash(i * 7.3) * 230) * (x < 820 ? .45 : 1) * (near ? .5 : 1.25), w = 130 + hash(i * 1.9) * 110;
     const pts = []; for (let k = 0; k <= 10; k++) { const u = k / 10, a = u * Math.PI; pts.push([x + (u - .5) * w * (1 + .15 * Math.sin(a * 3 + i)), -Math.pow(Math.sin(a), .55) * hgt * (1 + .06 * Math.sin(u * 17 + i))]); }
     out.push({ near, pts });
   }
   return out;
 })();
 const R2_HZ = 650;
-function R2_river(t, y0 = R2_HZ) {
+function R2_river(t, y0 = R2_HZ, o = {}) {
+  o = { cx: 1060, w: 430, ...o };
   // a silver-leaf ribbon from a thread at the horizon to the whole foreground
-  const cxy = y => 1000 + Math.sin((y - y0) * .006 + 1.2) * (y - y0) * .55 - (y - y0) * .25, hw = y => 8 + Math.pow((y - y0) / (H - y0 + 60), 1.6) * 640;
+  const U = y => (y - y0) / (H + 60 - y0), cxy = y => o.cx + Math.sin(U(y) * 3.4 + .5) * 300 * Math.pow(U(y), .8) - U(y) * 120, hw = y => 6 + Math.pow(U(y), 1.45) * o.w;
   const path = () => { for (let y = y0; y <= H + 60; y += 20) X.lineTo(cxy(y) - hw(y), y); for (let y = H + 60; y >= y0; y -= 20) X.lineTo(cxy(y) + hw(y), y); X.closePath(); };
-  lqSilver(path, { scale: .45, glint: frac(t * .22 + .2), bounds: [0, y0, W, H - y0], bevel: 0, lift: 0 });
+  lqSilver(path, { scale: .45, glint: frac(t * .22 + .2), bounds: [0, y0, W, H - y0], bevel: 0, lift: 0, shade: .2 });
   // current: dark ripple dashes drifting downstream, bright moon glints
   X.save(); X.beginPath(); path(); X.clip();
   for (let i = 0; i < 70; i++) {
@@ -252,13 +253,14 @@ function R2_river(t, y0 = R2_HZ) {
   inkStroke(() => { X.beginPath(); for (let y = y0; y <= H + 60; y += 20) X.lineTo(cxy(y) + hw(y), y); }, 'rgba(217,164,65,.55)', 2, { op: 'source-over' });
 }
 function R2_karst(front) {
-  X.save();
-  for (const k of R2_KARST) if (!!k.near === front) {
-    X.beginPath(); k.pts.forEach(([x, y], i) => i ? X.lineTo(x, R2_HZ + y) : X.moveTo(x, R2_HZ + y)); X.closePath();
-    X.fillStyle = front ? '#06070b' : '#141925'; X.fill();
-    X.strokeStyle = front ? 'rgba(201,204,209,.7)' : 'rgba(201,204,209,.3)'; X.lineWidth = front ? 2 : 1.5; X.stroke();
+  const path = () => { for (const k of R2_KARST) if (!!k.near === front) { k.pts.forEach(([x, y], i) => i ? X.lineTo(x, R2_HZ + y) : X.moveTo(x, R2_HZ + y)); X.closePath(); } };
+  if (!front) {
+    // far towers in dim silver leaf, fading into the river mist
+    lqSilver(path, { lift: 0, scale: .4, glint: frac(T * .1 + .5), bevel: 0, shade: .55, bounds: [0, R2_HZ - 460, W, 460] });
+    X.save(); const g = X.createLinearGradient(0, R2_HZ - 200, 0, R2_HZ); g.addColorStop(0, 'rgba(10,14,22,0)'); g.addColorStop(1, 'rgba(10,14,22,.85)'); X.fillStyle = g; X.fillRect(0, R2_HZ - 200, W, 200); X.restore();
+  } else {
+    X.save(); X.beginPath(); path(); X.fillStyle = '#06070b'; X.fill(); X.strokeStyle = 'rgba(217,164,65,.75)'; X.lineWidth = 2; X.stroke(); X.restore();
   }
-  X.restore();
 }
 function R2_star(t, t0, x0, y0, x1, y1, dur) {
   const k = (t - t0) / dur; if (k < 0 || k > 1.3) return;
@@ -287,8 +289,8 @@ function R2a_scene(t) {
   // the watchers on the right bank: the idol points at the star, the silver Clawd beside her
   const bank = () => { X.moveTo(1320, H + 40); X.quadraticCurveTo(1400, 950, 1920 + 40, 900); X.lineTo(1960, H + 40); X.closePath(); };
   lqLacquer(bank, '#07080c', { rim: 2, bounds: [1300, 900, 660, 220], glint: false });
-  lqClawd(1470, 1010, 150, { look: -1, arms: [0, .9], glint: frac(t * .3), step: 0, squash: pulse(t) * .2 });
-  idolBody(1700, 848, 22, dance(t, 'point', { snap: .5 }), { outfit: 'aodai', face: { hat: 'nonla', hatMat: 'gold', eyes: 'happy', mouth: 0, look: [-.6, -.6], blush: .7 } });
+  lqClawd(1450, 1010, 190, { look: -1, arms: [0, .9], glint: frac(t * .3), step: 0, squash: pulse(t) * .2 });
+  idolBody(1700, 830, 27, dance(t, 'point', { snap: .5 }), { outfit: 'aodai', face: { hat: 'nonla', hatMat: 'gold', eyes: 'happy', mouth: 0, look: [-.6, -.6], blush: .7 } });
   camEnd();
   // gold shooting star across the sky toward the type
   R2_star(t, 113.2, 2050, 70, 820, 420, .75);
@@ -309,19 +311,19 @@ function R2b_scene(t) {
   R2_river(t, 930);
   // the Clawd: bounces on the beat; the glint sweeps his leaf on "flaws"; jumps on "hard"
   const gFl = t >= ws[4].t && t < ws[4].t + .7 ? lerp(-.1, 1.1, (t - ws[4].t) / .7) : frac(t * .25 + .3);
-  const jmp = bump((t - ws[9].t) / .45) * 110, s = 860, gy = 1180;
+  const jmp = bump((t - ws[9].t) / .45) * 110, s = 800, gy = 1160;
   const o = { glint: gFl, squash: pulse(t, .3) * .28 + hit(t, ws[9].t + .45, .25) * .5, arms: t > ws[9].t ? [1.2, 1.2] : [.25 + .25 * pulse(t), .5], step: beatF(t) * .5, look: -.4, jump: jmp };
-  lqClawd(1400, gy, s, o);
+  lqClawd(1480, gy, s, o);
   // the gold star caught in his shades
   { const sq = o.squash, bw = s * (1 + sq * .18), bh = s * .62 * (1 - sq * .22), legH = s * .2 * (1 - sq * .4), by = -legH - bh, ey = gy - jmp + by + bh * .32, ex = s * .2, lk = -.4 * s * .03;
-    for (const sd of [-1, 1]) { const px = 1400 + sd * ex + lk + s * .02, py = ey + s * .07, tw = .7 + .3 * Math.sin(t * 9 + sd);
+    for (const sd of [-1, 1]) { const px = 1480 + sd * ex + lk + s * .02, py = ey + s * .07, tw = .7 + .3 * Math.sin(t * 9 + sd);
       lqGold(() => sparkPath(px, py, s * .03 * tw, 4, .18, .3, .6), { lift: 0, scale: .2, glint: false, bevel: 0 }); } }
   camEnd();
   // type on the calm left
   R_small(ws.slice(0, 3), 92, 250, t, { size: 52 });
-  let x = 84; x += R_word('NO', x, 480, t, ws[3].t, { size: 230 }) + 50; R_word('FLAWS', x, 480, t, ws[4].t, { size: 230 });
+  let x = 84; x += R_word('NO', x, 480, t, ws[3].t, { size: 210 }) + 44; R_word('FLAWS', x, 480, t, ws[4].t, { size: 210 });
   R_small(ws.slice(5, 8), 92, 640, t, { size: 52 });
-  x = 84; x += R_word('SO', x, 870, t, ws[8].t, { size: 230 }) + 50; x += R_word('HARD', x, 870, t, ws[9].t, { size: 230 });
+  x = 84; x += R_word('SO', x, 870, t, ws[8].t, { size: 210 }) + 44; x += R_word('HARD', x, 870, t, ws[9].t, { size: 210 });
   R_small([ws[10]], x + 30, 870, t, { size: 52, color: LQ_PAL.cinnabarLt });
 }
 
@@ -502,8 +504,8 @@ function R4a_scene(t) {
   R_night(t, { stars: 50 });
   const LA = R4_polyLen(R4_ROUTE_A), LB = R4_polyLen(R4_ROUTE_B), dA0 = R4_polyLen(R4_ROUTE_A.slice(0, 1).concat([R4_G(2, 6)]));
   // camera on the map panel
-  const rot = -.035 + lt * .006, z = .96 + lt * .03;
-  X.save(); X.translate(1270, 540); X.rotate(rot); X.scale(z, z); X.translate(-620, -470);
+  const rot = -.03 + lt * .006, z = .86 + lt * .025;
+  X.save(); X.translate(1270, 555); X.rotate(rot); X.scale(z, z); X.translate(-620, -470);
   R4_mapPanel(t);
   // destination: a cinnabar heart that runs hot on "hot"
   const [hx, hy] = R4_G(7, 0), hot = t >= ws[2].t ? .5 + .5 * pulse(t, .5, 1) : 0;
@@ -511,13 +513,13 @@ function R4a_scene(t) {
   withT(hx, hy - 6, 0, 1 + hot * .12, () => { lqGold(() => R_heartPath(0, 0, 50), { lift: 6, scale: .2, glint: .5, bevel: 1.5 }); lqLacquer(() => R_heartPath(0, 3, 40), LQ_PAL.cinnabar, { rim: 1, bounds: [-50, -50, 100, 100], glint: .5 }); });
   // route A draws, the car follows; on "re-route" A goes dead (dashed grey) and B snaps in, gold
   const dDraw = LA * easeOut(clamp(lt / .5)), carD = Math.min(dA0, dA0 * clamp((lt - .2) / (tRe - 125.67)));
-  if (t < tRe) R4_route(R4_ROUTE_A, dDraw, LQ_PAL.cinnabarLt, 16);
+  if (t < tRe) R4_route(R4_ROUTE_A, dDraw, LQ_PAL.cinnabarLt, 22);
   else {
     R4_route(R4_ROUTE_A, LA, '#6b6f78', 10, { dash: [16, 16], alpha: .8 });
     // a cinnabar cross stamped on the dead road
     const [xx, xy] = R4_G(5, 3), xk = backOut(clamp((t - tRe) / .15));
     withT(xx, xy, .1, xk, () => lqLacquer(() => { X.rect(-40, -9, 80, 18); X.moveTo(-9, -40); X.rect(-9, -40, 18, 80); }, LQ_PAL.cinnabar, { rim: 1, bounds: [-40, -40, 80, 80], glint: false }));
-    R4_route(R4_ROUTE_B, LB * expoOut(clamp((t - tRe) / .35)), LQ_PAL.goldHi, 16);
+    R4_route(R4_ROUTE_B, LB * expoOut(clamp((t - tRe) / .35)), LQ_PAL.cinnabarLt, 22);
   }
   const onB = t >= tRe + .12, dB = LB * clamp((t - tRe - .12) / (127.66 - tRe - .12)) * .96;
   const [px, py, pa] = onB ? R4_polyAt(R4_ROUTE_B, dB) : R4_polyAt(R4_ROUTE_A, carD);

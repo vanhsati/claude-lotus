@@ -467,7 +467,7 @@ function H2_G(t) {
   H2_waterTop(t, cx, cy);
   camBegin({ x: W / 2, y: H / 2, zoom: 1 + pulse(t) * .015 });
   H2_sunflower(t, cx, cy, { r: 320, ringR: 305, h: 185, n: 12, rot: lt * .7, glint: frac(t * .3),
-    burst: i => out * (i === 0 ? 420 : 140 + 60 * hash(i)) });
+    burst: i => out * (i === 0 ? 260 : 70 + 50 * hash(i)) });
   camEnd();
   H2_words(t, ws.slice(0, 1), 90, 250, { size: 60 });
   H2_big('DON’T', 84, 470, t, ws[1].t, { font: FONT.hero, size: 210 });
@@ -530,7 +530,7 @@ function H2_J(t) {
   const ws = wordTimes(LY[54]);   // When you go come my way way
   const cx = 630, cy = 540, lt = t - H2_T.j;
   H2_waterTop(t, cx, cy);
-  camBegin({ x: W / 2, y: H / 2, zoom: 1.02 + lt * .03 });
+  camBegin({ x: W / 2 + 60, y: H / 2, zoom: 1.12 + lt * .04 });
   H2_sunflower(t, cx, cy, { r: 280, ringR: 270, h: 150, n: 12, rot: -lt * 1.1 + 1, glint: frac(t * .3), burst: i => pulse(t, .3) * 30 });
   camEnd();
   H2_words(t, ws.slice(0, 3), 1830, 230, { size: 60, align: 'right' });
