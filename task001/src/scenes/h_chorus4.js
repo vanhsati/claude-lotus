@@ -108,7 +108,7 @@ const H_LOOM = [
   { w: 'Loom', x: 1110, y: 560, par: 7, p: '.41', pick: 4 }, { w: 'doom', x: 1130, y: 250, par: 7, p: '.33' }, { w: 'bloom', x: 1130, y: 830, par: 7, p: '.14' }, { w: 'room', x: 1130, y: 970, par: 7, p: '.12' },
 ];
 function H_loomNode(n, t) {
-  const ws = wordTimes(LY[41]), f = FONT.monoB(52);
+  const ws = wordTimes(LY[41]), f = FONT.monoB(60);
   const tPick = n.pick !== undefined ? ws[n.pick].t : null;
   const par = n.par !== undefined ? H_LOOM[n.par] : null;
   const tSprout = par ? ws[par.pick].t + .02 : 125.9;
@@ -122,7 +122,10 @@ function H_loomShot(t, lt) {
     const y = 20 + i * 36;
     inkStroke(() => { X.beginPath(); for (let x = -40; x <= W + 40; x += 60) X.lineTo(x, y + Math.sin(x * .004 + i * .7 + t * .6) * 5); }, PAL.tealLt, 2, { op: 'multiply', alpha: .55 });
   }
-  camBegin({ zoom: 1.0 + lt * .035 + kick * .012, x: 930 + lt * 30, y: 560, shake: kick * 3 });
+  // the camera rides the frontier of the tree
+  const picks = [0, 1, 4, 7, 10].map(i => H_LOOM[i]), pw = wordTimes(LY[41]);
+  let fx = picks[0].x; for (let i = 1; i < picks.length; i++) fx = lerp(fx, picks[i].x, easeInOut(clamp((t - pw[i - 1].t) / .35)));
+  camBegin({ zoom: 1.45 + lt * .04 + kick * .015, x: fx + 260, y: 560, shake: kick * 3 });
   rtext('LOOM  ·  base model  ·  n = 4  ·  temp 1.0', 90, 150, { font: FONT.mono(26), color: PAL.teal });
   const info = H_LOOM.map(n => H_loomNode(n, t));
   // threads first
