@@ -1,0 +1,13 @@
+{
+  "name": "pdoom-riso-idol",
+  "private": true,
+  "type": "module",
+  "description": "I'm Upping My P(doom): paper/riso K-pop music video, painted in canvas, rendered headless",
+  "scripts": {
+    "render": "node tools/render.mjs",
+    "encode": "node tools/render.mjs --encode"
+  },
+  "dependencies": {
+    "puppeteer-core": "^24.0.0"
+  }
+}
