@@ -550,7 +550,9 @@ function skBrushText(str, x, y, o = {}) {
   const hand = o.hand ?? 1, sd = o.seed ?? (str.length * 1.3);
   const each = fn => L.forEach((l, i) => { if (l.ch === ' ') return; X.save(); X.translate(x0 + l.x + l.w / 2, y + sjit(i * 3.1 + sd, size * .02 * hand)); X.rotate(sjit(i * 5.7 + sd, .035 * hand)); const sc2 = 1 + sjit(i * 1.9 + sd, .035 * hand); X.scale(sc2, sc2); fn(l.ch, -l.w / 2); X.restore(); });
   const words = []; { let a = null; L.forEach((l, i) => { if (l.ch === ' ') { if (a !== null) words.push([a, L[i - 1].x + L[i - 1].w]); a = null; } else if (a === null) a = l.x; }); if (a !== null) words.push([a, wd0(L)]); }
-  const Lt = skOn(skLay('_skTxt'), m, box, () => {
+  // the bleed pass reads a padded area around the box, so clear the whole layer (not only the box)
+  const lay = skLay('_skTxt'); lay.x.clearRect(0, 0, lay.width, lay.height);
+  const Lt = skOn(lay, m, box, () => {
     X.font = fnt; X.textBaseline = 'alphabetic'; X.textAlign = 'left';
     X.fillStyle = o.color || SK_PAL.ink; each((ch, dx) => X.fillText(ch, dx, 0));
     X.lineWidth = size * .012; X.strokeStyle = o.color || SK_PAL.ink; X.lineJoin = 'round'; each((ch, dx) => X.strokeText(ch, dx, 0));
