@@ -3,11 +3,13 @@
 //
 // idolHead(x, y, R, o): the head at any size (R = head radius in px). Used for close-ups and on the body.
 // idolBody(x, y, s, pose, o): full body standing at hip (x, y). s = head radius in px. Pose from POSES / dance().
+//   o.outfit: 'aodai' (a Vietnamese áo dài over wide silk trousers; o.palette {tunic, tunicDk, pants, pantsSh, gold, shoe}; o.glint)
 
 // ---------- head ----------
 // o: {turn -1..1 (3/4 view), tilt (rad), eyes:'open'|'closed'|'happy'|'wink'|'spiral'|'star'|'red'|'heart'|'sad'|'shock',
 //     open 0..1, look [x,y] (-1..1), mouth 0..1 (singing), mouthShape:'smile'|'o'|'flat'|'grin'|'frown', blush 0..1,
-//     brow -1..1 (worried..determined), crown 1 (petal scale), sway (petal sway), sparkRot, bust (draw shoulders), mic (bool), sweat, lift}
+//     brow -1..1 (worried..determined), crown 1 (petal scale), sway (petal sway), sparkRot, bust (draw shoulders), mic (bool), sweat, lift,
+//     hat: 'nonla' (conical leaf hat on the petal crown; hatTilt rad, hatScale, hatMat 'straw'|'gold', strap colour)}
 function idolHead(x, y, R, o = {}) {
   const turn = o.turn || 0, lift = o.lift ?? Math.max(3, R * .05);
   X.save(); X.translate(x, y); X.rotate(o.tilt || 0);
@@ -119,7 +121,42 @@ function idolHead(x, y, R, o = {}) {
     inkStroke(() => { X.beginPath(); X.moveTo(mx, R * .42); X.quadraticCurveTo(mx + R * .12, R * .78, fx * 1.2 - R * .3, R * .7); }, PAL.ink, R * .022);
     cut(() => { X.beginPath(); X.ellipse(fx * 1.2 - R * .3, R * .7, R * .055, R * .04, -.3, 0, TAU); }, { fill: PAL.ink, lift: 2 });
   }
+  if (o.hat === 'nonla') drawNonLa(R, fx, lift, o);
   X.restore();
+}
+
+// Nón lá: a conical palm-leaf hat seen front-on, sitting on the petal crown, with ribs, rings and a silk chin strap.
+function drawNonLa(R, fx, lift, o) {
+  const B = R * 2.05 * (o.hatScale || 1), Hh = B * .62, ry = B * .1, gold = o.hatMat === 'gold' && typeof lqGold === 'function';
+  const strap = o.strap || '#B3261E';
+  // chin strap (behind the hat brim, in front of the face)
+  inkStroke(() => { X.beginPath(); X.moveTo(-R * .9 + fx * .2, -R * .7); X.quadraticCurveTo(-R * .98 + fx * .2, R * .55, fx * .9, R * 1.08); X.quadraticCurveTo(R * .98 + fx * .2, R * .55, R * .9 + fx * .2, -R * .7); }, strap, R * .05);
+  inkStroke(() => { X.beginPath(); X.moveTo(-R * .9 + fx * .2, -R * .7); X.quadraticCurveTo(-R * .98 + fx * .2, R * .55, fx * .9, R * 1.08); }, 'rgba(255,220,200,.35)', R * .015);
+  withT(fx * .25, -R * 1.0, o.hatTilt || 0, 1, () => {
+    const cone = () => { X.beginPath(); X.moveTo(0, -Hh); X.quadraticCurveTo(-B * .42, -Hh * .42, -B, 0); X.ellipse(0, 0, B, ry, 0, Math.PI, 0, true); X.quadraticCurveTo(B * .42, -Hh * .42, 0, -Hh); X.closePath(); };
+    // soft shadow of the brim on the hair
+    X.save(); X.globalAlpha = .28; X.fillStyle = '#2a1206'; X.beginPath(); X.ellipse(R * .05, ry * 1.6, B * .9, ry * 1.4, 0, 0, TAU); X.fill(); X.restore();
+    if (gold) lqGold(() => { cone(); X.closePath(); }, { scale: R / 300, lift, bevel: 0 });
+    else cut(cone, { fill: '#E9D5A2', lift });
+    X.save(); cone(); X.clip();
+    // light from the upper left: the right flank of the cone falls into shade
+    const g = X.createLinearGradient(-B, 0, B, 0);
+    g.addColorStop(0, 'rgba(255,250,230,.35)'); g.addColorStop(.42, 'rgba(255,250,230,0)'); g.addColorStop(.6, 'rgba(90,55,20,.05)'); g.addColorStop(1, 'rgba(90,55,20,.42)');
+    X.fillStyle = g; X.fillRect(-B, -Hh, B * 2, Hh + ry);
+    // rings (the leaf layers, bound on bamboo hoops) and ribs radiating from the apex
+    const col = gold ? 'rgba(80,45,10,.55)' : 'rgba(140,100,45,.55)', hi = 'rgba(255,248,225,.5)';
+    for (let j = 1; j <= 9; j++) {
+      const f = Math.pow(j / 10, .9), cy = -Hh * (1 - f), rx = B * f, ryy = ry * f;
+      X.lineWidth = Math.max(1, R * .012); X.strokeStyle = col; X.beginPath(); X.ellipse(0, cy, rx, ryy, 0, 0, Math.PI); X.stroke();
+      X.strokeStyle = hi; X.lineWidth = Math.max(.6, R * .006); X.beginPath(); X.ellipse(0, cy - R * .018, rx, ryy, 0, Math.PI * .08, Math.PI * .6); X.stroke();
+    }
+    X.strokeStyle = col; X.lineWidth = Math.max(.7, R * .007);
+    for (let i = 1; i < 18; i++) { const ph = Math.PI * i / 18; X.beginPath(); X.moveTo(0, -Hh); X.lineTo(-Math.cos(ph) * B, Math.sin(ph) * ry); X.stroke(); }
+    X.restore();
+    // bound brim: a darker rim along the front edge
+    inkStroke(() => { X.beginPath(); X.ellipse(0, 0, B, ry, 0, 0, Math.PI); }, gold ? '#6b4414' : '#9A7440', R * .035);
+    inkStroke(() => { X.beginPath(); X.ellipse(0, -R * .012, B * .995, ry, 0, Math.PI * .1, Math.PI * .5); }, 'rgba(255,248,225,.6)', R * .012);
+  });
 }
 
 function drawEye(ex, ey, R, sd, sq, kind, open, look, o) {
@@ -220,8 +257,23 @@ function idolBody(x, y, s, P, o = {}) {
   const shoulder = sd => [neck[0] + sd * IDOL.shW * s * Math.cos(P.lean) , neck[1] + s * .25 + sd * IDOL.shW * s * Math.sin(P.lean)];
   const hipJ = sd => [sd * IDOL.hipW * s, s * .1];
   // legs (drawn first)
+  const ad = o.outfit === 'aodai';
+  const AP = ad ? { tunic: '#B3261E', tunicDk: '#6E120D', pants: '#F7F2E6', pantsSh: '#DCD0BC', gold: '#D9A441', shoe: '#1D1512', ...(o.palette || {}) } : null;
+  if (ad) aoDaiPanel(s, P, AP, 'back', lift, o);
   const leg = (sd, a, kn) => {
     const h0 = hipJ(sd), k = seg(h0[0], h0[1], a, IDOL.thigh * s), f = seg(k[0], k[1], a + kn, IDOL.shin * s);
+    if (ad) {
+      // wide white silk trousers that flare over the foot, then a small lacquer slipper
+      const bootA = a + kn;
+      withT(f[0], f[1], bootA * .5, 1, () => cut(() => { X.beginPath(); X.ellipse(sd * s * .15, s * .45, s * .42, s * .2, 0, 0, TAU); }, { fill: AP.shoe, lift }));
+      const d = [f[0] - k[0], f[1] - k[1]], L = Math.hypot(d[0], d[1]) || 1, n = [-d[1] / L, d[0] / L];
+      const hem = [f[0] + d[0] / L * s * .3, f[1] + d[1] / L * s * .3];
+      const pts = [[h0[0] - s * .55, h0[1] - s * .3], [h0[0] + s * .55, h0[1] - s * .3], [k[0] + n[0] * s * .5, k[1] + n[1] * s * .5], [hem[0] + n[0] * s * .68, hem[1] + n[1] * s * .68], [hem[0] - n[0] * s * .68, hem[1] - n[1] * s * .68], [k[0] - n[0] * s * .5, k[1] - n[1] * s * .5]];
+      cut(() => pathSmooth(pts, true, .35), { fill: AP.pants, lift });
+      inkStroke(() => { X.beginPath(); X.moveTo(k[0] + n[0] * s * .1, k[1] + n[1] * s * .1); X.quadraticCurveTo(lerp(k[0], hem[0], .5) - n[0] * s * .1, lerp(k[1], hem[1], .5), hem[0] + n[0] * s * .15, hem[1] + n[1] * s * .15); }, AP.pantsSh, s * .07);
+      inkStroke(() => { X.beginPath(); X.moveTo(hem[0] + n[0] * s * .66, hem[1] + n[1] * s * .66); X.lineTo(hem[0] - n[0] * s * .66, hem[1] - n[1] * s * .66); }, AP.pantsSh, s * .05);
+      return;
+    }
     cut(() => limbPath(h0, k, s * .42, s * .3), { fill: PAL.skin, lift });
     // sock (white) from mid-shin, boot below
     const sk = [lerp(k[0], f[0], .12), lerp(k[1], f[1], .12)];
@@ -239,7 +291,7 @@ function idolBody(x, y, s, P, o = {}) {
   // skirt: orange pleats, flares with P.skirt
   const fl = 1 + (P.skirt || 0) * .35, sw = Math.sin(T * 5) * .03;
   const waistY = -s * .7, hemY = s * 1.45;
-  withT(0, 0, P.lean * .5, 1, () => {
+  if (!ad) withT(0, 0, P.lean * .5, 1, () => {
     const pts = [[-s * 1.0, waistY], [s * 1.0, waistY], [s * 1.55 * fl + sw * s * 10, hemY], [-s * 1.55 * fl + sw * s * 10, hemY]];
     cut(() => pathPoly(pts), { fill: PAL.orange, lift });
     for (let i = -3; i <= 3; i++) inkStroke(() => { X.beginPath(); X.moveTo(i * s * .28, waistY + s * .15); X.lineTo(i * s * .45 * fl + sw * s * 10, hemY - s * .05); }, 'rgba(150,50,15,.5)', s * .05);
@@ -247,7 +299,8 @@ function idolBody(x, y, s, P, o = {}) {
   });
   // torso: white cropped jacket
   const sL = shoulder(-1), sR = shoulder(1);
-  withT(0, 0, 0, 1, () => {
+  if (ad) { aoDaiPanel(s, P, AP, 'front', lift, o); aoDaiTorso(s, neck, sL, sR, waistY, AP, lift, o); }
+  else withT(0, 0, 0, 1, () => {
     const pts = [[-s * .95, waistY + s * .1], [sL[0] - s * .1, sL[1] + s * .1], [neck[0] - s * .35, neck[1] + s * .05], [neck[0] + s * .35, neck[1] + s * .05], [sR[0] + s * .1, sR[1] + s * .1], [s * .95, waistY + s * .1]];
     cut(() => pathSmooth(pts, true, .5), { fill: PAL.paperHi, lift });
     // zipper / placket and hem
@@ -261,20 +314,102 @@ function idolBody(x, y, s, P, o = {}) {
   // arms: white sleeves, orange cuffs, skin hands
   const arm = (sd, a, el, hand) => {
     const sh = shoulder(sd), e = seg(sh[0], sh[1], a, IDOL.upArm * s), w = seg(e[0], e[1], a + el, IDOL.foreArm * s);
+    if (ad) {
+      // long fitted áo dài sleeves to the wrist, a thin gold cuff
+      aoDaiFill(() => limbPath(sh, e, s * .34, s * .27), AP.tunic, lift, s, o);
+      aoDaiFill(() => limbPath(e, w, s * .27, s * .22), AP.tunic, lift, s, o);
+      const cf = [lerp(e[0], w[0], .9), lerp(e[1], w[1], .9)];
+      aoDaiGold(() => limbPath(cf, w, s * .23, s * .23), s, o);
+    } else {
     cut(() => limbPath(sh, e, s * .38, s * .3), { fill: PAL.paperHi, lift });
     cut(() => limbPath(e, w, s * .3, s * .27), { fill: PAL.paperHi, lift });
     const cf = [lerp(e[0], w[0], .82), lerp(e[1], w[1], .82)];
     cut(() => limbPath(cf, w, s * .3, s * .3), { fill: PAL.orange, lift: lift * .3 });
+    }
     drawHand(w[0], w[1], a + el, s, hand, sd, lift);
     return w;
   };
   const wl = arm(-1, P.lSh, P.lEl, P.hL), wr = arm(1, P.rSh, P.rEl, P.hR);
   // neck + head
   cut(() => limbPath([neck[0], neck[1] + s * .2], [neck[0] + Math.sin(P.lean) * s * .5, neck[1] - s * .45], s * .22, s * .22), { fill: PAL.skinSh, lift: 0 });
+  if (ad) aoDaiCollar(s, neck, P, AP, lift, o);
   const hc = seg(neck[0], neck[1], Math.PI + P.lean + P.head * .5, (IDOL.neck + 1.0) * s);
   idolHead(hc[0], hc[1], s * 1.15, { mic: true, crown: .85, ...o.face, tilt: P.lean + P.head, turn: P.turn, lift: lift * .6 });
   X.restore();
   return { hands: [wl, wr] };
+}
+// ---------- áo dài pieces (used when idolBody gets {outfit: 'aodai'}) ----------
+// Fills use the job's lacquer materials when they are loaded (lqLacquer / lqGold), else flat paper and ink.
+function aoDaiFill(pf, col, lift, s, o, bounds) {
+  cut(pf, { fill: col, lift });
+  if (typeof lqLacquer === 'function') lqLacquer(pf, col, { rim: Math.max(1, s * .03), glint: o.glint ?? false, mottle: .18, bounds, sheen: .8 });
+}
+function aoDaiGold(pf, s, o) {
+  if (typeof lqGold === 'function') lqGold(pf, { scale: Math.max(.08, s / 260), glint: o.glint ?? false, bevel: 0 });
+  else ink(pf, (o.palette && o.palette.gold) || '#D9A441', { op: 'source-over' });
+}
+// A front or back panel: hangs from the waist slits to below the knee and swings / flows with the pose and time.
+function aoDaiPanel(s, P, AP, which, lift, o) {
+  const front = which === 'front', waistY = -s * .55, hemY = s * (front ? 3.55 : 3.75);
+  const avgHip = ((P.lHip || 0) + (P.rHip || 0)) / 2, flow = .55 + Math.abs(P.skirt || 0) * 1.2;
+  const ph = T * 2.7 + (front ? 0 : 1.3);
+  const hemDx = -Math.sin(avgHip) * s * 2.1 * (front ? 1 : .6) + Math.sin(ph) * s * .28 * flow + (front ? 1 : -1) * (P.skirt || 0) * s * .35 - P.lean * s * 2.5;
+  const wW = s * (front ? .82 : .95), hW = s * (front ? 1.05 : 1.3) * (1 + Math.abs(P.skirt || 0) * .25);
+  const pts = [];
+  pts.push([-wW, waistY]); pts.push([wW, waistY]);
+  pts.push([wW * 1.05 + hemDx * .35, lerp(waistY, hemY, .45)]);
+  const n = 7;
+  for (let i = 0; i <= n; i++) {        // the hem: a travelling ripple
+    const u = 1 - i / n, x = lerp(-hW, hW, u) + hemDx, y = hemY + Math.sin(ph * 1.6 + u * 5.5) * s * .12 * flow + (u - .5) * hemDx * .12;
+    pts.push([x, y]);
+  }
+  pts.push([-wW * 1.05 + hemDx * .35, lerp(waistY, hemY, .45)]);
+  const pf = () => pathSmooth(pts, true, .7), b = [-hW + Math.min(0, hemDx) - s, waistY, hW * 2 + Math.abs(hemDx) + s * 2, hemY - waistY + s * .3];
+  aoDaiFill(pf, front ? AP.tunic : AP.tunicDk, lift, s, o, b);
+  // silk folds: long soft lines from the waist toward the hem
+  for (let i = -2; i <= 2; i++) inkStroke(() => { X.beginPath(); X.moveTo(i * wW * .35, waistY + s * .4); X.quadraticCurveTo(i * wW * .45 + hemDx * .4, lerp(waistY, hemY, .55), i * hW * .5 + hemDx * .95, hemY - s * .15); }, front ? 'rgba(90,10,6,.28)' : 'rgba(0,0,0,.22)', s * .06);
+  if (!front) return;
+  // gold embroidery: a vine of small spark flowers climbing to a lotus near the hem
+  const at = v => [lerp(0, hemDx * .9, Math.pow(v, 1.4)) + Math.sin(v * 7) * s * .22, lerp(waistY + s * .5, hemY - s * .6, v)];
+  inkStroke(() => { X.beginPath(); for (let i = 0; i <= 20; i++) { const [x, y] = at(i / 20 * .8); i ? X.lineTo(x, y) : X.moveTo(x, y); } }, 'rgba(217,164,65,.8)', s * .05);
+  aoDaiGold(() => {
+    for (const v of [.08, .24, .4, .56]) { const [x, y] = at(v), side = Math.sin(v * 7) > 0 ? -1 : 1; sparkPathAdd(x + side * s * .28, y, s * .2, 6, .3, v * 3); X.moveTo(x + side * s * .1, y - s * .05); X.ellipse(x + side * s * .1, y - s * .05, s * .12, s * .05, side * .6, 0, TAU); }
+    const [lx, ly] = at(.86); lotusPathAdd(lx, ly, s * .62);
+  }, s, o);
+}
+function sparkPathAdd(cx, cy, R, n, inner, rot) {
+  for (let i = 0; i < n; i++) {
+    const a = rot + i / n * TAU, w = Math.PI / n * .6;
+    X.moveTo(cx + Math.cos(a - w) * R * inner, cy + Math.sin(a - w) * R * inner);
+    X.quadraticCurveTo(cx + Math.cos(a) * R * 1.2, cy + Math.sin(a) * R * 1.2, cx + Math.cos(a + w) * R * inner, cy + Math.sin(a + w) * R * inner);
+    X.closePath();
+  }
+  X.moveTo(cx + R * .3, cy); X.arc(cx, cy, R * .3, 0, TAU);
+}
+function lotusPathAdd(cx, cy, R) {
+  // five pointed petals fanned upward over a flat base leaf
+  for (const [a, l, w] of [[0, 1, .34], [-.55, .88, .3], [.55, .88, .3], [-1.1, .7, .26], [1.1, .7, .26]]) {
+    const tx = cx + Math.sin(a) * R * l, ty = cy - Math.cos(a) * R * l, nx = Math.cos(a) * R * w, ny = Math.sin(a) * R * w;
+    X.moveTo(cx, cy); X.quadraticCurveTo(cx + (tx - cx) * .5 - nx, cy + (ty - cy) * .5 - ny, tx, ty); X.quadraticCurveTo(cx + (tx - cx) * .5 + nx, cy + (ty - cy) * .5 + ny, cx, cy); X.closePath();
+  }
+  X.moveTo(cx - R * .8, cy + R * .1); X.quadraticCurveTo(cx, cy - R * .12, cx + R * .8, cy + R * .1); X.quadraticCurveTo(cx, cy + R * .3, cx - R * .8, cy + R * .1); X.closePath();
+}
+function aoDaiTorso(s, neck, sL, sR, waistY, AP, lift, o) {
+  const pts = [[-s * .85, waistY + s * .35], [sL[0] - s * .05, sL[1] + s * .1], [neck[0] - s * .32, neck[1] + s * .05], [neck[0] + s * .32, neck[1] + s * .05], [sR[0] + s * .05, sR[1] + s * .1], [s * .85, waistY + s * .35]];
+  aoDaiFill(() => pathSmooth(pts, true, .5), AP.tunic, lift, s, o, [-s * 1.3, neck[1], s * 2.6, waistY - neck[1] + s * 2]);
+  // the diagonal raglan closure from the collar to under the right arm, with gold knot buttons
+  const c0 = [neck[0] + s * .22, neck[1] + s * .3], c1 = [sR[0] - s * .15, sR[1] + s * .75];
+  inkStroke(() => { X.beginPath(); X.moveTo(c0[0], c0[1]); X.quadraticCurveTo(c1[0] - s * .05, c0[1] + s * .1, c1[0], c1[1]); }, 'rgba(60,6,4,.6)', s * .05);
+  aoDaiGold(() => { for (const u of [.15, .5, .85]) { const x = lerp(c0[0], c1[0], u) - s * .02, y = lerp(c0[1], c1[1], u * u) + s * .02; X.moveTo(x + s * .07, y); X.arc(x, y, s * .07, 0, TAU); } }, s, o);
+  // a chest flower
+  aoDaiGold(() => sparkPathAdd(neck[0] - s * .5, neck[1] + s * 1.3, s * .28, 6, .3, .3), s, o);
+}
+function aoDaiCollar(s, neck, P, AP, lift, o) {
+  // mandarin collar: a short standing band around the throat with gold edging
+  const cx = neck[0] + Math.sin(P.lean) * s * .1, cy = neck[1] - s * .05;
+  const pf = () => { X.moveTo(cx - s * .3, cy + s * .22); X.lineTo(cx - s * .28, cy - s * .2); X.quadraticCurveTo(cx, cy - s * .1, cx + s * .28, cy - s * .2); X.lineTo(cx + s * .3, cy + s * .22); X.quadraticCurveTo(cx, cy + s * .34, cx - s * .3, cy + s * .22); X.closePath(); };
+  aoDaiFill(pf, AP.tunic, lift * .5, s, o, [cx - s * .3, cy - s * .2, s * .6, s * .5]);
+  aoDaiGold(() => { X.moveTo(cx - s * .28, cy - s * .2); X.quadraticCurveTo(cx, cy - s * .1, cx + s * .28, cy - s * .2); X.lineTo(cx + s * .28, cy - s * .12); X.quadraticCurveTo(cx, cy - s * .02, cx - s * .28, cy - s * .12); X.closePath(); }, s, o);
 }
 function drawHand(x, y, ang, s, kind, sd, lift) {
   withT(x, y, ang, 1, () => {
