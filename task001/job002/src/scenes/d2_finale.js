@@ -394,7 +394,7 @@ const D2_INS = [
 ];
 const D2_STAGE = [520, 40, 880, 1000];
 const D2_T3 = 179.473, D2_TEND = 196.6;
-const D2_insT = i => barT(84) + i * BEAT * 2;   // 183.56, then every two beats
+const D2_insT = i => barT(83) + i * BEAT * 2;   // 181.38, then every two beats
 
 // The Hanoi old quarter at night: tube houses in gold line on black lacquer, red lanterns.
 function D2_quarter(w, h) {
@@ -534,6 +534,7 @@ function D2_callWords(t, i, words, y, size, o = {}) {
   const kin = easeOut((t - a + .06) / .14), kout = 1 - easeIn((t - end) / .2), k = Math.min(kin, kout);
   if (k <= 0) return;
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0);
+  if (o.settle) { const [sc, dy] = o.settle, yc = y - size * .33; X.translate(W / 2, yc + dy); X.scale(sc, sc); X.translate(-W / 2, -yc); }
   D2_cartouche(W / 2, y - size * .33, tot + size * .9, size * 1.35, k, t);
   X.globalAlpha = kout;
   let x = W / 2 - tot / 2;
@@ -542,14 +543,14 @@ function D2_callWords(t, i, words, y, size, o = {}) {
 }
 function D2_muralZoom(t) {
   const u = clamp((t - D2_T3) / (196.25 - D2_T3)), e = ease(u);
-  let z = 2.25 * Math.pow(.935 / 2.25, e);
+  let z = 1.75 * Math.pow(.935 / 1.75, e);
   for (const i of [67, 69, 72]) for (const w of D2_wt(i)) z *= 1 + .045 * hit(t, w.t, .45);
   for (const w of D2_wt(71)) z *= 1 + .02 * hit(t, w.t, .3);
   return z;
 }
 shot(D2_T3, D2_TEND, (t, lt) => {
   const z = D2_muralZoom(t), u = ease(clamp((t - D2_T3) / (196.25 - D2_T3)));
-  const cx = 960, cy = lerp(650, 540, u);
+  const cx = 960, cy = lerp(620, 540, u);
   const call = D2_call(t, [67, 69, 72]), settle = clamp((t - 195.9) / .7);
   // the gallery wall beyond the panel's edge
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); const wg = X.createLinearGradient(0, 0, 0, H); wg.addColorStop(0, '#15100d'); wg.addColorStop(1, '#0a0706'); X.fillStyle = wg; X.fillRect(0, 0, W, H); X.restore();
@@ -579,7 +580,7 @@ shot(D2_T3, D2_TEND, (t, lt) => {
   D2_callWords(t, 69, ['COME', 'MY…'], 1000, 170);
   const r71 = D2_wt(71);
   if (r71.length) {
-    const a = r71[0].t, end = LY[71][1] + .15, kin = easeOut((t - a + .06) / .14), kout = 1 - easeIn((t - end) / .2), k = Math.min(kin, kout);
+    const a = r71[0].t, end = LY[71][1] - .12, kin = easeOut((t - a + .06) / .14), kout = 1 - easeIn((t - end) / .12), k = Math.min(kin, kout);
     if (k > 0) {
       X.save(); X.setTransform(SX, 0, 0, SX, 0, 0);
       D2_cartouche(W / 2, 250, 1500, 400, k, t); X.globalAlpha = kout;
@@ -593,7 +594,8 @@ shot(D2_T3, D2_TEND, (t, lt) => {
       X.restore();
     }
   }
-  D2_callWords(t, 72, ['COME', 'MY...'], 250, 200, { end: 999, n: 30 });
+  const st = easeInOut((t - 195.75) / .75);
+  D2_callWords(t, 72, ['COME', 'MY...'], 250, 200, { end: 999, n: 30, settle: [lerp(1, .58, st), lerp(0, -95, st)] });
   D2_sweep(t, D2_T3, .25, .45);
   D2_sweep(t, D2_w(72, 0, 194.75), .5, .35);
 }, { seed: 661 });

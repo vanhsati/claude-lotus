@@ -1183,3 +1183,23 @@ function lqFinish(t, sh) {
   X.globalAlpha = 1; X.fillStyle = g; X.fillRect(0, 0, cw, ch);
   X.globalCompositeOperation = 'source-over';
 }
+
+// ---------- áo dài shoulders for idol close-ups (idolHead bust; enabled by JOB.idolBust = "lqAoBust") ----------
+function lqAoBust(x, y, R, o = {}) {
+  const sy = R * 1.3, col = o.color || LQ_PAL.cinnabar;
+  X.save(); X.translate(x, y);
+  cut(() => { X.beginPath(); X.roundRect(-R * .26, R * .5, R * .52, sy - R * .3, R * .1); }, { fill: PAL.skinSh, lift: 0 });
+  const sh = () => pathSmooth([[-R * 2.7, R * 3.8], [-R * 2.45, sy + R * 1.05], [-R * 1.75, sy + R * .52], [-R * .55, sy + R * .16], [0, sy + R * .12], [R * .55, sy + R * .16], [R * 1.75, sy + R * .52], [R * 2.45, sy + R * 1.05], [R * 2.7, R * 3.8]], true, .7);
+  lqLacquer(sh, col, { lift: 10, rim: 2, glint: o.glint, bounds: [-R * 2.4, sy, R * 4.8, R * 2.4] });
+  inkStroke(() => { X.beginPath(); X.moveTo(-R * 2.4, sy + R * 1.05); X.quadraticCurveTo(-R * 1.6, sy + R * .45, -R * .5, sy + R * .2); }, 'rgba(255,220,190,.25)', R * .03);
+  // diagonal closure from the collar to the right underarm, with gold knot buttons
+  lqGold(() => { X.moveTo(R * .18, sy + R * .12); X.quadraticCurveTo(R * .75, sy + R * .32, R * 1.05, sy + R * 1.05); X.lineTo(R * .98, sy + R * 1.08); X.quadraticCurveTo(R * .7, sy + R * .4, R * .14, sy + R * .2); X.closePath(); }, { scale: R / 600, glint: o.glint, bevel: 0 });
+  for (const f of [.25, .55, .85]) { const bx = lerp(R * .3, R * 1.02, f), by = lerp(sy + R * .16, sy + R * 1.0, f * f); lqGold(() => X.arc(bx, by, R * .045, 0, TAU), { scale: .2, glint: false, bevel: 1 }); }
+  lqGold(() => sparkPath(-R * .95, sy + R * .75, R * .22, 6, .25, .3, .6), { scale: R / 700, glint: o.glint, bevel: 1, lift: 2 });
+  // mandarin collar
+  const cp = () => { X.roundRect(-R * .36, sy - R * .34, R * .72, R * .34, [R * .12, R * .12, R * .04, R * .04]); };
+  lqLacquer(cp, LQ_PAL.cinnabarDk, { lift: 3, rim: 1, glint: o.glint, bounds: [-R * .36, sy - R * .34, R * .72, R * .34] });
+  lqGold(() => { X.roundRect(-R * .36, sy - R * .34, R * .72, R * .05, R * .03); X.rect(-R * .36, sy - R * .03, R * .72, R * .04); }, { scale: .3, glint: o.glint, bevel: 0 });
+  lqGold(() => { X.moveTo(0, sy - R * .3); X.lineTo(R * .04, sy - R * .03); X.lineTo(-R * .04, sy - R * .03); X.closePath(); }, { scale: .3, glint: false, bevel: 0 });
+  X.restore();
+}

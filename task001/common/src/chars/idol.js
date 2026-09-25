@@ -38,7 +38,8 @@ function idolHead(x, y, R, o = {}) {
     petal(a, R * 1.2 * crown, R * .56 * crown * (i % 2 ? .94 : 1), R * .3, PAL.orange, 'rgba(255,214,170,.55)');
   }
   // ---- shoulders / collar (bust shots) ----
-  if (o.bust) {
+  if (o.bust && window.JOB && JOB.idolBust && typeof window[JOB.idolBust] === 'function') window[JOB.idolBust](0, 0, R, o);   // job-specific costume
+  else if (o.bust) {
     const sy = R * 1.3;
     cut(() => limbPath([fx * .3, R * .55], [fx * .3, sy + R * .2], R * .27, R * .3), { fill: PAL.skinSh, lift: 0 });
     // jacket: shoulders slope into the frame edge

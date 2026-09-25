@@ -627,12 +627,12 @@ function R4c_scene(t) {
     // the panel's floor and the gold line
     lqLacquer(() => X.rect(-50, 840, W + 100, 300), LQ_PAL.brownDk, { rim: 0, bounds: [0, 840, W, 240], glint: frac(t * .2 + .6) });
     X.save(); X.fillStyle = LQ_PAL.gold; X.globalAlpha = .6; X.fillRect(-10, 838, W + 20, 3); X.restore();
-    const lineHit = hit(t, tLine, .5);
+    const lineHit = hit(t, tLine, .3);
     lqGold(() => { X.moveTo(1150, 840); X.lineTo(1172, 840); X.lineTo(1146, H + 10); X.lineTo(1112, H + 10); X.closePath(); }, { lift: 3, scale: .3, glint: t >= tCross ? lerp(0, 1, clamp((t - tCross) / .5)) : .3, bevel: 1, bounds: [1100, 840, 80, 240] });
-    if (lineHit > 0) { X.save(); X.globalCompositeOperation = 'screen'; X.fillStyle = `rgba(246,214,140,${.5 * lineHit})`; X.fillRect(1080, 830, 120, 260); X.restore(); }
+    if (lineHit > 0) { X.save(); X.globalCompositeOperation = 'screen'; X.fillStyle = `rgba(246,214,140,${.5 * lineHit})`; X.beginPath(); X.moveTo(1140, 840); X.lineTo(1182, 840); X.lineTo(1156, H); X.lineTo(1102, H); X.fill(); X.restore(); }
     // the couple: the idol (unimpressed, then a wink) and the silver Clawd pointing at the ex
     const idP = t < w43[1].t ? dance(t, 'idle') : t < tScr ? dance(t, 'shrug', { snap: .6 }) : dance(t, 'peace', { snap: .4 });
-    idolBody(390, 610, 36, idP, { outfit: 'aodai', face: { hat: 'nonla', hatMat: 'gold', eyes: t < w43[1].t ? 'happy' : t < tScr ? 'closed' : 'wink', mouth: 0, mouthShape: t < tScr ? 'flat' : 'smile', look: [.6, 0], blush: .6 } });
+    idolBody(390, 658, 36, idP, { outfit: 'aodai', face: { hat: 'nonla', hatMat: 'gold', eyes: t < w43[1].t ? 'happy' : t < tScr ? 'closed' : 'wink', mouth: 0, mouthShape: t < tScr ? 'flat' : 'smile', look: [.6, 0], blush: .6 } });
     const point = t >= w43[1].t;
     lqClawd(760, 900, 270, { arms: [.2, point ? 1.0 : .2 + .2 * pulse(t)], look: 1, glint: frac(t * .35), squash: pulse(t, .3) * .2 + hit(t, tScr, .3) * .5, step: point ? 0 : beatF(t) * .5, lean: point ? .08 : 0 });
     // "what is that about?": a cinnabar question mark pops over his head
