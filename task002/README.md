@@ -1,10 +1,20 @@
 # task002: Niết Bàn, sự tắt lửa
 
-Animation giải thích Niết Bàn (Nibbāna) theo giáo lý Theravāda, lời Việt, có dẫn nguồn kinh điển Pāli.
+Video HTML (khoảng 10 phút) giải thích Niết Bàn (Nibbāna) theo giáo lý Theravāda, lời Việt, có dẫn nguồn kinh điển Pāli.
 Một tệp duy nhất: mở `index.html` trong trình duyệt (HTML + SVG + JS thuần, không cần build).
 
-Điều khiển: nút ◀ ▶ hoặc phím ← →, phím cách để tạm dừng, bấm tên chương để nhảy tới.
-Mở thẳng một chương bằng `index.html#c3` (chương 3).
+* **Như một video**: màn mở, thẻ tiêu đề mỗi chương, chuyển cảnh qua màn đen, máy quay đẩy chậm, phụ đề từng câu,
+  thanh thời gian có mốc chương, toàn màn hình.
+* **Âm thanh** (tạo bằng Web Audio, không cần tệp): nền drone Rê–La, tiếng chuông bát khi sang chương, nốt ngũ cung
+  thưa, tiếng lửa reo và lách tách theo lượng lửa trên màn hình, tiếng xèo khi lửa tắt, tiếng xích đứt, âm lấp lánh
+  khi cảnh chuyển sang ánh trăng. Nhạc tự hạ nhỏ khi có lời đọc.
+* **Giọng đọc**: dùng giọng tiếng Việt có sẵn của trình duyệt (Web Speech); mỗi câu phụ đề chạy đúng theo độ dài lời đọc.
+  Nếu thiết bị không có giọng tiếng Việt, video vẫn chạy theo thời lượng đọc ước tính.
+* **Giọng thu sẵn (tùy chọn)**: khi có `narration/manifest.json` cạnh trang, trang dùng các tệp đó thay cho giọng
+  của thiết bị. Tạo bằng `node tools/export_cues.mjs` rồi `python3 tools/make_narration.py` (edge-tts, cần mạng tới
+  speech.platform.bing.com).
+
+Phím tắt: phím cách để phát/tạm dừng, ← → lùi/tiến một câu, F toàn màn hình. Mở thẳng một chương bằng `index.html#c3`.
 
 ## Mười chương
 
@@ -26,4 +36,5 @@ Các câu trích là bản dịch tạm bám sát Pāli; nên đối chiếu v�
 ## Chỉnh sửa
 
 Mỗi chương là một phần tử trong mảng `scenes` của `index.html`: `beats` chứa lời thuyết minh (`t`) và nguồn (`s`),
-`init` vẽ cảnh, `update` điều khiển chuyển động theo nhịp (beat) hiện tại. Thời lượng mỗi nhịp tự tính theo độ dài lời.
+`init` vẽ cảnh, `update` điều khiển chuyển động theo nhịp (beat) hiện tại. Mỗi nhịp được tách thành các câu phụ đề;
+câu nào xong lời đọc thì sang câu tiếp. Sau khi sửa lời, chạy lại hai công cụ trên nếu dùng giọng thu sẵn.

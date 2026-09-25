@@ -13,6 +13,7 @@
   :root {
     color-scheme: dark;
     --ground: #0d1119;
+    --black: #05070b;
     --surface: #161c2a;
     --line: #2a3246;
     --ink: #efe6d4;
@@ -26,42 +27,76 @@
     --sans: "Be Vietnam Pro", "Segoe UI", system-ui, sans-serif;
   }
   html, body { background: var(--ground); color: var(--ink); }
+  [hidden] { display: none !important; }
   body { margin: 0; font-family: var(--sans); font-size: 16px; line-height: 1.6; }
-  .wrap { max-width: 1120px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 16px; }
+  .wrap { max-width: 1180px; margin: 0 auto; padding-inline: 16px; padding-block: 20px 48px; display: grid; gap: 18px; }
 
   .top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 24px; }
   .top h1 { font-family: var(--display); font-weight: 600; font-size: clamp(30px, 5vw, 44px); line-height: 1.1; margin: 0; text-wrap: balance; }
   .top h1 em { color: var(--brass); font-weight: 500; }
   .eyebrow { margin: 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
 
-  .stage-frame { margin: 0; position: relative; border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--ground); }
+  /* ---- player ---- */
+  .player { border: 1px solid var(--line); border-radius: 6px; overflow: hidden; background: var(--black); }
+  .screen { position: relative; container-type: inline-size; background: var(--black); }
   #stage { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; max-width: 100%; }
-  .progress { height: 3px; background: var(--line); }
-  .progress span { display: block; height: 100%; width: 0; background: var(--brass); }
 
-  .caption { display: grid; gap: 6px; min-height: 9.5em; align-content: start; }
-  .chap { margin: 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
-  .text { margin: 0; font-size: clamp(17px, 2.1vw, 21px); line-height: 1.6; max-width: 62ch; }
-  .text strong { color: var(--brass); font-weight: 600; }
-  .text em, .src em { font-family: var(--display); font-style: italic; font-size: 1.12em; color: var(--brass); }
-  .src { margin: 0; font-size: 13px; color: var(--muted); }
-
-  .controls { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-  .controls button, .chapters button {
-    font: inherit; color: var(--ink); background: var(--surface); border: 1px solid var(--line);
-    border-radius: 4px; cursor: pointer;
+  .band {
+    font-size: clamp(15px, 2.05cqw, 32px); line-height: 1.45;
+    min-height: calc(3 * 1.45em + 2.2em); padding: .7em 5cqw .8em;
+    display: grid; align-content: center; justify-items: center; gap: .35em; text-align: center;
+    background: var(--black);
   }
-  .controls button { padding: 8px 14px; font-size: 15px; min-width: 44px; }
-  .controls button:hover, .chapters button:hover { border-color: var(--brass); }
-  button:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
-  #play { min-width: 110px; }
-  .count { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .sub { margin: 0; max-width: 48em; text-wrap: balance; transition: opacity .35s ease; }
+  .sub strong { color: var(--brass); font-weight: 600; }
+  .sub em, .cite em { font-family: var(--display); font-style: italic; font-size: 1.14em; color: var(--brass); }
+  .sub.hide { opacity: 0; }
+  .cite { margin: 0; font-size: .62em; color: var(--muted); letter-spacing: .04em; min-height: 1.45em; }
 
+  .poster {
+    position: absolute; inset: 0; display: grid; place-items: center; align-content: center; gap: 2.2cqw;
+    border: 0; margin: 0; padding: 16px; padding-top: 3cqw; width: 100%; color: var(--ink); cursor: pointer; font: inherit;
+    background: radial-gradient(ellipse at 50% 45%, rgba(5, 7, 11, .15), rgba(5, 7, 11, .75) 75%);
+  }
+  .poster .ring {
+    width: clamp(64px, 11cqw, 140px); aspect-ratio: 1; border-radius: 50%; border: 2px solid var(--brass);
+    display: grid; place-items: center; background: rgba(217, 166, 83, .12); transition: transform .25s ease, background .25s ease;
+  }
+  .poster .ring svg { width: 38%; height: 38%; margin-left: 8%; fill: var(--brass); }
+  .poster:hover .ring, .poster:focus-visible .ring { transform: scale(1.06); background: rgba(217, 166, 83, .22); }
+  .poster .pmeta { font-size: clamp(12px, 1.5cqw, 18px); color: var(--ink); letter-spacing: .08em; text-shadow: 0 1px 8px #05070b; }
+
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 8px 10px; background: var(--surface); border-top: 1px solid var(--line); }
+  .bar button, .meta button, .meta select {
+    font: inherit; color: var(--ink); background: transparent; border: 1px solid transparent; border-radius: 4px; cursor: pointer;
+  }
+  .bar button { padding: 6px 10px; font-size: 15px; min-width: 40px; line-height: 1.2; }
+  .bar button:hover { border-color: var(--line); background: #1d2436; }
+  .bar button[aria-pressed="false"] { color: var(--muted); text-decoration: line-through; }
+  button:focus-visible, select:focus-visible, .track:focus-visible { outline: 2px solid var(--cool); outline-offset: 2px; }
+  .time { font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .track { position: relative; flex: 1 1 200px; height: 28px; cursor: pointer; touch-action: none; }
+  .rail { position: absolute; left: 0; right: 0; top: 12px; height: 4px; background: var(--line); border-radius: 2px; }
+  .fill { position: absolute; left: 0; top: 12px; height: 4px; width: 0; background: var(--brass); border-radius: 2px; }
+  .tick { position: absolute; top: 9px; width: 2px; height: 10px; background: var(--muted); opacity: .6; }
+  .knob { position: absolute; top: 7px; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: var(--ink); left: 0; }
+  .push { margin-left: auto; }
+
+  .player:fullscreen { display: flex; flex-direction: column; width: 100vw; height: 100vh; border: 0; border-radius: 0; }
+  .player:fullscreen .screen { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+  .player:fullscreen #stage { flex: 1; min-height: 0; height: auto; aspect-ratio: auto; }
+
+  /* ---- below the player ---- */
+  .meta { display: grid; gap: 14px; }
+  .chap { margin: 0; font-size: 12px; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); font-weight: 600; font-variant-numeric: tabular-nums; }
   .chapters { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 6px; }
-  .chapters button { width: 100%; text-align: left; padding: 8px 10px; font-size: 14px; display: flex; gap: 10px; align-items: baseline; }
+  .chapters button { width: 100%; text-align: left; padding: 8px 10px; font-size: 14px; display: flex; gap: 10px; align-items: baseline; background: var(--surface); border-color: var(--line); }
+  .chapters button:hover { border-color: var(--brass); }
   .chapters button span { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
   .chapters button[aria-current="true"] { border-color: var(--brass); background: #1f2233; }
   .chapters button[aria-current="true"] span { color: var(--brass); }
+  .voicebox { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; font-size: 14px; color: var(--muted); }
+  .voicebox select { background: var(--surface); border-color: var(--line); padding: 6px 8px; max-width: 100%; }
 
   details.sources { border-top: 1px solid var(--line); padding-top: 12px; font-size: 14px; color: var(--muted); }
   details.sources summary { cursor: pointer; color: var(--ink); font-weight: 500; }
@@ -75,6 +110,7 @@
   svg .cap { font-weight: 600; letter-spacing: .14em; fill: var(--muted); }
   svg .mut { fill: var(--muted); }
   svg .cool { fill: var(--cool); }
+  @media (prefers-reduced-motion: reduce) { .sub, .poster .ring { transition: none; } }
 </style>
 
 <main class="wrap">
@@ -83,37 +119,52 @@
     <p class="eyebrow">Theo giáo lý Theravāda · Phật giáo Nguyên Thủy</p>
   </header>
 
-  <figure class="stage-frame">
-    <svg id="stage" viewBox="0 0 1600 900" role="img" aria-labelledby="text"></svg>
-    <div class="progress" aria-hidden="true"><span id="bar"></span></div>
-  </figure>
-
-  <section class="caption" aria-live="polite">
-    <p class="chap" id="chap"></p>
-    <p class="text" id="text"></p>
-    <p class="src" id="src"></p>
-  </section>
-
-  <div class="controls">
-    <button id="prev" type="button" aria-label="Lùi lại">◀</button>
-    <button id="play" type="button">❚❚ Tạm dừng</button>
-    <button id="next" type="button" aria-label="Tiếp theo">▶</button>
-    <span class="count" id="count"></span>
+  <div class="player" id="player">
+    <div class="screen">
+      <svg id="stage" viewBox="0 0 1600 900" role="img" aria-label="Hình minh họa của chương đang phát"></svg>
+      <div class="band" aria-live="polite">
+        <p class="sub" id="sub"></p>
+        <p class="cite" id="cite"></p>
+      </div>
+      <button class="poster" id="poster" type="button" aria-label="Phát video">
+        <span class="ring"><svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0,0 L10,5 L0,10Z"/></svg></span>
+        <span class="pmeta" id="pmeta">10 chương · có giọng đọc và nhạc nền</span>
+      </button>
+    </div>
+    <div class="bar">
+      <button id="prevCh" type="button" aria-label="Chương trước" title="Chương trước">⏮</button>
+      <button id="play" type="button" aria-label="Phát">▶</button>
+      <button id="nextCh" type="button" aria-label="Chương sau" title="Chương sau">⏭</button>
+      <div class="track" id="track" role="slider" tabindex="0" aria-label="Vị trí phát" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+        <div class="rail"></div><div class="fill" id="fill"></div><div class="knob" id="knob"></div>
+      </div>
+      <span class="time" id="time">0:00 / 0:00</span>
+      <button id="voiceBtn" type="button" aria-pressed="true" title="Bật hoặc tắt giọng đọc">Giọng đọc</button>
+      <button id="soundBtn" type="button" aria-pressed="true" title="Bật hoặc tắt nhạc nền">Nhạc</button>
+      <button id="fsBtn" type="button" aria-label="Toàn màn hình" title="Toàn màn hình">⛶</button>
+    </div>
   </div>
 
-  <ol class="chapters" id="chapters"></ol>
-
-  <details class="sources">
-    <summary>Nguồn kinh điển và ký hiệu</summary>
-    <p>Các câu trích là bản dịch tạm, bám sát nguyên văn Pāli. Có thể đối chiếu với bản dịch Việt ngữ của Hòa thượng Thích Minh Châu.</p>
-    <ul>
-      <li><strong>DN</strong> Trường Bộ (Dīgha Nikāya) · <strong>MN</strong> Trung Bộ (Majjhima Nikāya)</li>
-      <li><strong>SN</strong> Tương Ưng Bộ (Saṃyutta Nikāya) · <strong>AN</strong> Tăng Chi Bộ (Aṅguttara Nikāya)</li>
-      <li><strong>Dhp</strong> Pháp Cú (Dhammapada) · <strong>Ud</strong> Phật Tự Thuyết (Udāna) · <strong>Iti</strong> Phật Thuyết Như Vậy (Itivuttaka)</li>
-      <li><strong>Vism</strong> Thanh Tịnh Đạo (Visuddhimagga), luận của ngài Buddhaghosa</li>
-    </ul>
-    <p>Phím tắt: ← → để lùi và tiến, phím cách để tạm dừng.</p>
-  </details>
+  <section class="meta">
+    <p class="chap" id="chap"></p>
+    <ol class="chapters" id="chapters"></ol>
+    <div class="voicebox">
+      <label for="voiceSel">Giọng đọc</label>
+      <select id="voiceSel"></select>
+      <span id="voiceNote"></span>
+    </div>
+    <details class="sources">
+      <summary>Nguồn kinh điển và ký hiệu</summary>
+      <p>Các câu trích là bản dịch tạm, bám sát nguyên văn Pāli. Có thể đối chiếu với bản dịch Việt ngữ của Hòa thượng Thích Minh Châu.</p>
+      <ul>
+        <li><strong>DN</strong> Trường Bộ (Dīgha Nikāya) · <strong>MN</strong> Trung Bộ (Majjhima Nikāya)</li>
+        <li><strong>SN</strong> Tương Ưng Bộ (Saṃyutta Nikāya) · <strong>AN</strong> Tăng Chi Bộ (Aṅguttara Nikāya)</li>
+        <li><strong>Dhp</strong> Pháp Cú (Dhammapada) · <strong>Ud</strong> Phật Tự Thuyết (Udāna) · <strong>Iti</strong> Phật Thuyết Như Vậy (Itivuttaka)</li>
+        <li><strong>Vism</strong> Thanh Tịnh Đạo (Visuddhimagga), luận của ngài Buddhaghosa</li>
+      </ul>
+      <p>Phím tắt: phím cách để phát hoặc tạm dừng, ← → để lùi hoặc tiến một câu, F để xem toàn màn hình.</p>
+    </details>
+  </section>
 </main>
 
 <script>
@@ -147,6 +198,8 @@
   const hex = (h) => [1, 3, 5].map((i) => parseInt(h.slice(i, i + 2), 16));
   const mix = (a, b, t) => { const A = hex(a), B = hex(b); return "rgb(" + A.map((v, i) => Math.round(lerp(v, B[i], t))).join(",") + ")"; };
   const op = (e, v) => e.setAttribute("opacity", v.toFixed(3));
+  // Sound hooks; the audio engine below fills these in once the viewer presses play.
+  const SFX = { out() {}, clink() {}, chime() {}, bell() {} };
 
   // ---------- palettes & defs ----------
   const PAL = {
@@ -193,7 +246,8 @@
   const warmGlow = el("ellipse", { cx: 800, cy: 700, rx: 900, ry: 520, fill: "url(#glow-warm)" }, bg);
   const coolGlow = el("ellipse", { cx: 800, cy: 420, rx: 1000, ry: 640, fill: "url(#glow-cool)" }, bg);
   const G = { warm: 0.6, cool: 0, warmT: 0.6, coolT: 0 };
-  const layer = el("g", {}, svg);
+  const cam = el("g", {}, svg);
+  const layer = el("g", {}, cam);
 
   // ---------- reusable drawings ----------
   function flamePath(h, w, t, sd) {
@@ -252,6 +306,7 @@
       this.glow.setAttribute("rx", (w * 2.6 + h * 0.5).toFixed(1));
       this.glow.setAttribute("ry", (h * 1.2 + 10).toFixed(1));
       op(this.glow, Math.min(1, I));
+      if (this.prev >= 0.15 && I < 0.15 && target < 0.1) SFX.out(this.s);
       if (smoke && this.prev - I > 0.0004 && I < 0.7 && Math.random() < 0.7) smoke.emit(this.x, this.y - h * 0.8, this.s);
       this.prev = I;
     }
@@ -581,6 +636,8 @@
         const tgt = b > at || (b === at && bt > 0.9 + order * 0.4) ? 1 : 0;
         const v = S.F("b" + i, tgt, dt, 3);
         const weak = S.F("w" + i, (b === 2 && (i === 3 || i === 4)) ? 1 : 0, dt, 2);
+        if ((S.v["pb" + i] || 0) < 0.5 && v >= 0.5) SFX.clink(i);
+        S.v["pb" + i] = v;
         const d = v * 34;
         l.lh.setAttribute("transform", `translate(${-d},${d * 0.5}) rotate(${-v * 18} ${l.cx} ${l.cy})`);
         l.rh.setAttribute("transform", `translate(${d},${d * 0.5}) rotate(${v * 18} ${l.cx} ${l.cy})`);
@@ -757,8 +814,13 @@
         lines(S.bTxt, 0, -20, MYTHS[i].r, "", 42, 60);
         txt(S.bTxt, 0, 150, MYTHS[i].s, "pali", 34);
       }
-      const p = reduce ? (bt > 2.6 ? 1 : 0) : ease((bt - 2.6) / 0.8);
+      // The card turns over when the narration reaches the second sentence (what the texts teach).
+      if (S.k >= 1 && S.flipB !== b) { S.flipB = b; S.flipT = bt; }
+      const since = S.flipB === b ? bt - S.flipT : -1;
+      const p = since < 0 ? 0 : reduce ? 1 : ease(since / 0.8);
       const sx = Math.max(0.002, Math.abs(Math.cos(Math.PI * p)));
+      if ((S.pf || 0) < 0.5 && p >= 0.5) SFX.chime();
+      S.pf = i === S.pfi ? p : 0; S.pfi = i;
       const inO = S.F("card", b >= 1 ? 1 : 0, dt, 4);
       S.card.setAttribute("transform", `translate(800,${(400 + (1 - inO) * 30).toFixed(1)}) scale(${sx.toFixed(3)},1)`);
       op(S.card, inO);
@@ -817,16 +879,243 @@
     },
   });
 
-  // ---------- engine ----------
+  // ---------- timeline ----------
+  // The film is a list of cues: one subtitle sentence each. A chapter opens with a title card and
+  // closes with a fade to black. With a voice, a cue lasts as long as its narration; without one,
+  // it lasts an estimated reading time.
   const $ = (id) => document.getElementById(id);
-  const chapEl = $("chap"), textEl = $("text"), srcEl = $("src"), bar = $("bar"), countEl = $("count"), playBtn = $("play");
-  const totalBeats = scenes.reduce((n, s) => n + s.beats.length, 0);
-  let cur = 0, beat = 0, bt = 0, playing = true, S = null, last = null, clock = 0;
-
   const fmt = (s) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
     .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
     .replace(/\*(.+?)\*/g, '<em lang="pi">$1</em>');
-  const dur = (b) => Math.max(6, 3 + b.t.length / 15);
+  const plain = (s) => s.replace(/\s*\(\*[^)]*?\*\)/g, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1");
+  const splitSent = (s) => s.split(/(?<=[.?!…][”"]?)\s+(?=[“"*]*\p{Lu})/u);
+  const CARD = 3.4, OPEN = 1.8, FADE = 1.1, GAP = 0.55, MINBEAT = 5.5;
+  const PALI = ["nibbāna", "ādittapariyāya", "upādāna", "cattāri ariyasaccāni", "ariyo aṭṭhaṅgiko maggo", "saṃyojana", "nibbāna-dhātu", "Aggivacchagotta Sutta", "", "nibbānaṃ paramaṃ sukhaṃ"];
+
+  const cues = [];
+  scenes.forEach((sc, si) => {
+    sc.first = cues.length;
+    sc.beats.forEach((be, b) => {
+      const start = cues.length;
+      splitSent(be.t).forEach((p, k) => {
+        const say = plain(p);
+        cues.push({ i: cues.length, si, b, k, text: p, say, src: be.s || "", est: Math.max(1.8, say.length / 14 + 0.4), pad: 0 });
+      });
+      const sum = cues.slice(start).reduce((n, c) => n + c.est + GAP, 0);
+      if (sum < MINBEAT) cues[cues.length - 1].pad = MINBEAT - sum;
+    });
+    sc.last = cues.length - 1;
+  });
+  const span = (c) => c.est + GAP + c.pad;
+  let total = 0;
+  function layout() {
+    let T = 0;
+    scenes.forEach((sc, si) => {
+      sc.T = T;
+      T += si === 0 ? OPEN : CARD;
+      for (let i = sc.first; i <= sc.last; i++) { cues[i].T = T; T += span(cues[i]); }
+      T += FADE;
+      sc.end = T;
+    });
+    total = T;
+    const track = $("track");
+    track.querySelectorAll(".tick").forEach((t) => t.remove());
+    scenes.forEach((sc, si) => {
+      if (!si) return;
+      const t = document.createElement("div");
+      t.className = "tick";
+      t.style.left = ((sc.T / total) * 100).toFixed(2) + "%";
+      track.insertBefore(t, $("fill"));
+    });
+    $("pmeta").textContent = `10 chương · khoảng ${Math.round(total / 60)} phút · có giọng đọc và nhạc nền`;
+  }
+
+  // ---------- overlays: veil and chapter title card ----------
+  const veil = el("rect", { width: 1600, height: 900, fill: "#05070b", opacity: 0 }, svg);
+  const cardG = el("g", { opacity: 0 }, svg);
+  const cardNum = txt(cardG, 800, 350, "", "cap", 30);
+  const cardTitle = txt(cardG, 800, 470, "", "disp", 112);
+  el("line", { x1: 730, y1: 525, x2: 870, y2: 525, stroke: "#d9a653", "stroke-width": 2 }, cardG);
+  const cardPali = txt(cardG, 800, 600, "", "pali", 44);
+
+  // ---------- audio: generated ambient score and sound effects ----------
+  const AU = { ctx: null, on: true, silent: false, next: 3 };
+  function impulse(ctx, secs, decay) {
+    const len = Math.floor(ctx.sampleRate * secs), buf = ctx.createBuffer(2, len, ctx.sampleRate);
+    for (let ch = 0; ch < 2; ch++) {
+      const d = buf.getChannelData(ch);
+      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+    }
+    return buf;
+  }
+  function initAudio() {
+    if (AU.ctx) { AU.ctx.resume && AU.ctx.resume(); return; }
+    const C = window.AudioContext || window.webkitAudioContext;
+    if (!C) return;
+    try {
+      const ctx = new C(); AU.ctx = ctx;
+      const now = ctx.currentTime;
+      AU.master = ctx.createGain(); AU.master.gain.value = 0;
+      const comp = ctx.createDynamicsCompressor();
+      AU.master.connect(comp); comp.connect(ctx.destination);
+      const verb = ctx.createConvolver(); verb.buffer = impulse(ctx, 5, 2.4);
+      const wet = ctx.createGain(); wet.gain.value = 0.55; verb.connect(wet); wet.connect(AU.master);
+      AU.music = ctx.createGain(); AU.music.gain.value = 0.85;
+      AU.music.connect(AU.master); AU.music.connect(verb);
+      AU.sfx = ctx.createGain(); AU.sfx.gain.value = 1;
+      AU.sfx.connect(AU.master); AU.sfx.connect(verb);
+      // drone: D and A in three octaves, gently breathing
+      const lp = ctx.createBiquadFilter(); lp.type = "lowpass"; lp.frequency.value = 700; lp.connect(AU.music);
+      [[73.42, 0.05], [110, 0.035], [146.83, 0.028], [220, 0.012]].forEach(([f, g], k) => {
+        const gain = ctx.createGain(); gain.gain.value = g; gain.connect(lp);
+        const lfo = ctx.createOscillator(), lfoG = ctx.createGain();
+        lfo.frequency.value = 0.05 + k * 0.023; lfoG.gain.value = g * 0.6;
+        lfo.connect(lfoG); lfoG.connect(gain.gain); lfo.start(now);
+        ["sine", "triangle"].forEach((type, j) => {
+          const o = ctx.createOscillator(); o.type = type; o.frequency.value = f; o.detune.value = j ? 4 : -3;
+          o.connect(gain); o.start(now);
+        });
+      });
+      // moonlight shimmer, faded in when the stage turns cool
+      AU.shimmer = ctx.createGain(); AU.shimmer.gain.value = 0; AU.shimmer.connect(AU.music);
+      [587.33, 880, 1318.5].forEach((f, k) => {
+        const o = ctx.createOscillator(); o.frequency.value = f;
+        const g = ctx.createGain(); g.gain.value = 0.5 / (k + 1);
+        const lfo = ctx.createOscillator(), lg = ctx.createGain(); lfo.frequency.value = 0.13 + k * 0.07; lg.gain.value = 0.4 / (k + 1);
+        lfo.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(AU.shimmer); o.start(now); lfo.start(now);
+      });
+      // fire: low roar plus crackles, both driven by how much is burning on stage
+      const nb = ctx.createBuffer(1, ctx.sampleRate * 2, ctx.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      AU.noise = nb;
+      const roarSrc = ctx.createBufferSource(); roarSrc.buffer = nb; roarSrc.loop = true;
+      const roarF = ctx.createBiquadFilter(); roarF.type = "lowpass"; roarF.frequency.value = 380;
+      AU.roar = ctx.createGain(); AU.roar.gain.value = 0;
+      roarSrc.connect(roarF); roarF.connect(AU.roar); AU.roar.connect(AU.sfx); roarSrc.start(now);
+      const crSrc = ctx.createBufferSource(); crSrc.buffer = nb; crSrc.loop = true;
+      const crF = ctx.createBiquadFilter(); crF.type = "bandpass"; crF.frequency.value = 2600; crF.Q.value = 0.9;
+      AU.crackle = ctx.createGain(); AU.crackle.gain.value = 0;
+      crSrc.connect(crF); crF.connect(AU.crackle); AU.crackle.connect(AU.sfx); crSrc.start(now);
+    } catch (e) { AU.ctx = null; }
+  }
+  function tone(freq, amp, decay, type = "sine", when = 0, dest = AU.sfx) {
+    const ctx = AU.ctx, t = ctx.currentTime + when;
+    const o = ctx.createOscillator(), g = ctx.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(0.0001, t);
+    g.gain.exponentialRampToValueAtTime(amp, t + 0.012);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
+    o.connect(g); g.connect(dest); o.start(t); o.stop(t + decay + 0.05);
+  }
+  function bell(freq, amp, decay, when = 0) {
+    [[1, 1, 1], [2.71, 0.42, 0.6], [5.18, 0.2, 0.35], [8.4, 0.08, 0.2]].forEach(([r, a, d]) => tone(freq * r, amp * a, decay * d, "sine", when));
+    tone(freq + 1.3, amp * 0.5, decay, "sine", when); // slow beating, like a struck bowl
+  }
+  function noiseBurst(amp, dur, f0, f1) {
+    const ctx = AU.ctx, t = ctx.currentTime;
+    const s = ctx.createBufferSource(); s.buffer = AU.noise;
+    const f = ctx.createBiquadFilter(); f.type = "lowpass";
+    f.frequency.setValueAtTime(f0, t); f.frequency.exponentialRampToValueAtTime(f1, t + dur);
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(amp, t + 0.05); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(AU.sfx); s.start(t); s.stop(t + dur + 0.05);
+  }
+  const live = () => AU.ctx && !AU.silent && playing;
+  Object.assign(SFX, {
+    out(s) { if (!live()) return; noiseBurst(0.18 * Math.min(1.3, s + 0.3), 0.9, 1400, 160); bell(880, 0.035, 4.5, 0.15); },
+    clink(i) { if (!live()) return; bell(1320 + (i % 5) * 70, 0.05, 1.4); noiseBurst(0.05, 0.12, 6000, 2500); },
+    chime() { if (!live()) return; bell(1174.66, 0.05, 3.2); },
+    bell(f = 146.83, a = 0.2, d = 8) { if (!live()) return; bell(f, a, d); },
+  });
+  const PENTA = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25, 739.99];
+  function audioFrame(dt, speaking) {
+    if (!AU.ctx) return;
+    const now = AU.ctx.currentTime;
+    AU.master.gain.setTargetAtTime(playing && AU.on ? 0.9 : 0, now, playing ? 0.6 : 0.12);
+    AU.music.gain.setTargetAtTime(speaking ? 0.5 : 0.85, now, 0.5);
+    AU.roar.gain.setTargetAtTime(0.09 * G.warm, now, 0.3);
+    AU.shimmer.gain.setTargetAtTime(0.018 * G.cool, now, 0.8);
+    if (!playing) return;
+    if (Math.random() < G.warm * 16 * dt) {
+      const g = AU.crackle.gain, a = 0.05 + Math.random() * 0.25 * G.warm;
+      g.cancelScheduledValues(now); g.setValueAtTime(a, now); g.exponentialRampToValueAtTime(0.0001, now + 0.02 + Math.random() * 0.05);
+    }
+    AU.next -= dt;
+    if (AU.next <= 0) {
+      AU.next = 4 + Math.random() * 5;
+      const f = PENTA[Math.floor(Math.random() * PENTA.length)];
+      tone(f, 0.035, 3.8, "sine", 0, AU.music);
+      tone(f * 2, 0.008, 2.2, "sine", 0, AU.music);
+      if (Math.random() < 0.4) tone(PENTA[Math.floor(Math.random() * 5)], 0.025, 3.5, "sine", 0.45, AU.music);
+    }
+  }
+
+  // ---------- narration ----------
+  const synth = window.speechSynthesis || null;
+  const VO = { on: true, voice: null, list: [], utter: null, done: true, audio: null, narr: null };
+  const voiceSel = $("voiceSel"), voiceNote = $("voiceNote");
+  const rank = (v) => (/natural|online|neural/i.test(v.name) ? 4 : 0) + (/google/i.test(v.name) ? 3 : 0) + (/hoaimy|namminh|linh/i.test(v.name) ? 2 : 0) + (v.localService ? 0 : 1);
+  function fillVoices() {
+    voiceSel.textContent = "";
+    const add = (value, label) => { const o = document.createElement("option"); o.value = value; o.textContent = label; voiceSel.appendChild(o); };
+    if (VO.narr) add("narr", "Giọng thu sẵn");
+    VO.list.forEach((v, i) => add(String(i), v.name));
+    if (!VO.narr && !VO.list.length) add("", "Chưa có giọng tiếng Việt");
+    voiceSel.disabled = !VO.narr && !VO.list.length;
+    voiceSel.value = VO.narr && !VO.voice ? "narr" : VO.voice ? String(VO.list.indexOf(VO.voice)) : "";
+    voiceNote.textContent = VO.narr || VO.list.length ? "" :
+      "Thiết bị này chưa có giọng đọc tiếng Việt, video vẫn chạy với phụ đề. Trên Windows, có thể thêm giọng Tiếng Việt trong Cài đặt, mục Giọng nói.";
+  }
+  function loadVoices() {
+    if (!synth) return;
+    const had = VO.voice && VO.voice.name;
+    VO.list = synth.getVoices().filter((v) => /^vi/i.test(v.lang)).sort((a, b) => rank(b) - rank(a));
+    if (!VO.narr) VO.voice = VO.list.find((v) => v.name === had) || VO.list[0] || null;
+    fillVoices();
+  }
+  if (synth) { loadVoices(); synth.addEventListener && synth.addEventListener("voiceschanged", loadVoices); }
+  fillVoices();
+  voiceSel.addEventListener("change", () => {
+    VO.voice = voiceSel.value === "narr" ? null : VO.list[+voiceSel.value] || null;
+    if (playing && phase === "cue") startCue(ci, true);
+  });
+  function stopVoice() {
+    VO.utter = null; VO.done = true;
+    if (synth) synth.cancel();
+    if (VO.audio) VO.audio.pause();
+  }
+  function speak(c) {
+    stopVoice();
+    if (!VO.on) return false;
+    if (VO.narr && !VO.voice && VO.narr[c.i]) {
+      const a = VO.audio; VO.done = false;
+      a.src = VO.narr[c.i]; a.currentTime = 0;
+      a.onended = a.onerror = () => { VO.done = true; };
+      const p = a.play(); if (p && p.catch) p.catch(() => { VO.done = true; });
+      return true;
+    }
+    if (!synth || !VO.voice) return false;
+    const u = new SpeechSynthesisUtterance(c.say);
+    u.voice = VO.voice; u.lang = VO.voice.lang; u.rate = 0.95;
+    u.onend = u.onerror = () => { if (VO.utter === u) VO.done = true; };
+    VO.utter = u; VO.done = false;
+    synth.speak(u);
+    return true;
+  }
+  // Recorded narration, when present next to the page, replaces the device voice and sets the real timings.
+  fetch("narration/manifest.json").then((r) => (r.ok ? r.json() : null)).then((m) => {
+    if (!m || !m.cues) return;
+    const map = {};
+    m.cues.forEach((x) => { const c = cues.find((c) => c.say === x.text); if (c) { map[c.i] = x.file; c.est = x.dur; } });
+    if (!Object.keys(map).length) return;
+    VO.narr = map; VO.audio = new Audio(); VO.voice = null;
+    layout(); fillVoices(); refresh();
+  }).catch(() => {});
+
+  // ---------- player state ----------
+  const poster = $("poster"), subEl = $("sub"), citeEl = $("cite"), chapEl = $("chap"), playBtn = $("play");
+  let playing = false, started = false, S = null, cur = 0, beat = 0, bt = 0, phase = "card", ci = 0, pt = 0;
+  let clock = 0, last = null, spoken = false, doneAt = -1, zoom = 1, dirty = true;
 
   const chapters = $("chapters");
   const chapBtns = scenes.map((sc, i) => {
@@ -834,82 +1123,235 @@
     const btn = document.createElement("button");
     btn.type = "button";
     btn.innerHTML = `<span>${String(i + 1).padStart(2, "0")}</span>${sc.title}`;
-    btn.addEventListener("click", () => { enter(i, 0); });
+    btn.addEventListener("click", () => goScene(i));
     li.appendChild(btn); chapters.appendChild(li);
     return btn;
   });
 
-  function enter(i, b) {
-    cur = i;
+  function build(si) {
+    cur = si;
     layer.textContent = "";
     S = { v: {} };
     S.F = (k, target, dt, rate = 3) => { if (!(k in S.v)) S.v[k] = 0; return (S.v[k] = approach(S.v[k], target, dt, rate)); };
-    scenes[i].init(layer, S);
-    chapBtns.forEach((btn, k) => btn.setAttribute("aria-current", k === i ? "true" : "false"));
-    setBeat(b);
+    scenes[si].init(layer, S);
+    beat = 0; bt = 0;
+    chapBtns.forEach((btn, k) => btn.setAttribute("aria-current", k === si ? "true" : "false"));
+    chapEl.textContent = `Chương ${si + 1} / ${scenes.length} · ${scenes[si].title}`;
+    cardNum.textContent = `CHƯƠNG ${si + 1}`;
+    cardTitle.textContent = scenes[si].title;
+    cardPali.textContent = PALI[si] || "";
   }
-  function setBeat(b) {
-    beat = b; bt = 0;
-    const sc = scenes[cur], be = sc.beats[b];
-    chapEl.textContent = `Chương ${cur + 1} / ${scenes.length} · ${sc.title}`;
-    textEl.innerHTML = fmt(be.t);
-    srcEl.innerHTML = be.s ? "Nguồn: " + fmt(be.s) : "";
-    let n = 0; for (let k = 0; k < cur; k++) n += scenes[k].beats.length;
-    countEl.textContent = `${n + b + 1} / ${totalBeats}`;
+  function step(dt) {
+    clock += dt;
+    scenes[cur].update(S, beat, bt, dt, clock);
+    G.warm = approach(G.warm, G.warmT, dt, 1.5); G.cool = approach(G.cool, G.coolT, dt, 1.2);
   }
-  function next() {
-    if (beat < scenes[cur].beats.length - 1) setBeat(beat + 1);
-    else if (cur < scenes.length - 1) enter(cur + 1, 0);
-    else setPlaying(false);
+  function showSub(c) {
+    if (!c) { subEl.classList.add("hide"); return; }
+    subEl.innerHTML = fmt(c.text);
+    subEl.classList.remove("hide");
+    citeEl.innerHTML = c.src ? fmt(c.src) : "";
   }
-  function prev() {
-    if (beat > 0) setBeat(beat - 1);
-    else if (cur > 0) enter(cur - 1, scenes[cur - 1].beats.length - 1);
-    else setBeat(0);
+  function enter(si) {
+    stopVoice();
+    build(si);
+    phase = "card"; pt = 0; ci = scenes[si].first;
+    showSub(null); citeEl.textContent = "";
+    if (si > 0) SFX.bell(146.83, 0.22, 9);
+    dirty = true;
+  }
+  function startCue(i, keepBt) {
+    ci = i;
+    const c = cues[i];
+    if (!keepBt && c.b !== beat) { beat = c.b; bt = 0; }
+    phase = "cue"; pt = 0; doneAt = -1;
+    S.k = c.k;
+    showSub(c);
+    spoken = playing ? speak(c) : false;
+  }
+  function jumpTo(i) {
+    stopVoice();
+    i = clamp(i, 0, cues.length - 1);
+    const c = cues[i];
+    AU.silent = true;
+    build(c.si);
+    beat = c.b; S.k = c.k;
+    let target = 0;
+    for (let k = scenes[c.si].first; k < i; k++) if (cues[k].b === c.b) target += span(cues[k]);
+    for (let k = 0; k < 60; k++) step(1 / 30);
+    while (bt < target) { bt += 1 / 30; step(1 / 30); }
+    AU.silent = false;
+    startCue(i, true);
+    dirty = true;
+  }
+  function goScene(si) {
+    if (!started) start();
+    enter(si);
+  }
+  function finish() {
+    setPlaying(false);
+    phase = "end";
+    showSub(null);
+    $("pmeta").textContent = "Xem lại từ đầu";
+    poster.hidden = false;
   }
   function setPlaying(p) {
     playing = p;
-    playBtn.textContent = p ? "❚❚ Tạm dừng" : "▶ Phát";
+    playBtn.textContent = p ? "❚❚" : "▶";
+    playBtn.setAttribute("aria-label", p ? "Tạm dừng" : "Phát");
+    if (!p) stopVoice();
+    else if (phase === "cue") { pt = 0; doneAt = -1; spoken = speak(cues[ci]); }
   }
-  $("next").addEventListener("click", next);
-  $("prev").addEventListener("click", prev);
-  playBtn.addEventListener("click", () => {
-    if (!playing && cur === scenes.length - 1 && beat === scenes[cur].beats.length - 1 && bt >= dur(scenes[cur].beats[beat])) enter(0, 0);
-    setPlaying(!playing);
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.target.closest && e.target.closest("button, summary") && (e.key === " " || e.key === "Enter")) return;
-    if (e.key === "ArrowRight") { next(); e.preventDefault(); }
-    else if (e.key === "ArrowLeft") { prev(); e.preventDefault(); }
-    else if (e.key === " ") { setPlaying(!playing); e.preventDefault(); }
-  });
+  function start() {
+    initAudio();
+    started = true;
+    poster.hidden = true;
+    if (phase === "end") enter(0);
+    else if (phase === "card") pt = 0;
+    setPlaying(true);
+    SFX.bell(110, 0.2, 10);
+  }
+  function toggle() { if (!started || phase === "end") start(); else setPlaying(!playing); }
 
+  function elapsed() {
+    const sc = scenes[cur];
+    if (phase === "card") return sc.T + pt;
+    if (phase === "cue") return cues[ci].T + Math.min(pt, span(cues[ci]));
+    if (phase === "fade") return sc.end - FADE + pt;
+    return total;
+  }
+  const mmss = (s) => `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
+  function refresh() {
+    const e = elapsed(), f = clamp(e / total) * 100;
+    $("fill").style.width = f.toFixed(2) + "%";
+    $("knob").style.left = f.toFixed(2) + "%";
+    $("time").textContent = `${mmss(e)} / ${mmss(total)}`;
+    $("track").setAttribute("aria-valuenow", Math.round(f));
+    $("track").setAttribute("aria-valuetext", `${mmss(e)} trên ${mmss(total)}`);
+  }
+
+  function advance(dt) {
+    pt += dt;
+    const sc = scenes[cur];
+    if (phase === "card") {
+      if (pt >= (cur === 0 ? OPEN : CARD)) startCue(sc.first);
+    } else if (phase === "cue") {
+      bt += dt;
+      const c = cues[ci];
+      const ended = spoken ? (VO.done && pt >= 0.4) || pt > c.est * 2.5 + 4 : pt >= c.est;
+      if (doneAt < 0 && ended) doneAt = pt;
+      if (doneAt >= 0 && pt - doneAt >= GAP + c.pad) {
+        if (ci < sc.last) startCue(ci + 1);
+        else { phase = "fade"; pt = 0; showSub(null); }
+      }
+    } else if (phase === "fade") {
+      bt += dt;
+      if (pt >= FADE) { if (cur < scenes.length - 1) enter(cur + 1); else finish(); }
+    }
+  }
+  function overlays() {
+    const cd = cur === 0 ? OPEN : CARD;
+    let v = 0, c = 0;
+    if (phase === "card") {
+      v = pt < cd - 1 ? 1 : 1 - ease(pt - (cd - 1));
+      if (cur > 0) c = ease(pt / 0.7) * (1 - ease((pt - (cd - 1.2)) / 0.8));
+    } else if (phase === "fade") v = ease(pt / FADE);
+    else if (phase === "end") v = 0.6;
+    if (!started) { v = 0; c = 0; }
+    op(veil, v); op(cardG, c);
+    const sc = scenes[cur];
+    const prog = clamp((elapsed() - sc.T) / (sc.end - sc.T));
+    zoom = reduce ? 1 : 1 + 0.045 * prog;
+    cam.setAttribute("transform", `translate(800 450) scale(${zoom.toFixed(4)}) translate(-800 -450)`);
+    op(warmGlow, G.warm); op(coolGlow, G.cool);
+  }
   function frame(now) {
     const dt = last == null ? 0.016 : Math.min(0.05, (now - last) / 1000);
-    last = now; clock += dt;
-    const d = dur(scenes[cur].beats[beat]);
-    if (playing) { bt += dt; if (bt >= d) next(); }
-    else bt = Math.min(bt + dt, Math.max(bt, 8)); // keep scene animations settling while paused
-    scenes[cur].update(S, beat, bt, dt, clock);
-    G.warm = approach(G.warm, G.warmT, dt, 1.5); G.cool = approach(G.cool, G.coolT, dt, 1.2);
-    op(warmGlow, G.warm); op(coolGlow, G.cool);
-    if (!reduce) stars.forEach(([s, ph, base]) => op(s, base * (0.7 + 0.3 * Math.sin(clock * 1.3 + ph)) * (0.5 + 0.5 * G.cool + 0.3)));
-    bar.style.width = (clamp(bt / d) * 100).toFixed(1) + "%";
+    last = now;
+    if (playing) {
+      advance(dt);
+      step(dt);
+      if (!reduce) stars.forEach(([s, ph, base]) => op(s, base * (0.7 + 0.3 * Math.sin(clock * 1.3 + ph)) * (0.8 + 0.5 * G.cool)));
+    }
+    if (playing || dirty) { overlays(); refresh(); dirty = false; }
+    audioFrame(dt, playing && phase === "cue" && spoken && !VO.done);
     requestAnimationFrame(frame);
   }
 
-  // Deep link: #c1 … #c10 opens that chapter.
+  // ---------- controls ----------
+  poster.addEventListener("click", toggle);
+  playBtn.addEventListener("click", toggle);
+  $("prevCh").addEventListener("click", () => goScene(elapsed() - scenes[cur].T > 4 ? cur : Math.max(0, cur - 1)));
+  $("nextCh").addEventListener("click", () => { if (cur < scenes.length - 1) goScene(cur + 1); });
+  const voiceBtn = $("voiceBtn"), soundBtn = $("soundBtn");
+  voiceBtn.addEventListener("click", () => {
+    VO.on = !VO.on; voiceBtn.setAttribute("aria-pressed", String(VO.on));
+    if (!VO.on) { stopVoice(); spoken = false; } else if (playing && phase === "cue") startCue(ci, true);
+  });
+  soundBtn.addEventListener("click", () => { AU.on = !AU.on; soundBtn.setAttribute("aria-pressed", String(AU.on)); });
+  const player = $("player"), fsBtn = $("fsBtn");
+  if (!(document.fullscreenEnabled && player.requestFullscreen)) fsBtn.hidden = true;
+  const toggleFs = () => {
+    try {
+      const p = document.fullscreenElement ? document.exitFullscreen() : player.requestFullscreen();
+      if (p && p.catch) p.catch(() => {});
+    } catch (e) { /* not available in this view */ }
+  };
+  fsBtn.addEventListener("click", toggleFs);
+
+  const track = $("track");
+  const seekAt = (clientX) => {
+    const r = track.getBoundingClientRect();
+    const T = clamp((clientX - r.left) / r.width) * total;
+    let i = 0;
+    while (i < cues.length - 1 && cues[i + 1].T <= T) i++;
+    if (!started) { initAudio(); started = true; poster.hidden = true; setPlaying(true); }
+    jumpTo(i);
+    if (playing) spoken = speak(cues[ci]);
+  };
+  let dragging = false;
+  track.addEventListener("pointerdown", (e) => { dragging = true; track.setPointerCapture && track.setPointerCapture(e.pointerId); seekAt(e.clientX); });
+  track.addEventListener("pointermove", (e) => { if (dragging && e.buttons) { stopVoice(); seekAt(e.clientX); } });
+  track.addEventListener("pointerup", () => { dragging = false; });
+  const nudge = (d) => {
+    const base = phase === "cue" ? ci : phase === "fade" ? scenes[cur].last : scenes[cur].first - (d < 0 ? 0 : 1);
+    jumpTo(base + d);
+    if (playing) spoken = speak(cues[ci]);
+  };
+  track.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowRight" || e.key === "ArrowLeft") { nudge(e.key === "ArrowRight" ? 1 : -1); e.preventDefault(); e.stopPropagation(); }
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.target.closest && e.target.closest("button, summary, select") && (e.key === " " || e.key === "Enter")) return;
+    if (e.target.closest && e.target.closest("select")) return;
+    if (e.key === "ArrowRight") { nudge(1); e.preventDefault(); }
+    else if (e.key === "ArrowLeft") { nudge(-1); e.preventDefault(); }
+    else if (e.key === " " || e.key === "k") { toggle(); e.preventDefault(); }
+    else if (e.key === "f" || e.key === "F") toggleFs();
+  });
+  document.addEventListener("visibilitychange", () => { if (document.hidden && playing) setPlaying(false); });
+
+  // ---------- boot ----------
+  layout();
   const m = /^#c(\d+)$/.exec(location.hash);
-  enter(m ? clamp(+m[1] - 1, 0, scenes.length - 1) : 0, 0);
+  build(m ? clamp(+m[1] - 1, 0, scenes.length - 1) : 0);
+  phase = "card"; pt = 0; ci = scenes[cur].first;
+  AU.silent = true; for (let k = 0; k < 45; k++) step(1 / 30); AU.silent = false;
+  showSub(null);
   stars.forEach(([s, , base]) => op(s, base));
   requestAnimationFrame(frame);
 
-  // Test hook for rendering stills: jump to a scene/beat and advance time.
-  window.nibbanaSeek = (i, b, seconds) => {
-    setPlaying(false); enter(i, b);
-    for (let k = 0; k < seconds * 30; k++) { bt += 1 / 30; clock += 1 / 30; scenes[cur].update(S, beat, bt, 1 / 30, clock); G.warm = approach(G.warm, G.warmT, 1 / 30, 1.5); G.cool = approach(G.cool, G.coolT, 1 / 30, 1.2); }
-    op(warmGlow, G.warm); op(coolGlow, G.cool);
+  // Test hook for rendering stills: jump to a chapter/beat and advance its animation by some seconds.
+  window.nibbanaSeek = (si, b, seconds) => {
+    started = true; poster.hidden = true; setPlaying(false);
+    const i = cues.findIndex((c) => c.si === si && c.b === b);
+    jumpTo(i);
+    AU.silent = true;
+    for (let k = 0; k < seconds * 30; k++) { bt += 1 / 30; step(1 / 30); }
+    AU.silent = false;
+    dirty = true; overlays(); refresh();
   };
+  window.nibbanaCues = () => cues.map((c) => ({ i: c.i, text: c.say }));
 })();
 </script>
 <!-- page:end -->
