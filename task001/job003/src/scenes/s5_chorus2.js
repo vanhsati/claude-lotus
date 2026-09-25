@@ -482,7 +482,7 @@ function S5_g(t, lt) {
   skNight(t, { horizon: S5_HZ, lights: S5_lights(m, Ls), bokeh: 20, haze: '#5A2A70' });
   X.save(); S5_set(m);
   X.fillStyle = '#0A0B12'; X.fillRect(-300, -60, 2520, 850);
-  const shops = [[-120, 'HOA'], [330, 'CÀ PHÊ'], [780, 'KARAOKE'], [1230, 'NHÀ NGHỈ'], [1680, 'HOA TƯƠI']];
+  const shops = [[-120, 'HOA'], [330, 'CÀ PHÊ'], [780, 'KARAOKE'], [1230, 'BÁNH MÌ'], [1680, 'HOA TƯƠI']];
   for (const [sx] of shops) { X.fillStyle = '#040508'; X.fillRect(sx, 280, 380, 420); X.fillStyle = '#12151F'; X.fillRect(sx - 12, 700, 404, 14); X.fillStyle = '#06070C'; X.fillRect(sx, 130, 380, 110); }
   X.restore();
   const e8 = Math.floor(beatF(t) * 2), cols = [[S5_P.neonCyan, S5_P.neonPink], [S5_P.neonPink, S5_P.neonAmber], [S5_P.neonAmber, S5_P.neonCyan], [S5_P.neonWhite, S5_P.neonPink], [S5_P.neonCyan, S5_P.neonAmber]];

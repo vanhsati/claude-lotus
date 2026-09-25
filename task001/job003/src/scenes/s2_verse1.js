@@ -125,7 +125,7 @@ function S2_lampPost(x, yb, h, s = 1, seed = 0) {
 }
 function S2_lampGlow(x, y, s = 1, seed = 0) {
   S2_light(x, y, 260 * s, .9);
-  skWash(() => S2_blob(x, y + 10 * s, 190 * s, 170 * s, seed, 28, .1), S2_P.ochre, { a: .22, edge: .55, feather: .6, spread: 40 * s, seed: seed + 3, color2: S2_P.rose, mix: .25 });
+  skWash(() => S2_blob(x, y + 10 * s, 190 * s, 170 * s, seed, 28, .1), S2_P.ochre, { a: .2, edge: .18, feather: .9, spread: 70 * s, blur: 12 * s, seed: seed + 3, color2: S2_P.rose, mix: .25 });
   skWash(() => S2_blob(x, y, 70 * s, 64 * s, seed + 2, 20, .1), S2_P.ochre, { a: .18, edge: .5, feather: .8, seed: seed + 4 });
 }
 // the lamp's reflection: stacked ochre dashes down the water
@@ -304,18 +304,18 @@ function S2_walk(x0, x1, y, seed) {
 const S2A_RECT = [-160, 0, 6060, 1080], S2A_HZ = 520;
 function S2A_paint() {
   const [x0, , w] = S2A_RECT, x1 = x0 + w;
-  S2_sky(x0 - 40, x1 + 40, -40, S2A_HZ, [430, 215, 78], { a: .5, seed: 2 });
+  S2_sky(x0 - 40, x1 + 40, -40, S2A_HZ, [430, 215, 78], { a: .66, seed: 2, gradTo: .35 });
   // mist bands over the far shore
   for (const [yy, a] of [[455, .5], [490, .35]]) { X.save(); X.globalCompositeOperation = 'screen'; const g = X.createLinearGradient(0, yy - 40, 0, yy + 40); g.addColorStop(0, 'rgba(240,232,215,0)'); g.addColorStop(.5, `rgba(240,232,215,${a})`); g.addColorStop(1, 'rgba(240,232,215,0)'); X.fillStyle = g; X.fillRect(x0, yy - 40, w, 80); X.restore(); }
   S2_farShore(x0 - 40, x1 + 40, S2A_HZ, 5);
   // water: all the way down in the wide view, then behind the embankment of the promenade
-  S2_water([[x0 - 40, S2A_HZ], [x1 + 40, S2A_HZ], [x1 + 40, 832], [2050, 832], [1920, 870], [1760, 1000], [1600, 1140], [x0 - 40, 1140]], 7, { y0: S2A_HZ, y1: 1080 });
+  S2_water([[x0 - 40, S2A_HZ], [x1 + 40, S2A_HZ], [x1 + 40, 832], [2050, 832], [1920, 870], [1760, 1000], [1600, 1140], [x0 - 40, 1140]], 7, { y0: S2A_HZ, y1: 1080, a: .6 });
   // near bank under the willow (V1 lower right) and the embankment face of the promenade
   skWash(() => pathSmooth([[1420, 1140], [1560, 1020], [1760, 960], [1960, 880], [2150, 846], [2300, 846], [2300, 1140]], true, .6), S2_P.celadon, { a: .45, edge: .6, color2: S2_P.ink, mix: .45, seed: 9, scale: 2 });
   S2_walk(2060, x1 + 40, 832, 11);
   // the lamps (glow first, then the posts over it)
   const lamps = [[2610, 832, 470, 1], [5230, 832, 480, 1], [3900, 832, 440, .95]];
-  lamps.forEach(([x, yb, h, s], i) => { S2_lampGlow(x, yb - h, s, 20 + i); S2_lampRefl(x, 560, 250, s, 30 + i); });
+  lamps.forEach(([x, yb, h, s], i) => S2_lampGlow(x, yb - h, s, 20 + i));
   S2_light(1150, 590, 200, .35);
   S2_tower(1150, 612, 1.05, 40);
   S2_ripples(x0, x1, S2A_HZ + 14, 1060, 260, 13);
@@ -356,7 +356,7 @@ const S2B_F = [1380, 520, 236];   // face centre and radius
 function S2B_paint() {
   const [fx, fy, R] = S2B_F;
   skWash(() => S2_blob(fx, fy + 10, 520, 470, 4, 30, .1), S2_P.indigo, { a: .42, edge: .75, color2: S2_P.rose, mix: .35, seed: 4, scale: 4 });
-  skWash(() => S2_blob(560, 250, 360, 230, 8, 24, .16), S2_P.ochre, { a: .2, edge: .5, feather: .7, spread: 60, seed: 5, scale: 3 });
+  skWash(() => S2_blob(560, 250, 360, 230, 8, 24, .16), S2_P.ochre, { a: .2, edge: .15, feather: .9, spread: 90, blur: 14, seed: 5, scale: 3 });
   // willow strands hanging in from the top right
   const st = []; for (let i = 0; i < 16; i++) { const x = 1640 + i * 22 + hash(i) * 20, L = 180 + hash(i * 3) * 300; st.push([[x, -20, .5], [x - 10, L * .5], [x - 26, L, .1]]); }
   skInk(st, { w: 2.4, alpha: .45, dry: .5, seed: 9, tail: .6 });
@@ -378,10 +378,10 @@ function S2B_scene(t) {
     // type: the small lines, then "nước mắt" huge, then "đắng cay"
     S2_write(t, ws, 0, 6, 120, 250, 54, { seed: 1 });
     S2_write(t, ws, 6, 10, 120, 330, 54, { seed: 2 });
-    const big = S2_write(t, ws, 10, 12, 96, 600, 196, { big: true, seed: 3, dur: .3 });
-    S2_write(t, ws, 12, 14, 560, 720, 54, { seed: 4 });
+    const big = S2_write(t, ws, 10, 12, 150, 600, 196, { big: true, seed: 3, dur: .3 });
+    S2_write(t, ws, 12, 14, 610, 720, 54, { seed: 4 });
     // ink runs down from the big word once it is written
-    if (big && ws[11]) skBleed(96 + big.w * .88, 612, S2_P.ink, t, ws[11].t + .25, { len: 190, w: 14, dur: 1.6, seed: 5, a: .5, color2: S2_P.indigo });
+    if (big && ws[11]) skBleed(150 + big.w * .88, 612, S2_P.ink, t, ws[11].t + .25, { len: 190, w: 14, dur: 1.6, seed: 5, a: .5, color2: S2_P.indigo });
     X.restore();
   });
 }

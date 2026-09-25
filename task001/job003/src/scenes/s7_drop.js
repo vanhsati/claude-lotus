@@ -43,7 +43,7 @@ function S7_cache(key, fn) {
 function S7_put(c, cam, alpha = 1, op = 'source-over') {
   if (alpha <= .003) return;
   if (cam) camBegin(cam); else { X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); }
-  X.globalAlpha = alpha; X.globalCompositeOperation = op; X.imageSmoothingQuality = 'high'; X.drawImage(c, 0, 0, W, H);
+  X.globalAlpha = alpha; X.globalCompositeOperation = op; X.imageSmoothingQuality = 'low'; X.drawImage(c, 0, 0, W, H);
   if (cam) camEnd(); else X.restore();
 }
 // Keep a camera inside the painting (the cached canvases end at the frame edge).
