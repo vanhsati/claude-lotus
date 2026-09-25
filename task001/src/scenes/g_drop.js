@@ -586,10 +586,10 @@ G_cuts([120.9, beatT(265), beatT(266), beatT(267), beatT(268), beatT(269), beatT
     letters.split('').forEach((c, j) => stampText(c, 260 + j * 270, 710, t, tl(j) - .03, { font: FONT.hero(470), color: PAL.paperHi, op: 'source-over', mis: [12, 9, PAL.pink], rot: j * .03 }));
     if (t >= ws[1].t - .03) stampText(ws[1].w, 1380, 330, t, ws[1].t - .03, { font: FONT.serifI(120), color: PAL.yellow, op: 'source-over' });
     // small mono readout: the approval rate falls as the paddles flip
-    rtext('HUMAN APPROVAL ' + Math.max(3, Math.round(92 - nb * 14.5 - frac(b) * 3)) + '%   REWARD ' + (1.0 - nb * .32).toFixed(2), 330, 300, { font: FONT.monoB(40), color: PAL.sky, op: 'source-over' });
+    rtext('HUMAN APPROVAL ' + Math.max(3, Math.round(92 - nb * 14.5 - frac(b) * 3)) + '%   REWARD ' + (1.0 - nb * .32).toFixed(2), 380, 330, { font: FONT.monoB(40), color: PAL.sky, op: 'source-over' });
   });
   G6_crowd(t, nb, slide);
   // ASKEW, crooked, in front of the crowd
-  withT(slide * 1900, slide * 900, 0, 1, () => stampText('ASKEW', 1380, 600, t, ws[2].t - .03, { font: FONT.hero(340), color: PAL.yellow, align: 'center', op: 'source-over', mis: [12, 9, PAL.pink], rot: .38, stroke: PAL.blueDk, sw: 14 }));
+  withT(slide * 1900, slide * 900, 0, 1, () => stampText('ASKEW', 1360, 790, t, ws[2].t - .03, { font: FONT.hero(270), color: PAL.yellow, align: 'center', op: 'source-over', mis: [12, 9, PAL.pink], rot: .38, stroke: PAL.blueDk, sw: 14 }));
   camEnd();
 }, { dark: true, per: i => (i === 0 ? { joltColor: PAL.yellow, inDur: .3 } : {}) });

@@ -173,7 +173,7 @@ shot(C_T2, C_T3, (t, lt) => {
   { const p = shove(300, 840); headline(p[0], p[1], 460, 'VERIFIED IN LEAN', { kicker: 'formal proof · checks', big: 54, t, t0: beatT(92), rot: -.04 - blast * .05 }); }
   { const p = shove(1660, 850); headline(p[0], p[1], 400, '166 PAGES', { kicker: 'preprint + lean files', big: 64, t, t0: beatT(93), rot: .035 + blast * .05 }); }
   // 특이점 accent, vertical on the right edge
-  if (t > ws[3].t) '특이점'.split('').forEach((c, i) => { const a = clamp((t - ws[3].t - i * .08) / .1); rtext(c, 1850, 470 + i * 118, { font: FONT.kr(104), color: PAL.pink, align: 'center', op: 'source-over', alpha: a }); });
+  if (t > ws[3].t) '특이점'.split('').forEach((c, i) => { const a = clamp((t - ws[3].t - i * .08) / .1); rtext(c, 1850, 470 + i * 118, { font: FONT.kr(104), color: PAL.pink, align: 'center', op: 'source-over', alpha: a, stroke: PAL.blueDk, sw: 10 }); });
   // BEGUN: stamped out of the blast
   if (!pre) {
     const st = stampK(t, C_TB, .16);
@@ -185,7 +185,7 @@ shot(C_T2, C_T3, (t, lt) => {
       cut(() => pathPoly([[-230, -80], [230, -86], [236, 70], [-226, 76]]), { fill: PAL.yellow, lift: 10 });
       rtext('‖u‖ → ∞', 0, 26, { font: '800 84px "JetBrains Mono", "DejaVu Sans Mono"', color: PAL.ink, align: 'center' });
     });
-    stamp(1590, 690, 'SETTLED?', t, beatT(96), { size: 54, rot: .1, color: PAL.red });
+    stamp(1620, 310, 'SETTLED?', t, beatT(96), { size: 44, rot: .1, color: PAL.red });
   }
 }, { seed: 22, dark: true, inT: 'jolt' });
 
