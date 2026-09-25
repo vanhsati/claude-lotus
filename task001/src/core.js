@@ -163,24 +163,24 @@ function sparkPath(cx, cy, R, n = 6, inner = .22, rot = 0, fat = .5) {
 function cut(buildPath, o = {}) {
   const lift = o.lift ?? 6, blur = o.blur ?? lift * 1.6, shade = o.shade ?? .28;
   X.save();
-  buildPath();
+  X.beginPath(); buildPath();
   if (lift > 0 && shade > 0) {
     X.shadowColor = `rgba(40,25,10,${shade})`; X.shadowBlur = blur; X.shadowOffsetX = lift * .45; X.shadowOffsetY = lift;
   }
   X.fillStyle = o.fill || PAL.paperHi; X.fill();
   X.shadowColor = 'transparent';
-  if (o.ht) { X.save(); X.clip(); X.globalCompositeOperation = 'multiply'; X.fillStyle = halftonePattern(o.ht, o.htSize || 10, o.htRad || .3); X.globalAlpha = o.htAlpha ?? 1; X.fill(); X.restore(); buildPath(); }
+  if (o.ht) { X.save(); X.clip(); X.globalCompositeOperation = 'multiply'; X.fillStyle = halftonePattern(o.ht, o.htSize || 10, o.htRad || .3); X.globalAlpha = o.htAlpha ?? 1; X.fill(); X.restore(); X.beginPath(); buildPath(); }
   if (o.stroke) { X.strokeStyle = o.stroke; X.lineWidth = o.sw || 3; X.lineJoin = 'round'; X.lineCap = 'round'; X.stroke(); }
   X.restore();
 }
 // ink(): riso ink printed straight onto whatever is below: multiply, no shadow.
 function ink(buildPath, color, o = {}) {
-  X.save(); buildPath();
+  X.save(); X.beginPath(); buildPath();
   X.globalCompositeOperation = o.op || 'multiply'; X.globalAlpha = o.alpha ?? 1; X.fillStyle = color; X.fill();
   X.restore();
 }
 function inkStroke(buildPath, color, w = 3, o = {}) {
-  X.save(); buildPath();
+  X.save(); X.beginPath(); buildPath();
   X.globalCompositeOperation = o.op || 'source-over'; X.globalAlpha = o.alpha ?? 1;
   X.strokeStyle = color; X.lineWidth = w; X.lineCap = o.cap || 'round'; X.lineJoin = 'round';
   if (o.dash) X.setLineDash(o.dash);
@@ -189,7 +189,7 @@ function inkStroke(buildPath, color, w = 3, o = {}) {
 // A halftone gradient: dots that grow from 0 at (x0,y0) to full at (x1,y1), clipped to a path.
 function htGrad(buildPath, color, x0, y0, x1, y1, o = {}) {
   const step = o.step || 11, maxR = o.maxR || step * .55, ang = o.angle ?? .26, ca = Math.cos(ang), sa = Math.sin(ang);
-  X.save(); buildPath(); X.clip();
+  X.save(); X.beginPath(); buildPath(); X.clip();
   X.globalCompositeOperation = o.op || 'multiply'; X.fillStyle = color; X.globalAlpha = o.alpha ?? 1;
   const dx = x1 - x0, dy = y1 - y0, L2 = dx * dx + dy * dy || 1;
   const bx = o.bounds || [Math.min(x0, x1) - 400, Math.min(y0, y1) - 400, Math.abs(dx) + 800, Math.abs(dy) + 800];

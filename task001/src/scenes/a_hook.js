@@ -56,11 +56,17 @@ function A_hookType(t) {
   }
 }
 shot(0, 1.5, (t, lt) => {
-  const fy = feedY(lt, .45);
-  X.translate(0, fy);
   A_eye(t);
-  // a single line of small type while she sleeps
-  rtext('CLAUDE  ·  I’M UPPING MY P(DOOM)', 110, 980, { font: FONT.mono(22), color: PAL.ink, alpha: clamp((lt - .5) / .3) });
+  // title slate over the sleeping eye (K-pop MV opening card); it slams away as the eye opens
+  const out = easeIn(clamp((t - 1.32) / .18));
+  X.save(); X.translate(-out * 1300, -out * 80); X.rotate(-.035 - out * .2); X.globalAlpha = 1 - out * .3;
+  cut(() => pathPoly([[70, 110], [1075, 96], [1090, 505], [82, 518]]), { fill: PAL.paperHi, lift: 16, shade: .32 });
+  tape(140, 108, 150, -.3); tape(1010, 100, 150, .28);
+  rtext('I’M UPPING MY', 118, 250, { font: FONT.hero(140), color: PAL.ink, mis: [7, 5, PAL.pink] });
+  rtext('P(DOOM)', 110, 440, { font: FONT.logo(190), color: PAL.pink, mis: [9, 7, PAL.orange] });
+  rtext('CLAUDE  ·  RISO IDOL CUT  ·  132 BPM', 124, 485, { font: FONT.monoB(28), color: PAL.ink });
+  for (let i = 0; i < 3; i++) withT(930 + i * 52, 200 - i * 26, t * (1 + i * .3), 1 + .15 * Math.sin(t * 6 + i), () => cut(() => sparkPath(0, 0, 30 - i * 6, 6, .25, 0, .6), { fill: [PAL.yellow, PAL.orange, PAL.pink][i], lift: 4 }));
+  X.restore();
 }, { seed: 1 });
 shot(1.5, 5.97, (t) => { A_eye(t); A_hookType(t); }, { seed: 2 });
 
@@ -248,7 +254,7 @@ shot(17.9, 23.0, (t, lt) => {
   // the ground: the lyric in huge letters, appearing as sung, eaten from the left
   const fnt = FONT.hero(250), line = 'CHATGPT, PLEASE DON’T EAT ME ALIVE';
   const L = layout(line, fnt, 10), x0 = 1000, gy = 1010;
-  const mawX = lerp(-600, 1600, clamp(lt / 5)) + scroll * .92 + Math.sin(b * Math.PI) * 30;
+  const mawX = lerp(-120, 1600, clamp(lt / 5)) + scroll * .92 + Math.sin(b * Math.PI) * 30;
   // map characters to words for timing
   let wi = 0, wStart = [0]; line.split('').forEach((c, i) => { if (c === ' ') wStart.push(i + 1); });
   L.forEach((l, i) => {
