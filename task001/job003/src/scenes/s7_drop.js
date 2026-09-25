@@ -39,6 +39,24 @@ function S7_cache(key, fn) {
   S7_CACHE.set(k, c); while (S7_CACHE.size > 26) S7_CACHE.delete(S7_CACHE.keys().next().value);
   return c;
 }
+// A cropped cache (world rect x, y, w, h), for small things like finished lines of brush text.
+const S7_CROP = new Map();
+function S7_cacheR(key, x, y, w, h, fn) {
+  const k = key + '|' + SX; let c = S7_CROP.get(k);
+  if (c) { S7_CROP.delete(k); S7_CROP.set(k, c); return c; }
+  c = mkCanvas(Math.max(1, Math.ceil(w * SX)), Math.max(1, Math.ceil(h * SX))); const prev = X, T0 = T;
+  X = c.getContext('2d'); X.save(); X.setTransform(SX, 0, 0, SX, -x * SX, -y * SX);
+  try { fn(); } finally { X.restore(); X = prev; T = T0; }
+  S7_CROP.set(k, c); while (S7_CROP.size > 80) S7_CROP.delete(S7_CROP.keys().next().value);
+  return c;
+}
+// Brush text, from a cropped cache once it is fully written (multiply either way)
+function S7_brush(str, x, y, o, tag) {
+  if ((o.k ?? 1) < 1) return skBrushText(str, x, y, o);
+  const size = o.size, w = textW(str, o.font), bx = x - size * .7, by = y - size * 1.45, bw = w + size * 1.4, bh = size * 2.1;
+  const c = S7_cacheR(`br:${str}:${x}:${y}:${size}:${o.color}:${tag}`, bx, by, bw, bh, () => skBrushText(str, x, y, { ...o, k: 1 }));
+  X.save(); X.globalCompositeOperation = 'multiply'; X.drawImage(c, bx, by, bw, bh); X.restore();
+}
 // Draw a cached canvas under a camera ({x, y, zoom, rot, shake} or null = identity).
 function S7_put(c, cam, alpha = 1, op = 'source-over') {
   if (alpha <= .003) return;
@@ -279,7 +297,9 @@ function S7_strips(t, silk, o = {}) {
     const dx = dir === 'v' ? 0 : off, dy = dir === 'v' ? off : 0, mid = (a0 + a1) / 2, pv = dir === 'v' ? [mid, H / 2] : [W / 2, mid];
     X.save(); X.translate(dx, dy); X.translate(pv[0], pv[1]); X.rotate(rot); X.translate(-pv[0], -pv[1]);
     // a shadow on the neon behind, then the strip
-    X.save(); X.shadowColor = 'rgba(0,0,0,.7)'; X.shadowBlur = 24 * SX; X.shadowOffsetY = 10 * SX; X.fillStyle = '#000'; X.beginPath(); poly.forEach((p, j) => j ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); X.closePath(); X.fill(); X.restore();
+    const shp = () => { X.beginPath(); poly.forEach((p, j) => j ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); X.closePath(); };
+    X.save(); X.fillStyle = 'rgba(0,0,0,.28)'; for (const [sx, sy] of [[0, 18], [0, 9]]) { X.translate(sx * .5, sy * .5); shp(); X.fill(); } X.restore();
+    X.save(); X.strokeStyle = 'rgba(0,0,0,.35)'; X.lineWidth = 14; X.translate(0, 6); shp(); X.stroke(); X.restore();
     X.save(); X.beginPath(); poly.forEach((p, j) => j ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); X.closePath(); X.clip();
     X.translate(-dx * (o.parallax ?? 0), -dy * (o.parallax ?? 0)); X.drawImage(silk, 0, 0, W, H); X.restore();
     // torn lips: silk threads and a neon rim from the light behind
@@ -344,10 +364,10 @@ function S7_lyric(t, li, box, I = 1) {
   const lay = S7_layout(li, box); if (!lay) return;
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); S7_boxT(box);
   // small brush rows, written on as sung
-  for (const r of lay.rows) { const k = S7_wk(t, r.ws); if (k > 0) skBrushText(r.ws.map(w => w.w).join(' '), r.x, r.y, { size: r.size, font: r.fnt, k, dry: .3, hand: .5, color: box.ink || SK_PAL.ink, bleed: .8 }); }
+  for (const r of lay.rows) { const k = S7_wk(t, r.ws); if (k > 0) S7_brush(r.ws.map(w => w.w).join(' '), r.x, r.y, { size: r.size, font: r.fnt, k, dry: .3, hand: .5, color: box.ink || SK_PAL.ink, bleed: .8 }, JSON.stringify([box.tx, box.ty, box.rot])); }
   // the key: brushed big as sung
   const k0 = lay.key[0]?.t ?? 0, kEnd = (lay.key[lay.key.length - 1]?.t ?? k0) + .25, kk = clamp((t - k0 + .03) / Math.max(.3, kEnd - k0));
-  if (kk > 0) skBrushText(lay.keyStr, lay.kx, lay.ky, { size: lay.big, font: lay.fk, k: kk, dry: .5, hand: .35, color: box.ink || SK_PAL.ink });
+  if (kk > 0) S7_brush(lay.keyStr, lay.kx, lay.ky, { size: lay.big, font: lay.fk, k: kk, dry: .5, hand: .35, color: box.ink || SK_PAL.ink }, JSON.stringify([box.tx, box.ty, box.rot]));
   X.restore();
   // ...then traced in neon, letter by letter on the 16ths
   if (t < k0 + .06) return;
