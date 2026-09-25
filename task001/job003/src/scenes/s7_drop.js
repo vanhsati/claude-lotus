@@ -549,3 +549,4 @@ shot(S7_B(358), S7_END, (t, lt) => {
   S7_jolt(t, S7_B(358), 1.2); S7_jolt(t, S7_HIT, 2, .25);
   S7_flash(t, S7_HIT, .8, '#FFF0F8', .3);
 }, { dark: true });
+TESTS.s7perf = () => { window.TEST = null; const out = []; for (const t0 of [186.5, 189.5, 192.5, 193.3, 194.5, 197.5, 199.2, 202.5, 205.8, 207.3, 208.3, 212, 213.5, 217, 219.2, 222, 224, 226.9, 227.5]) { const ms = []; for (let i = 0; i < 4; i++) { const a = performance.now(); drawFrame(t0 + i / 30); X.getImageData(0, 0, 1, 1); ms.push(Math.round(performance.now() - a)); } out.push(t0 + ': ' + ms.join(',')); } console.error('S7 ms ' + out.join(' | ')); };

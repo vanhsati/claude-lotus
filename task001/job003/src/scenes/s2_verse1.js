@@ -590,4 +590,8 @@ function S2_shot(i, t) {
   } else S2_SCENES[i](t);
 }
 S2_SCENES.forEach((fn, i) => shot(S2_CUT[i], S2_CUT[i + 1], t => S2_shot(i, t), { seed: 3320 + i, S2: true }));
-shot(70, 71, t => { skSilk(t); const B = S2_bake('E', S2E_RECT, 590, S2E_paint); X.save(); X.translate(500, 20); X.scale(.53, .53); X.translate(0, 840); S2_put(B); X.restore(); }, { S2: true });
+shot(70, 71, t => { skSilk(t);
+  skWash(() => X.rect(-60, -60, 700, 1300), S2_P.indigo, { a: .6, seed: 1 });
+  skWash(() => { X.rect(700, -60, 500, 1300); X.moveTo(1000, 500); X.arc(950, 500, 50, 0, TAU); }, S2_P.indigo, { a: .6, seed: 2, rule: 'evenodd' });
+  skWash(() => X.rect(1250, -60, 800, 700), S2_P.indigo, { a: .6, seed: 3, grad: [0, -60, 0, 640], gradTo: .2 });
+}, { S2: true });

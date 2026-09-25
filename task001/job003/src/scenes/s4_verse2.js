@@ -272,7 +272,7 @@ function S4_rapType(t) {
     { a: 2, b: 4, m: 'ink', size: 128, x: 64, y: 1010 },
     { a: 5, b: 7, m: 'neon', size: 42, x: 1010, y: 862, color: S4_P.neonCyan },
     { a: 8, b: 11, m: 'neon', size: 92, x: 1004, y: 1000, punch: 1 },
-  ], C.p1);
+  ], S4_L[1] ? S4_L[1][0] : C.p1);
   // L1: close on the faces. "Khuôn mặt em yêu vẫn thế nhưng nay | CẢM XÚC | đã quá nhạt phai mà" (the big word fades)
   const fade = 1 - .72 * easeOut((t - S4_lt(1, 12)) / .5);
   S4_rows(t, 1, [
@@ -326,8 +326,8 @@ function S4_rapType(t) {
   }
   // L7: "Bước đi vội vàng / em đang đi | BÊN AI ĐÓ"
   S4_rows(t, 7, [
-    { a: 0, b: 3, m: 'neon', size: 44, x: 960, y: 420, align: 'center', color: S4_P.neonWhite, halo: .6 },
-    { a: 4, b: 6, m: 'neon', size: 44, x: 960, y: 500, align: 'center', color: S4_P.neonWhite, halo: .6 },
+    { a: 0, b: 3, m: 'neon', size: 56, x: 960, y: 420, align: 'center', color: S4_P.neonWhite, halo: .6 },
+    { a: 4, b: 6, m: 'neon', size: 56, x: 960, y: 510, align: 'center', color: S4_P.neonWhite, halo: .6 },
     { a: 7, b: 9, m: 'neon', size: 150, x: 960, y: 760, align: 'center', punch: 1, color: S4_P.neonCyan },
   ], 106.2);
 }
