@@ -132,7 +132,7 @@ function D2_panelA(t) {
   X.save(); const vg = X.createRadialGradient(1380, 520, 150, 960, 540, 1250); vg.addColorStop(0, 'rgba(40,5,3,0)'); vg.addColorStop(1, 'rgba(30,4,2,.7)'); X.fillStyle = vg; X.fillRect(0, 0, W, H); X.restore();
   camBegin({ zoom: 1.02 + lt * .025 + KICK(t) * .012, x: 960, y: 540, shake: KICK(t) * 5 });
   // gold-leaf ground line and a wedge of sun rays behind the head
-  D2_sun(1540, 500, 150, t, { rays: 20, len: 3.2, spin: .12, rayA: .5, halo: true, haloA: .6 });
+  D2_sun(1540, 500, 150, t, { rays: 20, len: 2.6, spin: .12, rayA: .5, halo: true, haloA: .4 });
   idolHead(1540, 640, 200, { hat: 'nonla', hatMat: 'gold', bust: true, eyes: t > 159.1 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), look: [-.35, .05], tilt: -.05 + Math.sin(beatF(t) * Math.PI / 2) * .04, blush: .8, brow: .4 });
   camEnd();
   // I DO NOT / GAMBLE / AND E TOO SURE
@@ -140,13 +140,13 @@ function D2_panelA(t) {
   x += D2_stamp('I', x, 300, t, D2_w(56, 0, 157.66), { size: 170 }) + 50;
   x += D2_stamp('DO', x, 300, t, D2_w(56, 1, 157.79), { size: 170 }) + 50;
   D2_stamp('NOT', x, 300, t, D2_w(56, 2, 158.06), { size: 170 });
-  D2_stamp('GAMBLE', 100, 560, t, D2_w(56, 3, 158.2), { size: 240, n: 26 });
+  D2_stamp('GAMBLE', 100, 540, t, D2_w(56, 3, 158.2), { size: 200, n: 26 });
   x = 115;
   const eg = { size: 150, material: 'egg', flakes: false, font: FONT.vnI(150) };
-  x += D2_stamp('and', x, 800, t, D2_w(57, 0, 158.61), eg) + 40;
-  x += D2_stamp('e', x, 800, t, D2_w(57, 1, 158.75), eg) + 40;
-  x += D2_stamp('too', x, 800, t, D2_w(57, 2, 159.02), eg) + 40;
-  D2_stamp('sure', x, 800, t, D2_w(57, 3, 159.15), { ...eg, flakes: true, n: 10 });
+  x += D2_stamp('and', x, 760, t, D2_w(57, 0, 158.61), eg) + 40;
+  x += D2_stamp('e', x, 760, t, D2_w(57, 1, 158.75), eg) + 40;
+  x += D2_stamp('too', x, 760, t, D2_w(57, 2, 159.02), eg) + 40;
+  D2_stamp('sure', x, 760, t, D2_w(57, 3, 159.15), { ...eg, flakes: true, n: 10 });
 }
 shot(157.6, 159.428, (t, lt) => {
   D2_panelA(t);
@@ -165,8 +165,8 @@ function D2_silverPanel(t) {
   X.fillStyle = LQ_PAL.gold; X.fillRect(-100, 878, W + 200, 4);
   // masked frieze, black robes against the silver
   const call = D2_call(t, [58]);
-  for (let i = 0; i < 9; i++) {
-    const x = 40 + i * 112 + (i > 3 ? 240 : 0), h = 240 + (i % 2) * 36;
+  for (let i = 0; i < 8; i++) {
+    const x = 40 + i * 110 + (i > 3 ? 230 : 0) - (i > 6 ? 60 : 0), h = 240 + (i % 2) * 36;
     D2_dancer(x, 895 + (i % 2) * 10, h, t, i, { robe: '#1b1311', robeDk: '#0b0706', gold: .9, up: call * .9, mask: i % 3 === 1 ? 'gold' : 'egg' });
   }
   const pose = t < 161.2 ? dance(t, 'break') : { ...PZ.point };
@@ -299,14 +299,14 @@ shot(168.973, 170.746, (t) => { D2_sunShot(t, 62, 2); D2_sweep(t, 168.973, .22, 
 
 // Tender line: a close-up, then (on the beat) the cast orbiting on the disc; the eggshell words stay put across the cut.
 function D2_tenderText(t) {
-  const ws = D2_wt(63), fnt = FONT.vnI(150), lines = [[0, 1, 2], [3, 4, 5]], ys = [260, 440];
+  const ws = D2_wt(63), fnt = FONT.vnI(140), lines = [[0, 1, 2], [3, 4, 5]], ys = [210, 380];
   if (!ws.length) return;
   lines.forEach((row, r) => {
     let x = 110 + r * 70;
     row.forEach(j => {
       const w = ws[j]; if (!w) return;
       const k = easeOut((t - w.t + .04) / .22), wd = textW(w.w, fnt);
-      if (k > 0) { X.save(); X.globalAlpha = k; X.translate(0, (1 - k) * 22); lqInlayText(w.w, x, ys[r], { font: fnt, size: 150, material: 'egg', glint: frac(t * .2 + j * .1) }); X.restore(); }
+      if (k > 0) { X.save(); X.globalAlpha = k; X.translate(0, (1 - k) * 22); lqInlayText(w.w, x, ys[r], { font: fnt, size: 140, material: 'egg', glint: frac(t * .2 + j * .1) }); X.restore(); }
       x += wd + 44;
     });
   });
@@ -325,8 +325,8 @@ shot(170.746, 175.655, (t, lt) => {
     const l2 = t - tc;
     lqGround(t, { tone: 'black' });
     camBegin({ zoom: 1.06 - l2 * .02, x: 1080, y: 580, shake: KICK(t) * 4 });
-    D2_sun(1150, 380, 250, t, { rays: 24, spin: -.1, len: 1.9 });
-    const cx = 1150, cy = 890, rx = 620, ry = 112;
+    D2_sun(1400, 470, 210, t, { rays: 24, spin: -.1, len: 1.6 });
+    const cx = 1330, cy = 900, rx = 560, ry = 105;
     lqRedDisc(cx, cy, rx, ry, { glint: frac(t * .2), thick: 36 });
     const items = [], N = 12, rot = -l2 * 1.1;
     for (let i = 0; i < N; i++) { const a = rot + i / N * TAU, x = cx + Math.cos(a) * rx * .8, y = cy + Math.sin(a) * ry * .75, d = (Math.sin(a) + 1) / 2; items.push([y, () => D2_dancer(x, y, lerp(170, 240, d), t, i, { flip: Math.cos(a) < 0 })]); }
@@ -347,7 +347,7 @@ shot(175.655, beatT(324), (t, lt) => {
   camBegin({ zoom: 1.0 + k * .08 + zp, x: 1100, y: 560, shake: KICK(t) * 8 + k * 6 });
   D2_sun(1560, 470, 120 + k * 130, t, { rays: 28, len: 2.4 + k * 1.6, spin: .4, rayA: .6 + k * .35 });
   for (let i = 0; i < 12; i++) D2_dancer(-40 + i * 175, 1130 + (i % 2) * 20, 420, t, i, { robe: '#2a180d', robeDk: '#140b05', up: k * .8, lag: .3 });
-  D2_clawd(1330, 905, 150, t, 'pdoom');
+  D2_clawd(1800, 905, 150, t, 'pdoom');
   D2_idol(1590, 900 - 5.5 * 46, 46, t, lt < .9 ? dance(t, 'hype') : PZ.crouch, { eyes: 'open', face: { brow: .8 } });
   camEnd();
   D2_stamp('I CAN', 110, 330, t, D2_w(64, 0, 175.66), { size: 180 });
@@ -487,7 +487,8 @@ function D2_insetPaint(ins, t) {
   X.save(); X.font = FONT.vnSansM(15); X.fillStyle = 'rgba(246,227,161,.9)'; X.fillText(ins.label, x + 14, y + h - 14); X.restore();
 }
 function D2_emptyPanel(r, t) {
-  lqLacquer(() => X.rect(r[0], r[1], r[2], r[3]), '#150f0c', { bounds: r, glint: frac(t * .12 + r[0] * .0003), rim: 0 });
+  lqLacquer(() => X.rect(r[0], r[1], r[2], r[3]), '#150f0c', { bounds: r, glint: false, rim: 0, mottle: 0 });
+  X.strokeStyle = 'rgba(217,164,65,.35)'; X.lineWidth = 1.5; X.strokeRect(r[0] + 12, r[1] + 12, r[2] - 24, r[3] - 24);
 }
 // Gold frame and dividers of the whole panel.
 function D2_frame(t) {
@@ -496,7 +497,7 @@ function D2_frame(t) {
   lqGold(() => {
     X.rect(505, 22, 10, H - 44); X.rect(1405, 22, 10, H - 44);
     for (const x of [22, 1415]) { X.rect(x, 365, 483, 10); X.rect(x, 705, 483, 10); }
-  }, { bounds: [0, 0, W, H], glint: frac(g + .2), bevel: 1, lift: 0, scale: .8 });
+  }, { bounds: [0, 0, W, H], glint: false, bevel: 1, lift: 0, scale: .8 });
 }
 // The live stage in the centre: a gold sun, the red disc, the idol, the Clawd and a ring of masked dancers.
 function D2_stage(t, call) {
@@ -592,7 +593,7 @@ shot(D2_T3, D2_TEND, (t, lt) => {
       X.restore();
     }
   }
-  D2_callWords(t, 72, ['COME', 'MY...'], 990, 200, { end: 999, n: 30 });
+  D2_callWords(t, 72, ['COME', 'MY...'], 250, 200, { end: 999, n: 30 });
   D2_sweep(t, D2_T3, .25, .45);
   D2_sweep(t, D2_w(72, 0, 194.75), .5, .35);
 }, { seed: 661 });
