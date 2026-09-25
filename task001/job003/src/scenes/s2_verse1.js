@@ -50,10 +50,19 @@ function S2_bake(key, rect, seed, painter) {
     tx.setTransform(1, 0, 0, 1, 0, 0); tx.globalCompositeOperation = 'source-over'; tx.globalAlpha = 1; tx.fillStyle = '#fff'; tx.fillRect(0, 0, T.width, T.height);
     X = tx; X.save(); X.setTransform(SX, 0, 0, SX, -ox * SX, -oy * SX);
     try { S2_seeded(seed, painter); } finally { X.restore(); X = prev; }
-    // blend weights
+    // blend weights: a ramp of width OV centred in each overlap (bands never meet, so the weights always sum to one)
+    const ramp = (n, i, st, S, horiz) => {
+      if (n < 2) return;
+      const g = horiz ? tx.createLinearGradient(0, 0, S, 0) : tx.createLinearGradient(0, 0, 0, S), c1 = (S - st) / 2, c2 = (st + S) / 2, h = OV / 2;
+      const stops = [[0, i > 0 ? 0 : 1]];
+      if (i > 0) stops.push([(c1 - h) / S, 0], [(c1 + h) / S, 1]);
+      if (i < n - 1) stops.push([(c2 - h) / S, 1], [(c2 + h) / S, 0]);
+      stops.push([1, i < n - 1 ? 0 : 1]);
+      stops.forEach(([o, a]) => g.addColorStop(clamp(o), `rgba(0,0,0,${a})`));
+      tx.fillStyle = g; tx.fillRect(0, 0, W, H);
+    };
     tx.setTransform(SX, 0, 0, SX, 0, 0); tx.globalCompositeOperation = 'destination-in';
-    if (nx > 1) { const g = tx.createLinearGradient(0, 0, W, 0); g.addColorStop(0, i > 0 ? 'rgba(0,0,0,0)' : '#000'); g.addColorStop(ovx / W, '#000'); g.addColorStop(1 - ovx / W, '#000'); g.addColorStop(1, i < nx - 1 ? 'rgba(0,0,0,0)' : '#000'); tx.fillStyle = g; tx.fillRect(0, 0, W, H); }
-    if (ny > 1) { const g = tx.createLinearGradient(0, 0, 0, H); g.addColorStop(0, j > 0 ? 'rgba(0,0,0,0)' : '#000'); g.addColorStop(ovy / H, '#000'); g.addColorStop(1 - ovy / H, '#000'); g.addColorStop(1, j < ny - 1 ? 'rgba(0,0,0,0)' : '#000'); tx.fillStyle = g; tx.fillRect(0, 0, W, H); }
+    ramp(nx, i, stx, W, true); ramp(ny, j, sty, H, false);
     cx.globalCompositeOperation = 'lighter'; cx.drawImage(T, (ox - rx) * SX, (oy - ry) * SX);
   }
   return (S2_BK[id] = { c: C, r: [rx, ry, Math.max(rw, W), Math.max(rh, H)] });
@@ -499,7 +508,7 @@ function S2D_scene(t) {
 // ---------------------------------------------------------------------------------------------------------------------
 // E · the road at the end, the lantern, the wish
 // ---------------------------------------------------------------------------------------------------------------------
-const S2E_RECT = [-20, -840, 1960, 1940], S2E_VP = [905, 648];
+const S2E_RECT = [0, -840, 1920, 1940], S2E_VP = [905, 648];
 const S2E_REL = 60.944;   // the lantern lets go on the downbeat of bar 24
 function S2E_road(u, side) {   // point along a road edge, u = 0 (near) … 1 (vanishing point)
   const a = side < 0 ? [-80, 1120] : [1340, 1120]; return [lerp(a[0], S2E_VP[0] + side * 8, u), lerp(a[1], S2E_VP[1], u)];
@@ -590,8 +599,3 @@ function S2_shot(i, t) {
   } else S2_SCENES[i](t);
 }
 S2_SCENES.forEach((fn, i) => shot(S2_CUT[i], S2_CUT[i + 1], t => S2_shot(i, t), { seed: 3320 + i, S2: true }));
-shot(70, 71, t => { skSilk(t);
-  skWash(() => X.rect(-60, -60, 700, 1300), S2_P.indigo, { a: .6, seed: 1 });
-  skWash(() => { X.rect(700, -60, 500, 1300); X.moveTo(1000, 500); X.arc(950, 500, 50, 0, TAU); }, S2_P.indigo, { a: .6, seed: 2, rule: 'evenodd' });
-  skWash(() => X.rect(1250, -60, 800, 700), S2_P.indigo, { a: .6, seed: 3, grad: [0, -60, 0, 640], gradTo: .2 });
-}, { S2: true });

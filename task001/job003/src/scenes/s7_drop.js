@@ -550,3 +550,6 @@ shot(S7_B(358), S7_END, (t, lt) => {
   S7_flash(t, S7_HIT, .8, '#FFF0F8', .3);
 }, { dark: true });
 TESTS.s7perf = () => { window.TEST = null; const out = []; for (const t0 of [186.5, 189.5, 192.5, 193.3, 194.5, 197.5, 199.2, 202.5, 205.8, 207.3, 208.3, 212, 213.5, 217, 219.2, 222, 224, 226.9, 227.5]) { const ms = []; for (let i = 0; i < 4; i++) { const a = performance.now(); drawFrame(t0 + i / 30); X.getImageData(0, 0, 1, 1); ms.push(Math.round(performance.now() - a)); } out.push(t0 + ': ' + ms.join(',')); } console.error('S7 ms ' + out.join(' | ')); };
+TESTS.s7perf2 = () => { window.TEST = null; drawFrame(208.3); const tm = (nm, fn) => { const ms = []; for (let i = 0; i < 3; i++) { const a = performance.now(); T = 208.3 + i / 30; fn(T); X.getImageData(0, 0, 1, 1); ms.push(Math.round(performance.now() - a)); } return nm + ':' + ms.join(','); };
+  const r = [tm('stripFace', t => S7_stripFace(t, 2, 'ecu', { n: 5, gap: 90, amp: 30, seed: 2 })), tm('strips', t => S7_strips(t, S7_cache('face:ecu', () => 0), { n: 5, gap: 90 })), tm('banner', t => S7_banner(t, 5)), tm('lyric', t => S7_lyric(t, 4, S7_bb(4))), tm('jolt', t => S7_jolt(t, t - .05)), tm('finish', t => skFinish(t, null)), tm('neonface', t => S7_drawNeonFace(t, S7_ECU, null, () => 1)), tm('night', t => S7_put(S7_night('face'), null))];
+  console.error('S7 parts ' + r.join(' | ')); };

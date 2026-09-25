@@ -448,7 +448,7 @@ function S4_v4Painting() {
   for (let s = 0; s < 2; s++) {
     const y0 = 260 + s * 260, lines = [];
     for (let i = 0; i < 5; i++) { const y = y0 + i * 18; lines.push([[120, y + sjit(s * 9 + i, 2), .5], [700, y + sjit(s * 7 + i + 3, 2)], [1300, y + sjit(i * 5 + s, 2)], [1800, y + sjit(i + s * 11, 2), .4]]); }
-    skInk(lines, { w: 2.2, alpha: .5, dry: .5, seed: 102 + s, color: S4_P.inkLt });
+    skInk(lines, { w: 3.4, alpha: .75, dry: .35, seed: 102 + s, color: S4_P.inkLt });
     // notes: ink heads and stems
     const heads = [];
     for (let n = 0; n < 11; n++) { const x = 240 + n * 140 + sjit(n + s * 20, 20), y = y0 + 72 - Math.round(hash(n * 3.1 + s) * 8) * 9; heads.push([x, y]); }
