@@ -447,6 +447,9 @@ function S2D_bg() {
   skWash(() => X.rect(-60, -60, W + 120, H + 120), S2_P.indigo, { a: .5, edge: .2, feather: .3, color2: S2_P.ink, mix: .3, seed: 31, scale: 4, grad: [W, H, 0, 0], gradTo: .5 });
   S2_light(260, 140, 520, .6);
   skWash(() => S2_blob(300, 170, 420, 300, 9, 24, .15), S2_P.ochre, { a: .25, edge: .5, feather: .7, seed: 32, spread: 50, scale: 3 });
+  // the sheet's soft shadow on the desk
+  const [sx, sy, sw, sh, rot] = S2D_SHEET;
+  X.save(); X.translate(sx, sy); X.rotate(rot); X.globalCompositeOperation = 'multiply'; X.filter = `blur(${18 * SX}px)`; X.fillStyle = 'rgba(30,30,50,.55)'; X.fillRect(-sw / 2 + 14, -sh / 2 + 22, sw, sh); X.restore();
 }
 function S2D_ink() {
   // staves of the old song (faded sepia), inside the sheet's local frame
@@ -473,7 +476,6 @@ function S2D_scene(t) {
     // the sheet: pale silk laid on the dark desk
     const [sx, sy, sw, sh, rot] = S2D_SHEET;
     X.save(); X.translate(sx, sy); X.rotate(rot);
-    X.save(); X.globalCompositeOperation = 'multiply'; X.filter = `blur(${18 * SX}px)`; X.fillStyle = 'rgba(30,30,50,.55)'; X.fillRect(-sw / 2 + 14, -sh / 2 + 22, sw, sh); X.restore();
     X.fillStyle = '#F4EDE0'; X.fillRect(-sw / 2, -sh / 2, sw, sh);
     X.restore();
     S2_put(ink);
@@ -577,7 +579,7 @@ function S2E_scene(t) {
     const w9 = S2_ws(7);
     if (w9.length) S2_write(t, w9, 3, 6, 110, 262, 54, { seed: 5 });
     S2_write(t, w9, 6, 8, 110, -150, 224, { big: true, seed: 6, dur: .3 });
-    S2_inscribe(t, 8, 1200, -470, [3, 4], { size: 50, seal: [390, 36] });
+    S2_inscribe(t, 8, 1200, -470, [4, 3], { size: 50, seal: [420, 40] });
     X.restore();
   });
 }
