@@ -129,10 +129,10 @@ function idolHead(x, y, R, o = {}) {
 // Nón lá chin strap: a silk ribbon from under the side locks, tied under the chin (drawn before the hair in front).
 function drawNonLaStrap(R, fx, o) {
   const strap = o.strap || '#B3261E';
-  inkStroke(() => { X.beginPath(); X.moveTo(-R * .86 + fx * .2, -R * .2); X.quadraticCurveTo(-R * .62 + fx * .3, R * .88, fx * .9, R * 1.07); X.quadraticCurveTo(R * .62 + fx * .3, R * .88, R * .86 + fx * .2, -R * .2); }, strap, R * .045);
+  inkStroke(() => { X.beginPath(); X.moveTo(-R * .84 + fx * .2, R * .42); X.quadraticCurveTo(-R * .72 + fx * .3, R * 1.02, fx * .9, R * 1.1); X.quadraticCurveTo(R * .72 + fx * .3, R * 1.02, R * .84 + fx * .2, R * .42); }, strap, R * .03);
   inkStroke(() => { X.beginPath(); X.moveTo(-R * .84 + fx * .2, -R * .1); X.quadraticCurveTo(-R * .6 + fx * .3, R * .86, fx * .9, R * 1.05); }, 'rgba(255,220,200,.4)', R * .012);
   // the knot
-  cut(() => { X.beginPath(); X.ellipse(fx * .9, R * 1.08, R * .07, R * .045, 0, 0, TAU); }, { fill: strap, lift: 2 });
+  cut(() => { X.beginPath(); X.ellipse(fx * .9, R * 1.1, R * .06, R * .04, 0, 0, TAU); }, { fill: strap, lift: 2 });
 }
 // Nón lá: a conical palm-leaf hat seen front-on, sitting on the petal crown, with ribs, rings and a silk chin strap.
 function drawNonLa(R, fx, lift, o) {

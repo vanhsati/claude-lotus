@@ -124,7 +124,7 @@ function V_house(hs, C, dim) {
   const zz = u => lerp(hs.z0, hs.z1, u), cz = u => Math.max(zn, zz(u));
   // shopfront: glowing opening, folding-gate lines, a cinnabar signboard
   if (hs.z1 > zn + .3) {
-    X.fillStyle = `rgba(233,170,70,${.22 * dim})`; V_quad([[xs, 0, cz(.1)], [xs, 2.7, cz(.1)], [xs, 2.7, cz(.9)], [xs, 0, cz(.9)]], C); X.fill(); X.strokeStyle = gold; X.stroke();
+    X.fillStyle = `rgba(233,170,70,${.1 * dim})`; V_quad([[xs, 0, cz(.1)], [xs, 2.7, cz(.1)], [xs, 2.7, cz(.9)], [xs, 0, cz(.9)]], C); X.fill(); X.strokeStyle = gold; X.stroke();
     X.beginPath(); for (let u = .2; u < .85; u += .12) if (zz(u) > zn) V_line([xs, 0, zz(u)], [xs, 2.7, zz(u)], C); X.strokeStyle = goldF; X.lineWidth = lw * .5; X.stroke();
     V_quad([[xs, 2.9, cz(.06)], [xs, 3.6, cz(.06)], [xs, 3.6, cz(.94)], [xs, 2.9, cz(.94)]], C); X.fillStyle = hash(s + 1.7) < .5 ? '#8a1c15' : '#5a130e'; X.fill(); X.strokeStyle = gold; X.lineWidth = lw; X.stroke();
     X.beginPath(); for (let u = .16; u < .84; u += .09) if (zz(u) > zn) V_line([xs, 3.25, zz(u)], [xs, 3.25, zz(u + .05)], C); X.strokeStyle = `rgba(246,227,161,${.85 * dim})`; X.lineWidth = lw * 1.6; X.stroke();
@@ -225,7 +225,7 @@ function V_idolFace(t, extra = {}) { return { hat: 'nonla', hatMat: 'gold', mout
 function V1_paint(t) {
   const lt = t - V_S0, ws0 = wordTimes(LY[0]);
   const C = { x: -.35 + Math.sin(lt * .6) * .15, y: 1.75 + Math.sin(beatF(t) * Math.PI) * .012, z: lt * .55 };
-  const dist = lerp(15.5, 5.6, easeOut(lt / 4.8)), iz = C.z + dist, ix = lerp(1.0, .55, lt / 4.6);
+  const dist = lerp(15.5, 5.6, easeOut(lt / 4.8)), iz = C.z + dist, ix = lerp(-1.1, -.2, lt / 4.6);
   // reach out toward us on "come near me now"
   const reach = clamp((t - ws0[1].t + .1) / .2) * (1 - clamp((t - 39.9) / .3));
   const idol = { x: ix, z: iz, draw: P => {
@@ -238,8 +238,8 @@ function V1_paint(t) {
   // LY[0] Baby, COME NEAR ME NOW
   if (t > ws0[0].t - .3 && typeK > 0) {
     X.save(); X.globalAlpha = typeK;
-    const g = X.createLinearGradient(0, 0, 0, 560); g.addColorStop(0, 'rgba(7,5,4,.72)'); g.addColorStop(.8, 'rgba(7,5,4,.5)'); g.addColorStop(1, 'rgba(7,5,4,0)');
-    X.fillStyle = g; X.fillRect(0, 0, W, 560);
+    const g = X.createLinearGradient(0, 0, 0, 540); g.addColorStop(0, 'rgba(7,5,4,.75)'); g.addColorStop(.7, 'rgba(7,5,4,.5)'); g.addColorStop(1, 'rgba(7,5,4,0)');
+    X.fillStyle = g; X.fillRect(0, 0, W, 540);
     V_tender([ws0[0].t, ws0[1].t, 'Baby,'], 120, 118, t, { size: 96 });
     const f = FONT.vn(200), sp = textW(' ', f), wC = textW('COME', f), wM = textW('ME', f), wN = textW('NOW', f);
     V_inlay('COME', 100, 318, t, ws0[1].t, { size: 200, from: 1.3 });
@@ -256,7 +256,7 @@ shot(V_S0, V_S1, (t) => V1_paint(t), { seed: 371 });
 const V2_BARS = [-5, -4, -3, -2, -1, 0, 1, 2, 3, 4].map(i => 960 + (i + .5) * 118);
 function V2_paint(t) {
   const lt = t - V_S1, ws2 = wordTimes(LY[2]), ws3 = wordTimes(LY[3]), tP = ws2[3].t;
-  const push = 1 + lt * .018 + hit(t, tP, .3) * .03;
+  const push = 1 + lt * .007 + hit(t, tP, .3) * .03;
   lqGround(t, { tone: 'brown', sheen: .7 });
   camBegin({ zoom: push, x: 960, y: 560, shake: KICK(t) * 3 + hit(t, tP, .25) * 14 });
   // gold-leaf moon window behind her
@@ -300,7 +300,7 @@ shot(V_S1, V_S2, (t) => V_sandIn(t, V_S1, .26, V1_paint, V2_paint, 42, { from: '
 
 // ---------- V3: formula / Tequila / cellular (the bass drops out) ----------
 // V3a: an eggshell mosaic heart assembles, the heart curve written in gold.
-const V3_HC = [1300, 560], V3_HR = 250;
+const V3_HC = [1400, 560], V3_HR = 250;
 const V3_TILES = (() => {
   const out = [], st = 34, [cx, cy] = V3_HC, R = V3_HR;
   // inside test for heartPath(cx, cy, R) via its parametric cousin
@@ -312,6 +312,13 @@ const V3_TILES = (() => {
     const ang = hash(i * 7.3) * TAU, far = 700 + hash(i * 2.9) * 600;
     out.push({ pts, c: [px + st / 2, y + st / 2], off: [Math.cos(ang) * far, Math.sin(ang) * far * .7], rot: (hash(i * 5.1) - .5) * 6, ord: 1 - (y - (cy - R * 1.2)) / (R * 2.3) * .7 - hash(i * 3.3) * .3 + .3 });
   }
+  return out;
+})();
+// the heart curve (x²+y²−1)³ = x²y³ traced once (bisection along rays), 17 px outside the tiles
+const V3_OUTLINE = (() => {
+  const [cx, cy] = V3_HC, R = V3_HR, f = (x, y) => { const u = (x - cx) / (R * 1.02), v = -(y - cy - R * .1) / R, a = u * u + v * v - 1; return a * a * a - u * u * v * v * v; };
+  const oy = cy - R * .05, out = [];
+  for (let i = 0; i < 160; i++) { const a = i / 160 * TAU, dx = Math.cos(a), dy = Math.sin(a); let lo = 0, hi = R * 2; for (let k = 0; k < 30; k++) { const m = (lo + hi) / 2; if (f(cx + dx * m, oy + dy * m) < 0) lo = m; else hi = m; } out.push([cx + dx * (lo + 26), oy + dy * (lo + 26)]); }
   return out;
 })();
 function V3a_paint(t) {
@@ -328,7 +335,7 @@ function V3a_paint(t) {
   lqEggshell(P, { scale: .5, lift: 3, glint: .3 + lt * .2, bevel: 1 });
   // grout lines once assembled + a gold outline pulse on "formula"
   const done = clamp((t - ws[6].t + .05) / .15);
-  if (done > 0) { X.save(); X.globalAlpha = done; heartPath(V3_HC[0], V3_HC[1] + 10, V3_HR * 1.02); X.strokeStyle = LQ_PAL.gold; X.lineWidth = 6 + hit(t, ws[6].t, .4) * 10; X.stroke(); X.restore(); }
+  if (done > 0) { X.save(); X.globalAlpha = done; X.beginPath(); V3_OUTLINE.forEach(([x, y], i) => i ? X.lineTo(x, y) : X.moveTo(x, y)); X.closePath(); X.strokeStyle = LQ_PAL.gold; X.lineWidth = 6 + hit(t, ws[6].t, .4) * 10; X.stroke(); X.restore(); }
   // the formula
   const fk = clamp((t - T1 - .1) / 1.0), fstr = '(x² + y² − 1)³ = x²y³', ff = FONT.vnI(54);
   X.save(); X.beginPath(); X.rect(1300 - 330, 930, 660 * fk, 90); X.clip(); X.font = ff; X.textAlign = 'center'; X.fillStyle = LQ_PAL.goldHi; X.fillText(fstr, 1300, 995); X.restore();
@@ -337,7 +344,7 @@ function V3a_paint(t) {
   X.restore();
   camEnd();
   V_tender(LY[4], 110, 330, t, { size: 60, words: 6 });
-  V_inlay('FORMULA', 90, 560, t, ws[6].t, { size: 190, material: 'egg', from: 1.35, dustCol: LQ_PAL.egg });
+  V_inlay('FORMULA', 80, 560, t, ws[6].t, { size: 180, material: 'egg', from: 1.35, dustCol: LQ_PAL.egg });
 }
 shot(V_S2, V_S3, (t) => { V_sandIn(t, V_S2, .3, V2_paint, V3a_paint, 46, { from: 'center', halo: '#8a5a2a' }); }, { seed: 373 });
 
@@ -353,15 +360,15 @@ function V3b_paint(t) {
   const lev = 1080 - 40 - lt * 38;
   lqGold(() => { X.moveTo(-60, 1140); X.lineTo(-60, lev); for (let x = -60; x <= W + 60; x += 40) X.lineTo(x, lev + Math.sin(x * .012 + t * 4) * 9 + Math.sin(x * .03 - t * 6) * 4); X.lineTo(W + 60, 1140); X.closePath(); }, { scale: .45, glint: frac(lt * .3 + .6), bevel: 2 });
   // her head, tipsy
-  idolHead(1420, 560, 190, { hat: 'nonla', hatMat: 'gold', tilt: Math.sin(lt * 2.2 + .5) * .12 * high - .04, eyes: t > tq ? 'star' : high > .5 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), blush: 1 + high * .4, bust: true, look: [-.2, 0], sway: Math.sin(t * 3) });
+  idolHead(1560, 610, 165, { hat: 'nonla', hatMat: 'gold', tilt: Math.sin(lt * 2.2 + .5) * .12 * high - .04, eyes: t > tq ? 'star' : high > .5 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), blush: 1 + high * .4, bust: true, look: [-.2, 0], sway: Math.sin(t * 3) });
   camEnd();
   V_tender(LY[5], 110, 330, t, { size: 60, words: 6 });
   // TEQUILA with its own drips from the baseline
   if (t > tq - .02) {
-    const fnt = FONT.vn(210), w = textW('TEQUILA', fnt), x0 = 90, y = 600;
+    const fnt = FONT.vn(190), w = textW('TEQUILA', fnt), x0 = 80, y = 600;
     const lk = Math.max(0, t - tq - .15);
     lqGold(() => { for (let i = 0; i < 7; i++) { const dx = x0 + (i + .5) * w / 7 + sjit(i + 70, 20), dw = 12 + hash(i * 2.2) * 16, L = lk * (120 + hash(i * 4.4) * 200) * (1 + lk); if (L < 2) continue; X.moveTo(dx - dw / 2, y - 10); X.lineTo(dx + dw / 2, y - 10); X.lineTo(dx + dw * .35, y + L); X.arc(dx, y + L, dw * .5, 0, Math.PI); X.closePath(); } }, { scale: .3, glint: .5, bevel: 1 });
-    withT(0, 0, 0, 1, () => { X.save(); X.translate(x0 + w / 2, y); X.rotate(Math.sin(lt * 2.2) * .02); X.translate(-(x0 + w / 2), -y); V_inlay('TEQUILA', x0, y, t, tq, { size: 210, from: 1.35 }); X.restore(); });
+    withT(0, 0, 0, 1, () => { X.save(); X.translate(x0 + w / 2, y); X.rotate(Math.sin(lt * 2.2) * .02); X.translate(-(x0 + w / 2), -y); V_inlay('TEQUILA', x0, y, t, tq, { size: 190, from: 1.35 }); X.restore(); });
   }
 }
 shot(V_S3, V_S4, (t) => { V3b_paint(t); V_glint(t, V_S3); }, { seed: 374 });
@@ -371,11 +378,11 @@ function V3c_paint(t) {
   const lt = t - V_S4, ws = wordTimes(LY[6]), tc = ws[3].t, beats = [beatT(93), beatT(94), beatT(95)];
   lqGround(t, { tone: 'night', sheen: .9 });
   camBegin({ zoom: 1 + lt * .02, x: 960, y: 540 });
-  const bx = [1180, 1380, 1580], bh = [230, 400, 570], by = 860, bw = 150;
+  const bx = [1370, 1550, 1730], bh = [230, 400, 570], by = 860, bw = 130;
   // radio arcs above the bars, pulsing out on each lit beat
   for (let i = 0; i < 3; i++) {
     const k = (t - beats[i]) / .9; if (k < 0) continue;
-    for (let j = 0; j < 3; j++) { const kk = frac(k * .8 - j * .33); X.strokeStyle = `rgba(225,230,236,${.5 * (1 - kk)})`; X.lineWidth = 3; X.beginPath(); X.arc(1380, by - 640, 80 + kk * 460, -2.4, -.74); X.stroke(); }
+    for (let j = 0; j < 3; j++) { const kk = frac(k * .8 - j * .33); X.strokeStyle = `rgba(225,230,236,${.5 * (1 - kk)})`; X.lineWidth = 3; X.beginPath(); X.arc(1550, by - 610, 50 + kk * 200, -2.5, -.64); X.stroke(); }
   }
   bx.forEach((x, i) => {
     const lit = t >= beats[i] - .01, r = [x - bw / 2, by - bh[i], bw, bh[i]];
@@ -465,7 +472,7 @@ function V4b_paint(t) {
   const give = clamp((t - wordTimes(LY[8])[4].t + .1) / .2);
   let pose = dance(t, 'groove'); pose = mixPose(pose, { ...POSE0, ...PZ.armsOut, rSh: -1.2, rEl: -.3, lSh: 1.2, lEl: .3, head: .08 }, give * .8);
   if (t > ws9[4].t - .1) pose = mixPose(pose, { ...POSE0, ...PZ.heart }, clamp((t - ws9[4].t + .1) / .2));
-  idolBody(760, 640, 46, pose, { outfit: 'aodai', face: V_idolFace(t, { eyes: 'happy', look: [.4, 0] }) });
+  idolBody(760, 650, 52, pose, { outfit: 'aodai', face: V_idolFace(t, { eyes: 'happy', look: [.4, 0] }) });
   // gifts drop on the beats and stack
   const drops = V4_BOXES.map((b, i) => beatT(102 + i * .5 + (i > 3 ? (i - 3) * .5 : 0)));
   const base = 900, boxes = [];
@@ -487,6 +494,7 @@ function V4b_paint(t) {
 shot(V_S6, V_S7, (t) => { V4b_paint(t); V_glint(t, V_S6); }, { seed: 377 });
 
 // ---------- V5: the storm buffalo, then the sun ----------
+const V5_BOLTS = [V_S7 + .01, beatT(111), beatT(112.5)];
 function V5_paint(t) {
   const lt = t - V_S7, ws = wordTimes(LY[11]), tsh = ws[4].t, sun = easeOut(clamp((t - tsh + .1) / .35)), storm = 1 - sun * .85;
   lqGround(t, { tone: 'night', sheen: .5 + sun * .6 });
@@ -495,15 +503,18 @@ function V5_paint(t) {
   camBegin({ zoom: 1.03, x: 960, y: 540, shake: KICK(t) * 5 + hit(t, V_S7, .3) * 10 });
   // the sun and its rays
   if (sun > 0) {
-    withT(1560, 300, t * .15, sun, () => lqGold(() => sparkPath(0, 0, 330, 16, .55, 0, .4), { scale: .35, glint: .5, bevel: 1, alpha: .8 }));
+    withT(1560, 300, t * .15, sun, () => lqGold(() => sparkPath(0, 0, 360, 28, .6, 0, .22), { scale: .35, glint: .5, bevel: 1, alpha: .85 }));
     withT(1560, 300, 0, backOut(sun), () => lqGold(() => X.arc(0, 0, 180, 0, TAU), { scale: .35, glint: frac(t * .5), bevel: 2, lift: 6 }));
   }
   // storm clouds parting
   const part = sun * 700;
   lqLacquer(() => { X.moveTo(-100, -100); X.lineTo(1100 - part, -100); for (let q = 0; q <= 8; q++) { const u = q / 8; X.lineTo(1100 - part - Math.sin(u * 9 + t) * 30 - u * 200, -100 + u * 380); } X.lineTo(-100, 280); X.closePath(); }, '#24262e', { rim: 2, glint: .5, bounds: [0, 0, W, 300], alpha: .92 });
   lqLacquer(() => { X.moveTo(W + 100, -100); X.lineTo(1300 + part, -100); for (let q = 0; q <= 8; q++) { const u = q / 8; X.lineTo(1300 + part + Math.sin(u * 7 - t) * 30 + u * 260, -100 + u * 330); } X.lineTo(W + 100, 230); X.closePath(); }, '#1e2027', { rim: 2, glint: .6, bounds: [0, 0, W, 300], alpha: .92 });
+  X.save(); X.strokeStyle = `rgba(201,204,209,${.6 * storm})`; X.lineWidth = 2.5; X.beginPath();
+  for (let q = 0; q <= 8; q++) { const u = q / 8; X.lineTo(1100 - part - Math.sin(u * 9 + t) * 30 - u * 200, -100 + u * 380); } X.moveTo(1300 + part, -100);
+  for (let q = 0; q <= 8; q++) { const u = q / 8; X.lineTo(1300 + part + Math.sin(u * 7 - t) * 30 + u * 260, -100 + u * 330); } X.stroke(); X.restore();
   // lightning on the first downbeat and at bar 55
-  for (const tl of [V_S7 + .02, barT(28) + BEAT * 2]) { const k = hit(t, tl, .25); if (k > 0) { X.save(); X.strokeStyle = `rgba(244,246,248,${k})`; X.lineWidth = 6; X.beginPath(); let x = 300 + hash(tl) * 400, y = -20; X.moveTo(x, y); for (let q = 0; q < 9; q++) { x += (hash(tl + q) - .5) * 120; y += 60; X.lineTo(x, y); } X.stroke(); X.restore(); } }
+  for (const tl of V5_BOLTS) { const k = hit(t, tl, .3); if (k > 0) { X.save(); X.lineJoin = 'round'; X.beginPath(); let x = 500 + hash(tl) * 700, y = -20; X.moveTo(x, y); for (let q = 0; q < 12; q++) { x += (hash(tl * 3 + q) - .5) * 150; y += 62; X.lineTo(x, y); } X.strokeStyle = `rgba(200,215,240,${.35 * k})`; X.lineWidth = 26; X.stroke(); X.strokeStyle = `rgba(250,252,255,${k})`; X.lineWidth = 6; X.stroke(); X.restore(); } }
   // far hills (parallax) and the ground scrolling under the charge
   const scroll = lt * 900;
   lqLacquer(() => { X.moveTo(-100, 1200); for (let x = -100; x <= W + 100; x += 60) X.lineTo(x, 700 + Math.sin((x + scroll * .2) * .006) * 50 + Math.sin((x + scroll * .2) * .017) * 20); X.lineTo(W + 100, 1200); X.closePath(); }, '#161519', { rim: 0, glint: .5, bounds: [0, 620, W, 460] });
@@ -513,6 +524,7 @@ function V5_paint(t) {
   lqBuffalo(820, 1000, 640, t, { gait: 'charge', glint: frac(t * .4), speed: 2.2 });
   lqRain(t + 7, { rect: [0, 0, W, H], n: 70, angle: .3, len: 150, alpha: .85 * storm });
   camEnd();
+  for (const tl of V5_BOLTS) flash(t, tl, .18, 'rgba(210,225,255,.35)');
   // gold dust in the sunbeam
   if (sun > 0) { X.save(); X.fillStyle = LQ_PAL.goldHi; for (let i = 0; i < 60; i++) { const px = 1100 + hash(i * 3.1) * 820, py = frac(hash(i * 1.7) - t * .1) * 1080; X.globalAlpha = sun * .7 * hash(i * 5.3); X.fillRect(px, py, 3, 3); } X.restore(); }
   V_caption(t, LY[10]);

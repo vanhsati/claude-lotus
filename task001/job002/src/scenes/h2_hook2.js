@@ -70,6 +70,22 @@ function H2_big(str, x, y, t, t0, o = {}) {
     ...o, font: (o.font || FONT.vn)(o.size || 180), glint: o.glint ?? lerp(-.2, 1.1, clamp((t - t0) / .7)) });
   X.restore();
 }
+// a row of inlaid words, each landing on its own sung time; returns the x after the row
+function H2_row(t, items, x, y, o = {}) {
+  const size = o.size || 180, fnt = (o.font || FONT.vn)(size), gap = o.gap ?? size * .22;
+  X.save(); X.font = fnt; const wd = items.map(it => X.measureText(it.s).width); X.restore();
+  const tot = wd.reduce((a, b) => a + b, 0) + gap * (items.length - 1);
+  let cx = o.align === 'right' ? x - tot : o.align === 'center' ? x - tot / 2 : x;
+  items.forEach((it, i) => { H2_big(it.s, cx, y, t, it.t, { ...o, align: 'left' }); cx += wd[i] + gap; });
+  return cx;
+}
+// a soft dark lacquer band so gold type reads over the gold karsts
+function H2_shade(y0, y1, a = .6, top = true) {
+  X.save(); X.setTransform(SX, 0, 0, SX, 0, 0);
+  const g = X.createLinearGradient(0, y0, 0, y1);
+  g.addColorStop(top ? 0 : 1, `rgba(12,7,4,${a})`); g.addColorStop(top ? 1 : 0, 'rgba(12,7,4,0)');
+  X.fillStyle = g; X.fillRect(0, Math.min(y0, y1), W, Math.abs(y1 - y0)); X.restore();
+}
 // WAY WAY WAY: each word stamps at the front; later ones push earlier ones back toward a vanishing point.
 // Each word trails engraved gold echoes (the carved groove before it is inlaid).
 function H2_ways(t, times, o) {
@@ -159,7 +175,7 @@ function H2_drum(t, cx, cy, R, a, o = {}) {
   }
   X.restore();
   // the rider on the wall: feet toward the wall, travelling clockwise (facing −x after the rotation)
-  withT(cx + Math.cos(a) * (rr + R * .1), cy + Math.sin(a) * (rr + R * .1), a - Math.PI / 2, 1, () => { X.scale(-1, 1); H2_rider(R * .36, t, { glint: o.glint, spin: -t * 40 }); });
+  withT(cx + Math.cos(a) * (rr + R * .1), cy + Math.sin(a) * (rr + R * .1), a - Math.PI / 2, 1, () => { X.scale(-1, 1); H2_rider(R * .46, t, { glint: o.glint, spin: -t * 40 }); });
 }
 
 // ---------------------------------------------------------------- golden-hour stage
@@ -306,9 +322,9 @@ function H2_B(t) {
     X.save(); X.font = fnt; const L = layout(str, fnt, 4); X.restore();
     const x0 = W - 70 - L.width;
     L.forEach((c, i) => {
-      const ti = t0 + li * .035; li++;
+      const ti = t0 + li * .028; li++;
       if (t < ti) return;
-      const k = clamp((t - ti) / .32), ang = (1 - easeOut(k)) * -TAU, cxc = x0 + c.x + c.w / 2, cyc = y - 70;
+      const k = clamp((t - ti) / .26), ang = (1 - easeOut(k)) * -TAU, cxc = x0 + c.x + c.w / 2, cyc = y - 70;
       X.save(); X.translate(cxc, cyc - bump(k) * 60); X.rotate(ang); X.scale(lerp(1.3, 1, easeOut(k)), lerp(1.3, 1, easeOut(k)));
       lqInlayText(c.ch, 0, 70, { font: fnt, size: 190, align: 'center', glint: lerp(-.2, 1.1, clamp((t - ti) / .6)) });
       X.restore();
@@ -351,9 +367,8 @@ function H2_C(t) {
     withT(-620 * .38, -620 * .19, -wh, 1, () => { X.translate(620 * .38, 620 * .19); H2_rider(620, t, { glint: frac(t * .5), spin: -pos / 118 }); });
   });
   H2_words(t, ws.slice(0, 2), 96, 140, { size: 58 });
-  H2_big('SHOW', 90, 350, t, ws[2].t, { size: 200 });
-  H2_big('MY', 760, 350, t, ws[3].t, { size: 200 });
-  H2_ways(t, [ws[4].t], { x: 1260, y: 350, size: 200, vp: [1900, 200], k: .5, drift: .7 });
+  const xe = H2_row(t, [{ s: 'SHOW', t: ws[2].t }, { s: 'MY', t: ws[3].t }], 90, 350, { size: 190 });
+  H2_ways(t, [ws[4].t], { x: xe + 40 + 220, y: 350, size: 190, vp: [1900, 180], k: .5, drift: .7 });
 }
 shot(H2_T.c, H2_T.d, (t) => {
   H2_sandCut(t, H2_T.c, .4, () => H2_C(t), () => H2_B(t), 62, { from: 'left' });
@@ -407,11 +422,14 @@ shot(H2_T.d, H2_T.e, (t) => { H2_D(t); H2_glintCut(t, H2_T.d, .3, .35); }, { see
 function H2_E(t) {
   const ws = wordTimes(LY[49]);   // When you go come my way way way
   const lt = t - H2_T.e;
-  camBegin({ x: W / 2, y: H / 2, zoom: 1.08 - lt * .02, shake: KICK(t) * 3 });
+  const z = 1.42 - lt * .06, cyc = 640;
+  camBegin({ x: W / 2, y: cyc, zoom: z, shake: KICK(t) * 3 });
   const st = H2_stage(t, { horizon: 600, sunX: .5, camX: -lt * 40, cy: 800, rx: 540, ry: 115, h: 150, s: 24, glint: frac(t * .2), move: 'groove' });
   camEnd();
+  H2_shade(0, 300, .5);
   H2_words(t, ws.slice(0, 5), W / 2, 110, { size: 58, align: 'center' });
-  H2_ways(t, ws.slice(5).map(w => w.t), { x: W / 2, y: 1050, size: 230, vp: [st.sun[0], st.sun[1] + 40], k: .5 });
+  const sp = [(st.sun[0] - W / 2) * z + W / 2, (st.sun[1] - cyc) * z + H / 2];
+  H2_ways(t, ws.slice(5).map(w => w.t), { x: 470, y: 1040, size: 230, vp: [sp[0], sp[1] + 60], k: .5 });
 }
 shot(H2_T.e, H2_T.f, (t) => {
   H2_sandCut(t, H2_T.e + .3, .55, () => H2_E(t), () => H2_D(t), 63, { from: 'center' });
@@ -433,6 +451,7 @@ function H2_F(t) {
   H2_idol(t, 820, 1050, 44, 'groove', { glint: .5 });
   const P = H2_dancerPose(t, 0);
   lqClawd(1330, 1040, 330, { arms: P.arms, squash: P.hop * .35, lean: -P.lean * 2, jump: P.hop * 18, step: P.step, glint: frac(t * .3) });
+  H2_shade(0, 560, .55);
   H2_big('COME', 80, 250, t, ws[0].t, { size: 190 });
   H2_big('MY', 80, 440, t, ws[1].t, { size: 190 });
   H2_ways(t, ws.slice(2).map(w => w.t), { x: 1560, y: 330, size: 210, vp: [sun[0], sun[1] + 30], k: .5 });
@@ -447,13 +466,13 @@ function H2_G(t) {
   const out = easeOut(clamp((t - ws[2].t) / .3)) * (1 - backOut(clamp((t - ws[3].t) / .25)) * .6 - backOut(clamp((t - ws[4].t) / .25)) * .4);
   H2_waterTop(t, cx, cy);
   camBegin({ x: W / 2, y: H / 2, zoom: 1 + pulse(t) * .015 });
-  H2_sunflower(t, cx, cy, { r: 300, ringR: 290, h: 140, n: 12, rot: lt * .7, glint: frac(t * .3),
+  H2_sunflower(t, cx, cy, { r: 320, ringR: 305, h: 185, n: 12, rot: lt * .7, glint: frac(t * .3),
     burst: i => out * (i === 0 ? 420 : 140 + 60 * hash(i)) });
   camEnd();
   H2_words(t, ws.slice(0, 1), 90, 250, { size: 60 });
   H2_big('DON’T', 84, 470, t, ws[1].t, { font: FONT.hero, size: 210 });
   H2_big('RUNAWAY', 84, 690, t, ws[2].t, { font: FONT.hero, size: 210 });
-  H2_ways(t, ws.slice(3).map(w => w.t), { x: 380, y: 930, size: 210, font: FONT.hero, vp: [cx, cy], k: .45, drift: .3 });
+  H2_ways(t, ws.slice(3).map(w => w.t), { x: 300, y: 960, size: 190, font: FONT.hero, vp: [cx, cy], k: .45, drift: .3 });
 }
 shot(H2_T.g, H2_T.h, (t) => {
   H2_sandCut(t, H2_T.g, .3, () => H2_G(t), () => H2_F(t), 64, { from: 'top' });
@@ -463,19 +482,20 @@ shot(H2_T.g, H2_T.h, (t) => {
 function H2_Hs(t) {
   const ws = wordTimes(LY[52]);   // Run away way
   const lt = t - H2_T.h, cam = lt * 900;
-  const { sun } = H2_river(t, { horizon: 560, sunX: .7, camX: cam });
+  const { sun } = H2_river(t, { horizon: 640, sunX: .72, camX: cam });
   // boardwalk: cinnabar planks scrolling
-  lqLacquer(() => X.rect(0, 880, W, 70), LQ_PAL.cinnabarDk, { rim: 1, glint: .5, bounds: [0, 880, W, 70], lift: 6 });
-  lqLacquer(() => X.rect(0, 860, W, 26), LQ_PAL.cinnabar, { rim: 1, glint: .5, bounds: [0, 860, W, 26] });
-  X.fillStyle = 'rgba(217,164,65,.7)'; for (let i = -1; i < 14; i++) { const x = i * 160 - (cam % 160); X.fillRect(x, 860, 3, 90); }
+  const by = 900;
+  lqLacquer(() => X.rect(0, by + 20, W, 80), LQ_PAL.cinnabarDk, { rim: 1, glint: .5, bounds: [0, by + 20, W, 80], lift: 6 });
+  lqLacquer(() => X.rect(0, by, W, 26), LQ_PAL.cinnabar, { rim: 1, glint: .5, bounds: [0, by, W, 26] });
+  X.fillStyle = 'rgba(217,164,65,.7)'; for (let i = -1; i < 14; i++) { const x = i * 160 - (cam % 160); X.fillRect(x, by, 3, 100); }
   // a dancer chasing, the Clawd running
-  const P = H2_dancerPose(t, 1);
-  lqMaskDancer(360 + Math.sin(t * 9) * 10, 870, 330, t, { arms: [.85, .9], step: t * 5, lean: .18, flip: true });
+  lqMaskDancer(330 + Math.sin(t * 9) * 12, by + 10, 470, t, { arms: [.9, .75 + .2 * Math.sin(t * 9)], step: t * 5, lean: .2, flip: true });
   const run = t * 7;
-  lqClawd(1180, 870 - Math.abs(Math.sin(run * Math.PI)) * 30, 300, { step: run, lean: .2, arms: [Math.sin(run * Math.PI) * .5 + .5, -Math.sin(run * Math.PI) * .5 + .5], glint: frac(t * .6), look: 1 });
+  lqClawd(1240, by + 10 - Math.abs(Math.sin(run * Math.PI)) * 34, 400, { step: run, lean: .22, arms: [Math.sin(run * Math.PI) * .5 + .5, -Math.sin(run * Math.PI) * .5 + .5], glint: frac(t * .6), look: 1 });
   // dust of gold flakes kicked up behind
-  X.save(); for (let i = 0; i < 24; i++) { const a = frac(t * 2 + hash(i)), x = 1000 - a * 400, y = 860 - a * 90 * hash(i * 3) - bump(a) * 40; X.globalAlpha = 1 - a; X.fillStyle = LQ_PAL.goldHi; X.fillRect(x, y, 5, 5); } X.restore();
+  X.save(); for (let i = 0; i < 30; i++) { const a = frac(t * 2 + hash(i)), x = 1030 - a * 420, y = by - a * 110 * hash(i * 3) - bump(a) * 50; X.globalAlpha = 1 - a; X.fillStyle = LQ_PAL.goldHi; X.fillRect(x, y, 6, 6); } X.restore();
   // type runs off to the left too: RUN AWAY with engraved smears
+  H2_shade(0, 420, .55);
   const drift = easeIn(clamp((t - ws[1].t - .4) / .8)) * -120;
   H2_big('RUN', 90 + drift, 300, t, ws[0].t, { font: FONT.hero, size: 220 });
   H2_big('AWAY', 480 + drift, 300, t, ws[1].t, { font: FONT.hero, size: 220 });
@@ -487,15 +507,20 @@ shot(H2_T.h, H2_T.i, (t) => { H2_Hs(t); H2_glintCut(t, H2_T.h); }, { seed: 4508 
 function H2_I(t) {
   const ws = wordTimes(LY[53]);   // Oh baby come my way way way
   const lt = t - H2_T.i;
-  camBegin({ x: W / 2, y: 560, zoom: 1.18 + lt * .03, shake: KICK(t) * 3 });
-  const pose = t < ws[2].t ? dance(t, 'groove') : dance(t, ['heart', 'armsOut', 'jump', 'armsOut']);
-  const st = H2_stage(t, { horizon: 640, sunX: .5, camX: 0, cy: 860, rx: 600, ry: 110, h: 160, s: 30, spin: .7, pose, glint: frac(t * .25) });
+  const z = 1.0 + lt * .04;
+  camBegin({ x: W / 2, y: H / 2, zoom: z, shake: KICK(t) * 3 });
+  const pose = t < ws[2].t ? dance(t, 'groove') : dance(t, ['armsOut', 'heart', 'jump', 'armsOut']);
+  const st = H2_stage(t, { horizon: 640, sunX: .5, camX: 0, cy: 900, rx: 820, ry: 120, h: 210, s: 46, spin: .7, pose, glint: frac(t * .25) });
   camEnd();
-  H2_words(t, ws.slice(0, 2), W / 2, 110, { size: 60, align: 'center' });
+  // her silhouette rim-lit by the sun right behind her head
+  X.save(); X.globalCompositeOperation = 'screen'; const sp = [(st.sun[0] - W / 2) * z + W / 2, (st.sun[1] - H / 2) * z + H / 2];
+  const g = X.createRadialGradient(sp[0], sp[1], 0, sp[0], sp[1], 420); g.addColorStop(0, `rgba(255,220,150,${.3 + pulse(t) * .15})`); g.addColorStop(1, 'rgba(255,200,120,0)');
+  X.fillStyle = g; X.fillRect(0, 0, W, H); X.restore();
+  H2_shade(0, 420, .45);
+  H2_words(t, ws.slice(0, 2), 96, 120, { size: 60 });
   H2_big('COME', 90, 330, t, ws[2].t, { size: 190 });
   H2_big('MY', 1830, 330, t, ws[3].t, { size: 190, align: 'right' });
-  const sp = [(st.sun[0] - W / 2) * 1.2 + W / 2, (st.sun[1] - 560) * 1.2 + 540 + 20];
-  H2_ways(t, ws.slice(4).map(w => w.t), { x: W / 2, y: 1040, size: 250, vp: sp, k: .5 });
+  H2_ways(t, ws.slice(4).map(w => w.t), { x: 1500, y: 1040, size: 250, vp: [sp[0], sp[1] + 40], k: .5 });
   H2_glintCut(t, H2_T.i, .3, .7);
 }
 shot(H2_T.i, H2_T.j, (t) => H2_I(t), { seed: 4509 });
@@ -505,13 +530,12 @@ function H2_J(t) {
   const ws = wordTimes(LY[54]);   // When you go come my way way
   const cx = 630, cy = 540, lt = t - H2_T.j;
   H2_waterTop(t, cx, cy);
-  camBegin({ x: cx, y: cy, zoom: 1.12 + lt * .04, rot: -lt * .08 });
+  camBegin({ x: W / 2, y: H / 2, zoom: 1.02 + lt * .03 });
   H2_sunflower(t, cx, cy, { r: 280, ringR: 270, h: 150, n: 12, rot: -lt * 1.1 + 1, glint: frac(t * .3), burst: i => pulse(t, .3) * 30 });
   camEnd();
-  H2_words(t, ws.slice(0, 3), 1180, 250, { size: 60 });
-  H2_big('COME', 1170, 470, t, ws[3].t, { font: FONT.hero, size: 210 });
-  H2_big('MY', 1600, 470, t, ws[4].t, { font: FONT.hero, size: 210 });
-  H2_ways(t, ws.slice(5).map(w => w.t), { x: 1500, y: 800, size: 230, font: FONT.hero, vp: [cx, cy], k: .45, drift: .3 });
+  H2_words(t, ws.slice(0, 3), 1830, 230, { size: 60, align: 'right' });
+  H2_row(t, [{ s: 'COME', t: ws[3].t }, { s: 'MY', t: ws[4].t }], 1830, 460, { font: FONT.hero, size: 210, align: 'right' });
+  H2_ways(t, ws.slice(5).map(w => w.t), { x: 1560, y: 820, size: 230, font: FONT.hero, vp: [cx, cy], k: .45, drift: .3 });
 }
 shot(H2_T.j, H2_T.k, (t) => {
   H2_sandCut(t, H2_T.j, .3, () => H2_J(t), () => H2_I(t), 65, { from: 'right' });
@@ -526,8 +550,9 @@ function H2_K(t) {
   H2_stage(t, { horizon: 620, sunX: .5, camX: lt * 30, cy: 840, rx: 580, ry: 120, h: 155, s: 27, spin: -.9, pose, glint: frac(t * .25), face: { eyes: t > ws[7].t ? 'wink' : 'open' } });
   camEnd();
   H2_words(t, ws.slice(0, 3), 90, 150, { size: 60 });
-  H2_big('SHOW YOU', 84, 360, t, ws[3].t, { size: 170 });
-  H2_big('WHAT I MEAN', 1836, 1010, t, ws[5].t, { size: 150, align: 'right' });
+  H2_shade(0, 460, .55);
+  H2_row(t, [{ s: 'SHOW', t: ws[3].t }, { s: 'YOU', t: ws[4].t }], 84, 360, { size: 170 });
+  H2_row(t, [{ s: 'WHAT', t: ws[5].t }, { s: 'I', t: ws[6].t }, { s: 'MEAN', t: ws[7].t }], 1836, 1010, { size: 150, align: 'right' });
   H2_words(t, ws.slice(8), 1836, 1060 - 210, { size: 60, align: 'right' });
   // the build into the next section: the gold glint gathers and floods
   const fl = easeIn(clamp((t - 157.25) / .35));

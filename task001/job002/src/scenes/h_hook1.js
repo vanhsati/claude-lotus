@@ -140,8 +140,9 @@ function H_sceneTender(t, spin) {
   X.save(); X.globalCompositeOperation = 'multiply'; const mg = X.createRadialGradient(1340, 360, 60, 1440, 420, 340); mg.addColorStop(0, 'rgba(255,255,255,0)'); mg.addColorStop(1, 'rgba(120,80,40,.55)'); X.fillStyle = mg; X.beginPath(); X.arc(1440, 420, 332, 0, TAU); X.fill(); X.restore();
   const w15 = H_wt(15), feel = w15[6] ? w15[6].t : 71.6;
   const eyes = t < feel - .05 ? 'closed' : 'open';
+  H_aoBust(1410 - 20, 600, 215, { glint: frac(t * .12) });
   idolHead(1410, 600, 215, { hat: 'nonla', hatMat: 'gold', hatTilt: -.08 + Math.sin(t * 1.3) * .02, tilt: -.1 + Math.sin(t * 1.1) * .03, turn: -.18, eyes, open: easeOut((t - feel + .05) / .2),
-    look: [-.5, .1], mouth: clamp(VOX(t) * 1.25 - .2), mouthShape: 'o', blush: 1, bust: true, brow: -.5 });
+    look: [-.5, .1], mouth: clamp(VOX(t) * 1.25 - .2), mouthShape: 'o', blush: 1, bust: false, brow: -.5 });
   X.restore();
   // gold leaf flakes falling (pure function of t)
   for (let i = 0; i < 26; i++) {
@@ -155,6 +156,26 @@ function H_sceneTender(t, spin) {
     const k = easeOut((t - w15[7].t) / .5);
     X.save(); X.globalAlpha = k; X.font = FONT.vnIR(56); X.fillStyle = 'rgba(243,235,221,.85)'; X.fillText('oooo…', 120 + (1 - k) * 30, 850); X.restore();
   }
+  X.restore();
+}
+// áo dài shoulders for a head close-up (idolHead's own bust is the job001 stage jacket): cinnabar lacquer, a gold-edged
+// mandarin collar, the diagonal gold closure and an embroidered spark.
+function H_aoBust(x, y, R, o = {}) {
+  const sy = R * 1.3, col = o.color || LQ_PAL.cinnabar;
+  X.save(); X.translate(x, y);
+  cut(() => { X.beginPath(); X.roundRect(-R * .26, R * .5, R * .52, sy - R * .3, R * .1); }, { fill: PAL.skinSh, lift: 0 });
+  const sh = () => pathSmooth([[-R * 2.7, R * 3.8], [-R * 2.45, sy + R * 1.05], [-R * 1.75, sy + R * .52], [-R * .55, sy + R * .16], [0, sy + R * .12], [R * .55, sy + R * .16], [R * 1.75, sy + R * .52], [R * 2.45, sy + R * 1.05], [R * 2.7, R * 3.8]], true, .7);
+  lqLacquer(sh, col, { lift: 10, rim: 2, glint: o.glint, bounds: [-R * 2.4, sy, R * 4.8, R * 2.4] });
+  inkStroke(() => { X.beginPath(); X.moveTo(-R * 2.4, sy + R * 1.05); X.quadraticCurveTo(-R * 1.6, sy + R * .45, -R * .5, sy + R * .2); }, 'rgba(255,220,190,.25)', R * .03);
+  // diagonal closure from the collar to the right underarm, with gold knot buttons
+  lqGold(() => { X.moveTo(R * .18, sy + R * .12); X.quadraticCurveTo(R * .75, sy + R * .32, R * 1.05, sy + R * 1.05); X.lineTo(R * .98, sy + R * 1.08); X.quadraticCurveTo(R * .7, sy + R * .4, R * .14, sy + R * .2); X.closePath(); }, { scale: R / 600, glint: o.glint, bevel: 0 });
+  for (const f of [.25, .55, .85]) { const bx = lerp(R * .3, R * 1.02, f), by = lerp(sy + R * .16, sy + R * 1.0, f * f); lqGold(() => X.arc(bx, by, R * .045, 0, TAU), { scale: .2, glint: false, bevel: 1 }); }
+  lqGold(() => sparkPath(-R * .95, sy + R * .75, R * .22, 6, .25, .3, .6), { scale: R / 700, glint: o.glint, bevel: 1, lift: 2 });
+  // mandarin collar
+  const cp = () => { X.roundRect(-R * .36, sy - R * .34, R * .72, R * .34, [R * .12, R * .12, R * .04, R * .04]); };
+  lqLacquer(cp, LQ_PAL.cinnabarDk, { lift: 3, rim: 1, glint: o.glint, bounds: [-R * .36, sy - R * .34, R * .72, R * .34] });
+  lqGold(() => { X.roundRect(-R * .36, sy - R * .34, R * .72, R * .05, R * .03); X.rect(-R * .36, sy - R * .03, R * .72, R * .04); }, { scale: .3, glint: o.glint, bevel: 0 });
+  lqGold(() => { X.moveTo(0, sy - R * .3); X.lineTo(R * .04, sy - R * .03); X.lineTo(-R * .04, sy - R * .03); X.closePath(); }, { scale: .3, glint: false, bevel: 0 });
   X.restore();
 }
 function H_sceneAt(i, t, spin) { [H_sceneDrum, H_sceneSun, H_sceneTender][i](t, spin); }
@@ -223,7 +244,7 @@ function H_wide(t, o = {}) {
     } });
   }
   const s = o.idolS ?? 30;
-  items.push({ z: .001, draw: () => {
+  items.push({ z: o.idolFront ? 9 : .001, draw: () => {
     X.save(); X.fillStyle = 'rgba(30,4,2,.5)'; X.beginPath(); X.ellipse(cx, dy + 4, s * 2.6, s * .5, 0, 0, TAU); X.fill(); X.restore();
     idolBody(cx, dy - s * 4.55, s, o.pose || dance(t, 'groove'), { outfit: 'aodai', face: { hat: 'nonla', hatMat: 'gold', mouth: clamp(VOX(t) * 1.3 - .2), eyes: 'open', blush: .8, ...(o.face || {}) } });
   } });
@@ -329,7 +350,7 @@ shot(73.928, 75.291, (t, lt) => {
 
 // S3 75.29–76.66  wide, lower and closer: COME MY · WAY WAY receding toward her
 shot(75.291, 76.655, (t, lt) => {
-  H_wide(t, { cam: { zoom: 1.55 + lt * .05, y: 700, x: 960 }, camX: 300 + lt * 60, spin: 1.4 + t * .5, ring: .8 });
+  H_wide(t, { cam: { zoom: 1.55 + lt * .05, y: 700, x: 960 }, camX: 300 + lt * 60, spin: 1.4 + t * .5, ring: .8, idolFront: true, idolS: 32 });
   const w = H_W[17]; if (!w.length) return;
   H_lines(t, w, [[0, 1]], { x: W / 2, ys: [250], sizes: [210] });
   H_echo(t, H_wayT(17), 'WAY', { x: W / 2, y: 520, size: 280, vx: W / 2, vy: 640, shrink: .55 });
@@ -347,10 +368,10 @@ shot(76.655, 79.791, (t, lt) => {
   H_lines(t, w, [[0, 1]], { x: 90, align: 'left', ys: [215], sizes: [160] });
   // RUNAWAY: letters fly apart with the ring, then snap back together on the ways
   if (t >= run - .02) {
-    const s = H_stamp(t, run), fnt = FONT.hero(200), str = 'RUNAWAY', L = layout(str, fnt), spread = brk * (1 - back / 2) * 34;
+    const s = H_stamp(t, run), fnt = FONT.hero(185), str = 'RUNAWAY', L = layout(str, fnt), spread = brk * (1 - back / 2) * 34;
     L.forEach((c, i) => {
-      const u = i - (str.length - 1) / 2, x = 430 - L.width / 2 + c.x + c.w / 2 + u * spread, y = 520 + (hash(i * 3.1) - .5) * spread * 1.4, rr = (hash(i * 5.7) - .5) * spread * .01;
-      withT(x, y - 70, rr, s, () => lqInlayText(c.ch, 0, 70, { font: fnt, align: 'center', glint: frac((t - run) * .5 + i * .05), size: 200 }));
+      const u = i - (str.length - 1) / 2, x = 470 - L.width / 2 + c.x + c.w / 2 + u * spread, y = 520 + (hash(i * 3.1) - .5) * spread * 1.4, rr = (hash(i * 5.7) - .5) * spread * .01;
+      withT(x, y - 65, rr, s, () => lqInlayText(c.ch, 0, 65, { font: fnt, align: 'center', glint: frac((t - run) * .5 + i * .05), size: 185 }));
     });
   }
   H_wayStack(t, ways, { y: 900, size: 280, vy: 600, vx: 700 });
@@ -393,7 +414,8 @@ shot(83.609, 85.246, (t, lt) => {
   lqRedDisc(1350, 1060, 900, 170, { glint: frac(t * .1), thick: 40 });
   // dancers crossing behind her, left to right
   for (let i = 0; i < 4; i++) { const x = 900 + ((i * 330 + lt * 260) % 1320), pz = H_dancerPose(t, i, 1); lqMaskDancer(x, 1010, 300, t, { ...pz, flip: false }); }
-  idolHead(1370, 590, 175, { hat: 'nonla', hatMat: 'gold', bust: true, eyes: 'open', look: [-.4, 0], mouth: clamp(VOX(t) * 1.3 - .2), blush: .8, tilt: Math.sin(beatF(t) * Math.PI) * .05, turn: -.15 });
+  H_aoBust(1370 - 15, 590, 175, { glint: frac(t * .15) });
+  idolHead(1370, 590, 175, { hat: 'nonla', hatMat: 'gold', bust: false, eyes: 'open', look: [-.4, 0], mouth: clamp(VOX(t) * 1.3 - .2), blush: .8, tilt: Math.sin(beatF(t) * Math.PI) * .05, turn: -.15 });
   camEnd();
   const w = H_W[21]; if (!w.length) return;
   H_lines(t, w, [[0, 1, 2]], { x: 110, align: 'left', ys: [180], sizes: [60], font: FONT.vnSans, material: 'egg' });

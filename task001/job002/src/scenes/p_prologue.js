@@ -144,7 +144,7 @@ function P_quadPts(a, c, b, n = 30) { const o = []; for (let i = 0; i <= n; i++)
 function P_brush(pts, w0, u, seed, o = {}) {
   if (u <= 0) return;
   const S = P_sample(pts, o.n || 80), N = S.length - 1, m = Math.max(2, Math.round(N * u));
-  const prof = f => { const press = f < .08 ? .75 + 3.1 * f : 1; const tail = f > .55 ? Math.pow(1 - (f - .55) / .45, .8) : 1; return w0 * press * Math.max(.05, tail) * (1 + .08 * Math.sin(f * 17 + seed)); };
+  const prof = f => { const press = f < .06 ? .8 + 3.3 * f : 1; const tail = f > .55 ? Math.pow(1 - (f - .55) / .45, .8) : 1; return w0 * press * Math.max(.05, tail) * (1 + .08 * Math.sin(f * 17 + seed)); };
   const nrm = i => { const a = S[Math.max(0, i - 1)], b = S[Math.min(N, i + 1)], d = Math.hypot(b[0] - a[0], b[1] - a[1]) || 1; return [-(b[1] - a[1]) / d, (b[0] - a[0]) / d]; };
   const body = Math.min(m, Math.round(N * .9)), L = [], R = [];
   for (let i = 0; i <= body; i++) { const f = i / N, w = prof(f) * (i === body && u < .9 ? 1 : 1), n = nrm(i); L.push([S[i][0] + n[0] * w, S[i][1] + n[1] * w]); R.push([S[i][0] - n[0] * w * .92, S[i][1] - n[1] * w * .92]); }
@@ -154,12 +154,11 @@ function P_brush(pts, w0, u, seed, o = {}) {
   const head = S[body], hw = prof(body / N);
   lqLacquer(() => { X.moveTo(L[0][0], L[0][1]); for (const p of L) X.lineTo(p[0], p[1]); if (u < .97) X.arc(head[0], head[1], hw * .95, 0, TAU); X.moveTo(L[L.length - 1][0], L[L.length - 1][1]); for (let i = R.length - 1; i >= 0; i--) X.lineTo(R[i][0], R[i][1]); X.closePath(); }, col, { bounds, rim: 1.5, lift: o.lift ?? 6, glint: o.glint, mottle: .3 });
   // round pressed head of the stroke
-  X.save(); X.fillStyle = col; X.beginPath(); X.arc(S[0][0], S[0][1], prof(0) * 1.05, 0, TAU); X.fill(); X.restore();
   // bristle streaks (dry brush): long thin lines at fixed offsets across the width, broken toward the tail
   X.save(); X.lineCap = 'round';
   for (let b = 0; b < 14; b++) {
     const off = (hash(seed * 3 + b) * 2 - 1) * .95, dryAt = .6 + hash(seed * 5 + b) * .38, lw = 1 + hash(seed * 7 + b) * 3.5, dark = b % 3 === 0;
-    X.strokeStyle = dark ? 'rgba(70,8,6,.55)' : 'rgba(255,150,120,.28)'; X.lineWidth = lw;
+    X.strokeStyle = dark ? 'rgba(70,8,6,.3)' : 'rgba(255,160,130,.22)'; X.lineWidth = lw;
     X.beginPath(); let pen = false;
     const end = Math.min(m, Math.round(N * Math.min(1, dryAt + .35)));
     for (let i = 1; i <= end; i++) {
@@ -188,8 +187,9 @@ function P_brush(pts, w0, u, seed, o = {}) {
 
 // ---------- P1: the board and the burst ----------
 const P_S1 = P_quadPts([150, 900], [820, 470], [1790, 250], 40);          // the slash
-const P_S2 = P_quadPts([1460, 690], [1540, 700], [1600, 800], 14);        // a dab
+const P_S2 = P_quadPts([1470, 650], [1560, 690], [1630, 790], 14);        // a dab
 const P_S3 = P_quadPts([250, 330], [430, 230], [660, 250], 20);           // a flick
+const P_S5 = P_quadPts([640, 880], [980, 800], [1380, 850], 24);        // an underline
 const P_S4 = P_arcPts(960, 545, 395, Math.PI * 1.08, Math.PI * 1.08 + TAU * .86, 70, .015);   // the ensō
 function P_board(t, lt) {
   const push = 1 + lt * .018 + easeOut(clamp((t - 4.9) / 1.8)) * .05, sh = RMS(t) * 7;
@@ -204,6 +204,7 @@ function P_board(t, lt) {
   X.restore();
   // strokes land on the burst's peaks
   P_brush(P_S4, 50, P_ease(t, 4.92, 5.75, easeOut), 4, { lift: 8 });
+  P_brush(P_S5, 26, P_ease(t, 3.98, 4.2, easeOut), 5, { splat: 5 });
   P_brush(P_S3, 22, P_ease(t, 2.96, 3.14, easeOut), 3, { splat: 6 });
   P_brush(P_S1, 64, P_ease(t, .2, .5, expoOut), 1, { lift: 10 });
   P_brush(P_S2, 34, P_ease(t, .97, 1.1, easeOut), 2, { splat: 14 });
@@ -211,6 +212,7 @@ function P_board(t, lt) {
   P_flakes(t, .24, P_S1.filter((_, i) => i % 4 === 0), { n: 46, seed: 1, speed: 700 });
   P_flakes(t, 1.0, [[1530, 740]], { n: 22, seed: 2, speed: 800 });
   P_flakes(t, 2.98, [[450, 260]], { n: 16, seed: 3, speed: 600 });
+  P_flakes(t, 4.0, P_S5.filter((_, i) => i % 6 === 0), { n: 18, seed: 6, speed: 500 });
   P_flakes(t, 5.0, P_S4.filter((_, i) => i % 5 === 0), { n: 40, seed: 4, speed: 500 });
   P_flakes(t, 6.24, [[960, 545]], { n: 60, seed: 5, speed: 1500, size: 14 });
   // the card: "sơn mài" inlaid in gold, a cinnabar seal
@@ -492,9 +494,10 @@ function P_street(t) {
   X.save(); X.strokeStyle = 'rgba(217,164,65,.9)'; X.lineWidth = 3; X.beginPath(); X.moveTo(-200, P_GY); X.lineTo(2200, P_GY); X.stroke(); X.restore();
   X.save(); X.globalCompositeOperation = 'screen';
   for (const [hi, h] of P_HOUSES.entries()) {
-    const cx = h.x + h.w / 2, g = X.createLinearGradient(0, P_GY, 0, P_GY + 220);
-    g.addColorStop(0, 'rgba(233,160,70,.32)'); g.addColorStop(1, 'rgba(233,160,70,0)'); X.fillStyle = g;
-    X.globalAlpha = .55; for (let q = 0; q < 3; q++) { const wob = Math.sin(t * 1.3 + q * 2 + hi) * 6, ww = h.w * (.34 - q * .08); X.fillRect(cx - ww / 2 + wob, P_GY + 8 + q * 22, ww, 150 - q * 40); }
+    const cx = h.x + h.w / 2;
+    if (h.lit[0] + h.lit[1] < .9) continue;
+    X.save(); X.translate(cx + Math.sin(t * 1.3 + hi) * 5, P_GY + 70); X.scale(1, 3.2);
+    const rg = X.createRadialGradient(0, 0, 2, 0, 0, h.w * .38); rg.addColorStop(0, 'rgba(233,160,70,.22)'); rg.addColorStop(1, 'rgba(233,160,70,0)'); X.fillStyle = rg; X.fillRect(-h.w * .4, -40, h.w * .8, 80); X.restore();
   }
   X.restore();
   // lantern strings
