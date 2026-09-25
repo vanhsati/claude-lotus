@@ -1,0 +1,1 @@
+window.TESTS = window.TESTS || {};
