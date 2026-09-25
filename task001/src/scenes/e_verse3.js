@@ -483,11 +483,10 @@ function E_form(t, o = {}) {
     X.save(); pathPoly([[-380, -490], [382, -486], [378, 490], [-376, 486]]); X.clip();
     X.fillStyle = 'rgba(0,0,0,.06)'; X.fillRect(-380, -490, 18, 980);
     rtext('CDR', -320, -280, { font: FONT.logo(150), color: PAL.ink, mis: [6, 4, PAL.orange] });
-    rtext('FORM CDR-1 · REV 0', 330, -330, { font: FONT.monoB(24), color: PAL.ink, align: 'right' });
-    rtext('file before deployment', 330, -296, { font: FONT.mono(22), color: PAL.ink2, align: 'right' });
     inkStroke(() => { X.beginPath(); X.moveTo(-320, -250); X.lineTo(330, -250); }, PAL.ink, 6);
+    rtext('FORM CDR-1 · REV 0 · file before deployment', -320, -208, { font: FONT.mono(22), color: PAL.ink2 });
     ['CAPABILITY EVALS', 'RED-TEAM RESULTS', 'RISK ASSESSMENT', 'MITIGATIONS', 'SIGN-OFF'].forEach((lab, i) => {
-      const y = -150 + i * 120;
+      const y = -115 + i * 115;
       inkStroke(() => rrect(-320, y - 34, 56, 56, 6), PAL.ink, 5);
       rtext(lab, -240, y + 6, { font: FONT.ui(34), color: PAL.ink });
       inkStroke(() => { X.beginPath(); X.moveTo(-240, y + 36); X.lineTo(330, y + 36); }, PAL.ink, 2, { alpha: .5 });

@@ -590,6 +590,6 @@ G_cuts([120.9, beatT(265), beatT(266), beatT(267), beatT(268), beatT(269), beatT
   });
   G6_crowd(t, nb, slide);
   // ASKEW, crooked, in front of the crowd
-  withT(slide * 1900, slide * 900, 0, 1, () => stampText('ASKEW', 1490, 640, t, ws[2].t - .03, { font: FONT.hero(340), color: PAL.yellow, align: 'center', op: 'source-over', mis: [12, 9, PAL.pink], rot: -.42, stroke: PAL.blueDk, sw: 14 }));
+  withT(slide * 1900, slide * 900, 0, 1, () => stampText('ASKEW', 1380, 600, t, ws[2].t - .03, { font: FONT.hero(340), color: PAL.yellow, align: 'center', op: 'source-over', mis: [12, 9, PAL.pink], rot: .38, stroke: PAL.blueDk, sw: 14 }));
   camEnd();
 }, { dark: true, per: i => (i === 0 ? { joltColor: PAL.yellow, inDur: .3 } : {}) });

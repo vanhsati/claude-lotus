@@ -178,14 +178,14 @@ shot(C_T2, C_T3, (t, lt) => {
   if (!pre) {
     const st = stampK(t, C_TB, .16);
     withT(C_VC[0] - 20, 740, -.035, st.s * (1 + kick * .03), () => rtext('BEGUN', 0, 0, { font: FONT.hero(400), color: PAL.ink, align: 'center', op: 'source-over', mis: [14, 10, PAL.pink], stroke: PAL.paperHi, sw: 16, alpha: st.a }));
-    withT(C_VC[0] - 20, 385, .02, 1, () => rtext('SINGULARITY’S', 0, 0, { font: FONT.hero(140), color: PAL.blueDk, align: 'center', op: 'source-over', mis: [6, 5, PAL.pink], stroke: PAL.paperHi, sw: 12, alpha: clamp((t - C_TB - .1) / .15) }));
+    withT(C_VC[0] - 20, 385, .02, 1, () => rtext('SINGULARITY’S', 0, 0, { font: FONT.hero(120), color: PAL.blueDk, align: 'center', op: 'source-over', mis: [6, 5, PAL.pink], stroke: PAL.paperHi, sw: 12, alpha: clamp((t - C_TB - .1) / .15) }));
     // ‖u‖ → ∞ on the next beat
     const t0 = beatT(95);
     if (t > t0) withT(290, 560, -.06, lerp(1.4, 1, easeOut((t - t0) / .15)), () => {
       cut(() => pathPoly([[-230, -80], [230, -86], [236, 70], [-226, 76]]), { fill: PAL.yellow, lift: 10 });
       rtext('‖u‖ → ∞', 0, 26, { font: '800 84px "JetBrains Mono", "DejaVu Sans Mono"', color: PAL.ink, align: 'center' });
     });
-    stamp(1560, 350, 'SETTLED?', t, beatT(96), { size: 54, rot: .1, color: PAL.red });
+    stamp(1590, 690, 'SETTLED?', t, beatT(96), { size: 54, rot: .1, color: PAL.red });
   }
 }, { seed: 22, dark: true, inT: 'jolt' });
 
