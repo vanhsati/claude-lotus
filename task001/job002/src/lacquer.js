@@ -52,8 +52,8 @@ function lqRamp(stops) {
   return lut;
 }
 const LQ_RAMP = {
-  gold: [[0, '#140a04'], [.2, '#3b220c'], [.4, '#7c5219'], [.55, '#b07d2c'], [.66, '#cf9a3d'], [.76, '#dcae52'], [.86, '#ecca7a'], [.94, '#f6e3a1'], [1, '#fff8dc']],
-  silver: [[0, '#0b0b0d'], [.2, '#2b2d32'], [.4, '#5d6169'], [.55, '#8f949c'], [.66, '#b0b4bb'], [.76, '#c9ccd1'], [.86, '#dfe2e6'], [.94, '#f1f3f5'], [1, '#ffffff']],
+  gold: [[0, '#140a04'], [.2, '#3a1f0a'], [.4, '#74461a'], [.52, '#a26c22'], [.62, '#c28a2c'], [.72, '#d6a140'], [.82, '#e4b75c'], [.9, '#efd08a'], [.96, '#f7e6ad'], [1, '#fff8dc']],
+  silver: [[0, '#0b0b0d'], [.2, '#2a2b2f'], [.4, '#5a5d63'], [.52, '#85888e'], [.62, '#a3a6ab'], [.72, '#bcbfc3'], [.82, '#d0d3d6'], [.9, '#e2e4e6'], [.96, '#f1f2f3'], [1, '#ffffff']],
 };
 function lqPat(key, canvas) {
   const k = '_p_' + key; if (!LQ_TEX[k]) LQ_TEX[k] = X.createPattern(canvas, 'repeat'); return LQ_TEX[k];
@@ -77,19 +77,26 @@ function lqBuildLeaf() {
     const rowOff = r() * SH, rowY = j * SH + (r() - .5) * 8;
     for (let i = -1; i < S / SH; i++) {
       const x = i * SH + rowOff + (r() - .5) * 8, y = rowY + (r() - .5) * 5, w = SH + 5 + r() * 5, h = SH + 6 + r() * 4;
-      const rot = (r() - .5) * .035, tone = .7 + (r() - .5) * .16, phi = r(), gx = (r() - .5) * .12, gy = (r() - .5) * .12;
+      const rot = (r() - .5) * .035, tone = .7 + (r() - .5) * .2, phi = r(), gx = (r() - .5) * .12, gy = (r() - .5) * .12;
       const wr = [0, 1, 2].map(() => [r(), r(), r(), r(), r()]);
+      // torn edge outline (side index in [2]: 0 top, 1 left → the ridge is drawn on those)
+      const edge = [], jag = () => (r() - .5) * 2.4 + (r() < .08 ? (r() - .5) * 7 : 0);
+      for (let k = 0; k < 10; k++) edge.push([-w / 2 + w * k / 10, -h / 2 + jag(), 0]);
+      for (let k = 0; k < 10; k++) edge.push([w / 2 + jag(), -h / 2 + h * k / 10, 2]);
+      for (let k = 0; k < 10; k++) edge.push([w / 2 - w * k / 10, h / 2 + jag(), 3]);
+      for (let k = 0; k < 10; k++) edge.push([-w / 2 + jag(), h / 2 - h * k / 10, 1]);
+      edge.push([edge[0][0], edge[0][1], 0]);
       wrap((ox, oy) => {
         const cx = x + ox + w / 2, cy = y + oy + h / 2;
         if (cx < -SH || cx > S + SH || cy < -SH || cy > S + SH) return;
         g.save(); g.translate(cx, cy); g.rotate(rot);
         const gr = g.createLinearGradient(-w / 2, -h / 2, w / 2, h / 2);
         gr.addColorStop(0, gray(clamp(tone + gx))); gr.addColorStop(1, gray(clamp(tone + gy)));
-        g.fillStyle = gr; g.fillRect(-w / 2, -h / 2, w, h);
-        // overlap seam: a dark hairline under the edge and a light ridge just inside (the doubled leaf)
-        g.strokeStyle = gray(tone - .26, .75); g.lineWidth = 1.4; g.strokeRect(-w / 2, -h / 2, w, h);
-        g.strokeStyle = gray(tone + .14, .55); g.lineWidth = 1.2;
-        g.beginPath(); g.moveTo(-w / 2 + 2.2, h / 2 - 2); g.lineTo(-w / 2 + 2.2, -h / 2 + 2.2); g.lineTo(w / 2 - 2, -h / 2 + 2.2); g.stroke();
+        g.fillStyle = gr; g.beginPath(); edge.forEach((p, k) => k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill();
+        // overlap seam: a faint dark hairline under the torn edge and a light ridge just inside (the doubled leaf)
+        g.strokeStyle = gray(tone - .2, .45); g.lineWidth = .9; g.stroke();
+        g.strokeStyle = gray(tone + .1, .3); g.lineWidth = 2.2;
+        g.beginPath(); for (let k = 0; k < edge.length; k++) { const p = edge[k]; if (p[2] > 1) continue; k && edge[k - 1][2] <= 1 ? g.lineTo(p[0] + 1.6, p[1] + 1.6) : g.moveTo(p[0] + 1.6, p[1] + 1.6); } g.stroke();
         // wrinkles: a fold is a light/dark pair
         for (const q of wr) {
           if (q[4] < .45) continue;
@@ -104,8 +111,8 @@ function lqBuildLeaf() {
     }
   }
   // tears / pinholes where the leaf did not take (the lacquer shows)
-  for (let i = 0; i < 70; i++) {
-    const x = r() * S, y = r() * S, rad = 1 + Math.pow(r(), 3) * 9, n = 7, pts = [];
+  for (let i = 0; i < 55; i++) {
+    const x = r() * S, y = r() * S, rad = .8 + Math.pow(r(), 4) * 6, n = 7, pts = [];
     for (let k = 0; k < n; k++) { const a = k / n * TAU, rr = rad * (.4 + r() * .9); pts.push([Math.cos(a) * rr * 1.5, Math.sin(a) * rr]); }
     const rot = r() * TAU;
     wrap((ox, oy) => { g.save(); g.translate(x + ox, y + oy); g.rotate(rot); g.fillStyle = gray(.12, .95); g.beginPath(); pts.forEach((p, k) => k ? g.lineTo(p[0], p[1]) : g.moveTo(p[0], p[1])); g.closePath(); g.fill(); g.restore(); });
@@ -135,7 +142,8 @@ function lqBuildLeaf() {
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const i = y * S + x, l = L[i * 4] / 255, on = clamp((l - .2) / .15);
     const n = lqPN(x / 96, y / 96, S / 96, 1) * .05 + lqPN(x / 22, y / 22, Math.round(S / 22), 2) * .035 + lqPN(x / 4, y / 4, S / 4, 3) * .02 + (r2() - .5) * .045;
-    const v = clamp(l + n * on), ph = Fd[i * 4] / 255;
+    const coat = lqPN(x * 6 / S, y * 6 / S, 6, 8) * .5 + lqPN(x * 17 / S, y * 17 / S, 17, 9) * .3;   // uneven amber lacquer coat
+    const v = clamp((l + n * on) * (1 - on * (.09 + coat * .09))), ph = Fd[i * 4] / 255;
     lum[i] = v; lit[i] = clamp(v + on * (.08 + .34 * Math.pow(ph, 1.6)));
   }
   for (const kind of ['gold', 'silver']) for (const variant of ['base', 'lit']) {
@@ -149,17 +157,18 @@ function lqBuildLeaf() {
 // Crushed-eggshell inlay: periodic Voronoi fragments with dark lacquer gaps, per-fragment tone and tilt, sub-cracks.
 function lqBuildEgg() {
   if (LQ_TEX.egg) return LQ_TEX.egg;
-  const S = 768, G = 30, cs = S / G, r = rng(13), pts = [];
+  const S = 768, G = 28, cs = S / G, r = rng(13), pts = [];
   for (let j = 0; j < G; j++) for (let i = 0; i < G; i++) {
-    const n = r() < .22 ? 2 : 1;   // denser clusters of small crushed bits
+    const q = r(), n = q < .12 ? 0 : q < .72 ? 1 : q < .9 ? 2 : 4;   // big pieces, normal pieces, crushed clusters
+    const ccx = i + .2 + r() * .6, ccy = j + .2 + r() * .6;
     for (let k = 0; k < n; k++) {
-      const u = r(), tone = u < .62 ? 0 : u < .82 ? 1 : u < .95 ? 2 : 3;
-      pts.push({ x: (i + r()) * cs, y: (j + r()) * cs, gi: i, gj: j, tone, sh: (r() - .5) * .16, ta: r() * TAU, gap: .9 + r() * 1.8, vary: (r() - .5) * .06 });
+      const u = r(), tone = u < .6 ? 0 : u < .82 ? 1 : u < .95 ? 2 : 3, sp = n >= 4 ? .42 : 1;
+      pts.push({ x: clamp(ccx + (r() - .5) * sp, i, i + .999) * cs, y: clamp(ccy + (r() - .5) * sp, j, j + .999) * cs, gi: i, gj: j, tone, sh: (r() - .5) * .16, ta: r() * TAU, gap: .45 + Math.pow(r(), 2) * 1.3, vary: (r() - .5) * .07 });
     }
   }
   const grid = []; for (let j = 0; j < G; j++) { grid.push([]); for (let i = 0; i < G; i++) grid[j].push([]); }
   pts.forEach((p, idx) => grid[p.gj][p.gi].push(idx));
-  const TONES = [lqHex('#F1E8D8'), lqHex('#FAF6EC'), lqHex('#E7D7BA'), lqHex('#D8C3A0')], GAP = lqHex('#1a110d');
+  const TONES = [lqHex('#EFE5D2'), lqHex('#F8F3E8'), lqHex('#E4D2B2'), lqHex('#CDB690')], GAP = lqHex('#23150e');
   const c = mkCanvas(S, S), cx = c.getContext('2d'), id = cx.createImageData(S, S), d = id.data, r2 = rng(5);
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) {
     const gi = Math.floor(x / cs), gj = Math.floor(y / cs);
@@ -171,18 +180,18 @@ function lqBuildEgg() {
         if (dd < d1) { d2 = d1; d1 = dd; b1 = p; b1x = px; b1y = py; } else if (dd < d2) d2 = dd;
       }
     }
-    const e = (Math.sqrt(d2) - Math.sqrt(d1)) * .5 + lqPN(x / 7, y / 7, S / 7, 4) * .5;  // ≈ distance to the cell edge, ragged
+    const e = (Math.sqrt(d2) - Math.sqrt(d1)) * .5 + lqPN(x / 6, y / 6, S / 6, 4) * .35;  // ≈ distance to the cell edge, ragged
     const i4 = (y * S + x) * 4;
     if (e < b1.gap) { const v = .85 + r2() * .3; d[i4] = GAP[0] * v; d[i4 + 1] = GAP[1] * v; d[i4 + 2] = GAP[2] * v; d[i4 + 3] = 255; continue; }
     const T0 = TONES[b1.tone], tilt = ((x - b1x) * Math.cos(b1.ta) + (y - b1y) * Math.sin(b1.ta)) / cs;
-    const edge = clamp((e - b1.gap) / 3.2), sh = 1 + b1.sh * .5 + tilt * .07 + b1.vary - (1 - edge) * .2 + (r2() - .5) * .05 + lqPN(x / 3, y / 3, S / 3, 6) * .025;
+    const edge = clamp((e - b1.gap) / 2.2), sh = 1 + b1.sh * .5 + tilt * .07 + b1.vary - (1 - edge) * .16 + (r2() - .5) * .05 + lqPN(x / 3, y / 3, S / 3, 6) * .025;
     d[i4] = clamp(T0[0] * sh, 0, 255); d[i4 + 1] = clamp(T0[1] * sh, 0, 255); d[i4 + 2] = clamp(T0[2] * sh * .99, 0, 255); d[i4 + 3] = 255;
   }
   cx.putImageData(id, 0, 0);
   // hairline sub-cracks inside fragments
   cx.lineCap = 'round';
-  for (let i = 0; i < 420; i++) {
-    const x = r() * S, y = r() * S, a = r() * TAU, l = 3 + r() * 11;
+  for (let i = 0; i < 520; i++) {
+    const x = r() * S, y = r() * S, a = r() * TAU, l = 3 + r() * 9;
     for (const ox of [-S, 0, S]) for (const oy of [-S, 0, S]) {
       if (x + ox < -20 || x + ox > S + 20 || y + oy < -20 || y + oy > S + 20) continue;
       cx.strokeStyle = 'rgba(40,26,18,.55)'; cx.lineWidth = .7; cx.beginPath(); cx.moveTo(x + ox, y + oy); cx.lineTo(x + ox + Math.cos(a) * l, y + oy + Math.sin(a) * l); cx.stroke();
@@ -366,7 +375,7 @@ function lqLacquer(pathFn, color, o = {}) {
   if (gk !== false && gk !== null) {
     X.globalCompositeOperation = 'screen';
     X.fillStyle = lqBand(gk, { ...o, bounds: b }, [[0, 0], [.5, .16], [1, 0]], [255, 230, 205]); X.fillRect(b[0], b[1], b[2], b[3]);
-    X.fillStyle = lqBand(gk, { ...o, bounds: b, glintW: Math.max(b[2], b[3]) * .025 }, [[0, 0], [.5, .22], [1, 0]], [255, 245, 230]); X.fillRect(b[0], b[1], b[2], b[3]);
+    X.fillStyle = lqBand(gk, { ...o, bounds: b, glintW: Math.max(b[2], b[3]) * .05 }, [[0, 0], [.5, .12], [1, 0]], [255, 245, 230]); X.fillRect(b[0], b[1], b[2], b[3]);
   }
   X.globalCompositeOperation = 'source-over';
   // thin darker rim, then a hairline highlight on the upper-left edge
@@ -415,7 +424,7 @@ const LQ_SANDC = new Map();
 function lqSandStrokes(seed, reg, o) {
   const key = [seed, reg.join(','), o.n || 0, o.angle ?? '', o.from || '', o.spread ?? ''].join('|');
   if (LQ_SANDC.has(key)) return LQ_SANDC.get(key);
-  const r = rng(seed * 7.31 + 1.7), [rx, ry, rw, rh] = reg, base = Math.sqrt(rw * rh), n = o.n || Math.round(28 + 95 * clamp(rw * rh / (W * H)));
+  const r = rng(seed * 7.31 + 1.7), [rx, ry, rw, rh] = reg, base = Math.sqrt(rw * rh), n = o.n || Math.round(40 + 120 * clamp(rw * rh / (W * H)));
   const ang0 = o.angle ?? -.38, out = [];
   for (let i = 0; i < n; i++) {
     const u = r(), v = r(), jitter = r();
@@ -423,7 +432,7 @@ function lqSandStrokes(seed, reg, o) {
     if (o.from === 'left') ord = u * .75 + jitter * .25; else if (o.from === 'right') ord = (1 - u) * .75 + jitter * .25;
     else if (o.from === 'top') ord = v * .75 + jitter * .25; else if (o.from === 'bottom') ord = (1 - v) * .75 + jitter * .25;
     else if (o.from === 'center') ord = Math.hypot(u - .5, v - .5) * 1.25 + jitter * .2;
-    const s = { x: rx - rw * .05 + u * rw * 1.1, y: ry - rh * .05 + v * rh * 1.1, ki: ord * .78, a: ang0 + (r() - .5) * .45, L: base * (.2 + r() * .3), Wd: base * (.035 + r() * .05), prof: [], streaks: [], specks: [], scr: [] };
+    const s = { x: rx - rw * .05 + u * rw * 1.1, y: ry - rh * .05 + v * rh * 1.1, ki: ord * .78, a: ang0 + (r() - .5) * .3, L: base * (.26 + r() * .36), Wd: base * (.025 + r() * .04), prof: [], streaks: [], specks: [], scr: [] };
     for (let k = 0; k <= 16; k++) s.prof.push([.72 + r() * .5, .72 + r() * .5]);
     for (let k = 0; k < 16; k++) s.streaks.push({ v: (r() - .5) * 2.5, a: -1.2 + r() * .9, b: .3 + r() * .95, lw: .8 + r() * 3.2, al: .25 + r() * .6, bend: (r() - .5) * .3 });
     for (let k = 0; k < 46; k++) s.specks.push({ u: r() * 2 - 1, side: r() < .5 ? -1 : 1, d: .85 + r() * .9, sz: .7 + r() * 2.2, al: .3 + r() * .7 });
@@ -445,6 +454,8 @@ function lqSand(k, seed = 1, o = {}) {
       const g = clamp((k - s.ki) / .26); if (g <= 0) continue;
       const eg = easeOut(g), L = s.L * (.35 + .65 * eg), wd = s.Wd * (.3 + .7 * eg);
       X.save(); X.translate(s.x, s.y); X.rotate(s.a);
+      // thinning wash: the top coat worn translucent around the scrub
+      X.fillStyle = `rgba(255,255,255,${.16 * g})`; X.beginPath(); X.ellipse(0, 0, L * .58, wd * 1.7, 0, 0, TAU); X.fill();
       // rough-edged core: rubbed through
       X.fillStyle = `rgba(255,255,255,${Math.min(1, .35 + g * .85)})`;
       X.beginPath();
@@ -532,7 +543,7 @@ function lqClawd(x, y, s, o = {}) {
   X.save(); X.fillStyle = 'rgba(0,0,0,.45)'; X.beginPath(); X.ellipse(0, (o.jump || 0) + 2, bw * .55, s * .045, 0, 0, TAU); X.fill(); X.restore();
   [-.36, -.13, .13, .36].forEach((u, i) => {
     const ph = o.step !== undefined ? Math.sin(o.step * Math.PI + i * Math.PI) * .5 + .5 : 0, lh = legH * (1 - ph * .45);
-    leaf(() => X.roundRect(u * bw - s * .055, -legH - s * .02, s * .11, lh + s * .02, s * .02), leafO({ shade: .45, lift: lift * .5 }));
+    leaf(() => X.roundRect(u * bw - s * .055, -legH - s * .02, s * .11, lh + s * .02, s * .02), leafO({ shade: .75, lift: lift * .5 }));
   });
   const arms = o.arms || [0, 0];
   [-1, 1].forEach((sd, i) => withT(sd * bw * .5, by + bh * .45, -sd * (arms[i] || 0) * 2.2, 1, () =>
@@ -554,9 +565,9 @@ function lqClawd(x, y, s, o = {}) {
   }
   // gold chain: a sagging loop of links with a spark medallion
   if (o.chain !== false) {
-    const cy0 = by + bh * .56, sag = s * .2, n = 17, cw = bw * .7;
+    const cy0 = by + bh * .58, sag = s * .16, n = 13, cw = bw * .62;
     const P = u => [(u - .5) * cw, cy0 + Math.sin(u * Math.PI) * sag];
-    lqGold(() => { for (let i = 0; i <= n; i++) { const u = i / n, [px, py] = P(u), [qx, qy] = P(Math.min(1, u + .01)), a = Math.atan2(qy - py, qx - px); X.moveTo(px + Math.cos(a) * s * .026, py + Math.sin(a) * s * .026); X.ellipse(px, py, s * .026, s * (i % 2 ? .012 : .017), a, 0, TAU); } },
+    lqGold(() => { for (let i = 0; i <= n; i++) { const u = i / n, [px, py] = P(u), [qx, qy] = P(Math.min(1, u + .01)), a = Math.atan2(qy - py, qx - px); X.moveTo(px + Math.cos(a) * s * .026, py + Math.sin(a) * s * .026); X.ellipse(px, py, s * .03, s * (i % 2 ? .011 : .02), a, 0, TAU); X.moveTo(px + Math.cos(a) * s * .014, py + Math.sin(a) * s * .014); X.ellipse(px, py, s * .014, s * (i % 2 ? .003 : .008), a, 0, TAU, true); } },
       { scale: s / 900, glint, bevel: 0, lift: 2 });
     const [mx, my] = P(.5);
     lqGold(() => sparkPath(mx, my + s * .07, s * .075, 6, .3, 0, .7), { scale: s / 900, glint, bevel: Math.max(1, s * .008), lift: 3 });
@@ -578,7 +589,7 @@ function lqTimeMachine(x, y, s, t, o = {}) {
   if (trail > 0) {
     X.save(); X.globalCompositeOperation = 'lighter';
     for (const wx of [-.32, .31]) for (let lane = 0; lane < 2; lane++) {
-      const x0 = wx * u - u * .06, len = u * (1.1 + trail * 1.4), yy = -u * .012 - lane * u * .012;
+      const x0 = wx * u - u * .06, len = u * (.35 + trail * .9), yy = -u * .012 - lane * u * .012;
       for (let k = 0; k < 7; k++) {
         const ph = hash(k * 7.1 + lane * 3 + wx) * 5, wob = f => Math.sin(f * 13 + t * 21 + ph) * u * .006 * (1 + f * 2);
         X.beginPath(); X.moveTo(x0, yy);
@@ -589,7 +600,7 @@ function lqTimeMachine(x, y, s, t, o = {}) {
       }
     }
     for (let i = 0; i < 70; i++) {
-      const life = frac(t * (.9 + hash(i) * .8) + hash(i * 3.7)), sx = -u * .35 - life * u * (.5 + hash(i * 5.1) * 1.2) * (.4 + trail),
+      const life = frac(t * (.9 + hash(i) * .8) + hash(i * 3.7)), sx = -u * .35 - life * u * (.3 + hash(i * 5.1) * .8) * (.3 + trail),
         sy = -u * .02 - Math.sin(life * Math.PI) * u * (.03 + hash(i * 2.3) * .12) + life * life * u * .04, sz = u * .012 * (1 - life) * (.5 + hash(i * 9.1));
       if (sz < .6) continue;
       X.globalAlpha = trail * (1 - life);
@@ -604,7 +615,8 @@ function lqTimeMachine(x, y, s, t, o = {}) {
   // door geometry (side window + panel), hinged on the roof line
   const hingeY = -.292, th = doors * Math.PI * .86, ct = Math.cos(th);
   const door = [[.115, -.2], [.02, -.283], [-.14, -.288], [-.215, -.215], [-.215, -.08], [.11, -.08]];
-  const doorAt = pts => pts.map(([px, py]) => P(px, hingeY + (py - hingeY) * ct));
+  // opening, the door rises about the roof hinge; above the roof it leans back and outward like a wing
+  const doorAt = pts => pts.map(([px, py]) => { const yy = hingeY + (py - hingeY) * ct, up = Math.max(0, hingeY - yy); return P(px - up * .45 * Math.sin(th) + (px + .05) * .12 * Math.max(0, -ct), yy); });
   const poly = pts => () => { pts.forEach((p, i) => i ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); X.closePath(); };
   // far-side door (only visible above the roof once open)
   if (doors > .05 && ct < .6) lqSilver(poly(doorAt(door).map(([a, b]) => [a - u * .015, b - u * .005])), { scale: u / 2600, glint, shade: .55, bevel: 1 });
@@ -633,17 +645,21 @@ function lqTimeMachine(x, y, s, t, o = {}) {
     // seat back + a cinnabar dash light inside
     lqLacquer(() => X.roundRect(-.16 * u, -.24 * u, .06 * u, .15 * u, u * .02), LQ_PAL.cinnabarDk, { rim: 1, bounds: [-.16 * u, -.24 * u, .06 * u, .15 * u], glint: false });
   }
-  // the door itself
-  const dp = doorAt(door), outside = ct > 0;
-  if (outside) {
-    lqSilver(poly(dp), { scale: u / 2600, glint, bounds: bb, bevel: Math.max(1, u * .0025) });
-    const win = doorAt([[.095, -.198], [.018, -.268], [-.132, -.274], [-.195, -.212]]);
-    lqLacquer(poly(win), '#171b25', { rim: 1, bounds: [-.2 * u, -.28 * u, .3 * u, .09 * u], glint });
-    inkStroke(poly(dp), 'rgba(10,10,14,.7)', u * .0025);
-  } else {
-    lqLacquer(poly(dp), LQ_PAL.brown, { rim: 2, bounds: [-.22 * u, -.62 * u, .34 * u, .34 * u], glint: false });
-    inkStroke(poly(dp), LQ_PAL.gold, u * .003);
+  // the door itself: closed it sits flush; opening it swings up about the roof hinge like a wing (outer skin kept in view)
+  const dp = doorAt(door);
+  const win = doorAt([[.095, -.198], [.018, -.268], [-.132, -.274], [-.195, -.212]]);
+  if (doors > .02) {   // gas strut
+    const a = P(-.19, -.1), b = doorAt([[-.19, -.16]])[0];
+    inkStroke(() => { X.beginPath(); X.moveTo(a[0], a[1]); X.lineTo(b[0], b[1]); }, '#2a2a30', u * .005);
+    inkStroke(() => { X.beginPath(); X.moveTo(a[0], a[1]); X.lineTo(lerp(a[0], b[0], .5), lerp(a[1], b[1], .5)); }, '#9a9ea6', u * .003);
   }
+  lqSilver(poly(dp), { scale: u / 2600, glint, bounds: bb, bevel: Math.max(1, u * .0025), shade: ct < 0 ? .12 : 0 });
+  lqLacquer(poly(win), '#171b25', { rim: 1, bounds: [-.2 * u, -.3 * u, .3 * u, .2 * u], glint });
+  if (ct < .98) {       // the door's edge thickness and brown lacquer lining along the hinge
+    const e0 = dp[4], e1 = dp[5];
+    inkStroke(() => { X.beginPath(); X.moveTo(e0[0], e0[1]); X.lineTo(e1[0], e1[1]); }, LQ_PAL.brown, u * .012 * (1 - Math.abs(ct)));
+  }
+  inkStroke(poly(dp), 'rgba(10,10,14,.7)', u * .0025);
   // headlight / tail light
   lqLacquer(() => X.rect(.455 * u, -.123 * u, .05 * u, .014 * u), '#fff1c4', { rim: 1, glint: false, bounds: [.455 * u, -.123 * u, .05 * u, .014 * u] });
   lqLacquer(() => X.rect(-.512 * u, -.176 * u, .012 * u, .06 * u), LQ_PAL.cinnabar, { rim: 0, glint: false, bounds: [-.512 * u, -.176 * u, .012 * u, .06 * u] });

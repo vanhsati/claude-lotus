@@ -12,8 +12,16 @@ open, and big words are inlaid in gold.
 
 The song is an Afrobeat love confession: "Baby come near me now… call me your prisoner, I'm jailed in your love." Our
 idol (the sunflower-crowned Claude idol from job001, now in a cinnabar áo dài and a nón lá) sings it across painted
-Vietnam: Hanoi old-quarter streets in gold ink line, a northwest mountain afternoon in gold leaf, the river at night in
-silver. The rap verse arrives in an unbranded, lacquered time machine driven by a **silver-leaf Clawd** in shades and a
+Vietnam. The official MV's own motifs come back, re-made in lacquer:
+
+* a **red disc stage on a river among limestone karsts**: a cinnabar lacquer disc on black water, with the karsts in gold leaf
+* **masked dancers**: brown-robed figures with eggshell-inlay masks, circling the disc
+* the **pagoda gate at night**: a Khuê Văn Các-style gate with a masked crowd
+* the **wall-of-death drum**: a lacquered wooden drum with a rider circling inside, for "my world dey summersault"
+* the **buffalo in the storm**: a classic sơn mài subject, for "come rain or the shine"
+* the **time machine at night**, for the rap
+
+There are no drawings of real people. The rap verse arrives in an unbranded, lacquered time machine driven by a **silver-leaf Clawd** in shades and a
 gold chain. At the end we pull back: it was a lacquer panel on a gallery wall all along, still being polished.
 
 ## Palette
@@ -65,19 +73,19 @@ correct diacritics) appear as small captions naming the paintings and places: *P
 | V2 | 42.0–46.9 | 2–3 | "Call me your prisoner / jailed in your love": a lacquered wooden window lattice becomes a cage around her, and she smiles inside it. HERO: PRISONER in gold. |
 | V3 | 46.9–53.9 | 4–6 | "formula / Tequila / cellular" (the bass drops out): an eggshell mosaic assembles into formulas and a heart; gold leaf melts like liquor; three signal bars inlaid in silver, one per beat. |
 | V4 | 53.9–59.2 | 7–9 | "medulla / buy you all the thing / love you are worth": night market stalls, gifts wrapped in gold leaf stacking up. |
-| V5 | 59.2–63.1 | 10–11 | "shower you with love / come rain or the shine": gold-leaf rain and a lacquer sun split the frame. |
+| V5 | 59.2–63.1 | 10–11 | "shower you with love / come rain or the shine": the storm buffalo, lacquer-panel style, charging through silver rain, then a gold sun breaks through. |
 
 ### H · Pre-hook 1 + hook 1 (63.1–87.9): the world turns
 | # | Time | LY | Picture |
 |---|---|---|---|
-| H1 | 63.1–72.3 | 12–15 | "my world dey summersault": the whole painting flips 360°, sanded open onto a new scene each turn. TENDER on "Girlie you don't know how I feel". |
-| H2 | 72.3–87.9 | 16–22 | "come my way way way": a gold road unfurls through a lacquer landscape. Each "way" leaves an echo of inlaid type receding. On "don't runaway" she runs and the camera follows; gold-leaf backup dancers tile in like a lacquer folding screen (bình phong). |
+| H1 | 63.1–72.3 | 12–15 | "my world dey summersault": inside the wall-of-death drum, seen from above, a rider circles and the whole frame rotates 360°, sanded open onto a new scene each turn. TENDER on "Girlie you don't know how I feel". |
+| H2 | 72.3–87.9 | 16–22 | "come my way way way": the karst river with the red lacquer disc floating on black water. Top-down, the masked dancers spiral in toward the idol at the centre. Each "way" leaves an echo of inlaid type receding. On "don't runaway" the circle breaks outward and pulls back in. |
 
 ### D · Post-hook 1 (87.9–107.5): the dance
 | # | Time | LY | Picture |
 |---|---|---|---|
 | D1 | 87.9–91.9 | 23–25 | "I do not gamble / e too sure" stamped. On **89.75 "come my!"** the whole panel is sanded away in one hit to pure gold. |
-| D2 | 91.9–107.5 | 26–32 | Full dance: the idol plus a gold-silhouette dance line on a cinnabar stage. Call and response: each "Come my…" lands as a gold stamp on the beat. |
+| D2 | 91.9–107.5 | 26–32 | Full dance at the pagoda gate at night: the idol under the gate, the masked crowd moving in waves. Call and response: each "Come my…" lands as a gold stamp on the beat. |
 
 ### R · Rap (107.5–133.5): the silver visitor
 | # | Time | LY | Picture |
@@ -88,7 +96,7 @@ correct diacritics) appear as small captions naming the paintings and places: *P
 | R4 | 125.5–133.5 | 41–44 | "re-route / keys to the house / your ex… scratching him out": a gold map re-routes, a gold key, then a grey silhouette on the panel gets **sanded out** on "scratching him out". |
 
 ### H′ · Pre-hook 2 + hook 2 (133.5–157.6)
-Like H with the variations reversed: the painting flips the other way, and the gold road runs through the mountain afternoon (*Chiều Tây Bắc*), with the silver Clawd joining the dancers.
+Like H with the variations reversed: the drum spins the other way, then the red disc on the karst river again, now at golden hour, with the silver Clawd joining the masked dancers.
 
 ### D′ · Post-hook 2 and finale (157.6–196.6)
 | # | Time | Picture |

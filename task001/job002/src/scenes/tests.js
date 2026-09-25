@@ -58,20 +58,20 @@ TESTS.style = t => {
   lqInlayText('SƠN MÀI', 40, 820, { font: FONT.vn(200), material: 'gold', glint: .35, tracking: 6 });
   lqInlayText('Anh đang đến đây, em ơi', 44, 930, { font: FONT.vnI(80), material: 'gold', glint: .6 });
   lqInlayText('COME MY WAY', 44, 1030, { font: FONT.vnSans(78), material: 'silver', glint: .5, tracking: 4 });
-  lqInlayText('em', 900, 1030, { font: FONT.vn(120), material: 'egg', glint: .5 });
+  lqInlayText('em ơi', 770, 1030, { font: FONT.vnI(104), material: 'egg', glint: .5 });
   TS_label('INLAY · Playfair Display 900 / 700i · Be Vietnam Pro 900 · eggshell', 44, 1044);
 
   // ---- right: the cast ----
   // head close-up in nón lá
-  idolHead(1390, 340, 96, { hat: 'nonla', eyes: 'open', mouth: .25, look: [.1, 0], tilt: -.06, hatTilt: .05, blush: .7, bust: false });
-  TS_label('IDOL · NÓN LÁ', 1300, 560);
+  idolHead(1590, 440, 84, { hat: 'nonla', eyes: 'open', mouth: .25, look: [.1, 0], tilt: -.06, hatTilt: .05, blush: .7, bust: false });
+  TS_label('IDOL · NÓN LÁ', 1470, 640);
   // full body in áo dài
-  idolBody(1760, 560, 26, { lSh: .5, lEl: .6, rSh: -1.9, rEl: -.4, hR: 'open', lHip: .12, rHip: -.18, rKn: .15, lean: -.04, skirt: .4 }, { outfit: 'aodai', face: { hat: 'nonla', mouth: .4, eyes: 'happy' } });
-  TS_label('IDOL · ÁO DÀI', 1700, 820);
+  idolBody(1815, 600, 26, { lSh: .5, lEl: .6, rSh: -1.9, rEl: -.4, hR: 'open', lHip: .12, rHip: -.18, rKn: .15, lean: -.04, skirt: .4 }, { outfit: 'aodai', face: { hat: 'nonla', mouth: .4, eyes: 'happy' } });
+  TS_label('IDOL · ÁO DÀI', 1750, 830);
   // silver Clawd and the time machine
-  lqClawd(1290, 1030, 190, { arms: [1, 0], glint: .45 });
-  TS_label('THE VISITOR · SILVER CLAWD', 1190, 1044);
-  lqTimeMachine(1655, 1005, 520, t, { doors: .75, spin: 12, trail: .8, glint: .5 });
+  lqClawd(1300, 1030, 170, { arms: [1, 0], glint: .45 });
+  TS_label('SILVER CLAWD', 1240, 1044);
+  lqTimeMachine(1675, 1005, 480, t, { doors: 1, spin: 12, trail: .5, glint: .5 });
   TS_label('TIME MACHINE', 1700, 1044);
 };
 
@@ -80,4 +80,17 @@ TESTS.perf = t => {
   for (let i = 0; i < 4; i++) { const a = performance.now(); X.setTransform(SX, 0, 0, SX, 0, 0); TESTS.style(t + i * .1); ms.push(Math.round(performance.now() - a)); }
   const a = performance.now(); for (let i = 0; i < 4; i++) { X.setTransform(SX, 0, 0, SX, 0, 0); lqGround(t + i); } const g = (performance.now() - a) / 4;
   console.warn('style sheet ms per paint:', ms.join(', '), '· lqGround ms:', g.toFixed(1));
+};
+
+TESTS.idolbig = t => {
+  T = t; lqGround(t, {});
+  idolBody(700, 560, 60, { lSh: .5, lEl: .6, rSh: -1.9, rEl: -.4, hR: 'open', lHip: .12, rHip: -.18, rKn: .15, lean: -.04, skirt: .4 }, { outfit: 'aodai', face: { hat: 'nonla', mouth: .4, eyes: 'happy' } });
+  idolBody(1400, 560, 60, dance(t, 'groove'), { outfit: 'aodai', face: { hat: 'nonla', mouth: .4 } });
+};
+TESTS.dbg = t => {
+  T = t; sheet('#888');
+  const a = [200, 200], b = [400, 400];
+  lqLacquer(() => limbPath(a, b, 40, 30), '#B3261E', { rim: 0, glint: false, mottle: .18, sheen: 0 });
+  lqLacquer(() => limbPath([600, 200], [800, 400], 40, 30), '#B3261E', { rim: 0, glint: false, mottle: 0, sheen: 0 });
+  cut(() => limbPath([1000, 200], [1200, 400], 40, 30), { fill: '#B3261E', lift: 5 });
 };
