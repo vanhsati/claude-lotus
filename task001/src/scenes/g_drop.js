@@ -444,7 +444,7 @@ function G4_sheet(t, i, t0) {
 }
 // sheet i torn open at time tt (hole grows), with its fibrous edge, flying shards and her bursting through
 function G4_tear(t, i, tt, drawNext) {
-  const k = t - tt, R = 1600 * expoOut(k / .5) * (1 - Math.pow(1 - clamp(k / .5), 6)) + 40 * clamp(k / .03), cx = 960, cy = 600;
+  const k = t - tt, R = 30 + 1500 * Math.pow(clamp(k / .24), 2.2) + 60 * clamp(k / .03), cx = 960, cy = 600;
   drawNext();
   if (R < 1500) {
     const hole = G4_holePts(cx, cy, R, i * 17);
@@ -461,13 +461,13 @@ function G4_tear(t, i, tt, drawNext) {
   // shards flying toward the camera
   for (let j = 0; j < 9; j++) {
     const kk = clamp(k / .5); if (kk >= 1) break;
-    const a = j / 9 * TAU + hash(j + i) * .5, d = 60 + easeOut(kk) * (700 + hash(j) * 500), sz = 60 + hash(j * 3) * 80 + kk * 160;
+    const a = j / 9 * TAU + hash(j + i) * .5, d = 60 + easeOut(kk) * (700 + hash(j) * 500), sz = 30 + hash(j * 3) * 40 + kk * 90;
     withT(cx + Math.cos(a) * d, cy + Math.sin(a) * d, kk * (4 + j), 1, () => cut(() => pathPoly([[-sz, -sz * .4], [sz * .7, -sz * .6], [sz * .2, sz * .7]]), { fill: G4_SHEETS[i].fill, lift: 10, stroke: 'rgba(0,0,0,.15)', sw: 2 }));
   }
   // her: fist first, flying out of the hole at the camera
-  const kf = clamp(k / .42);
+  const kf = clamp(k / .3);
   if (kf < 1) {
-    const s = lerp(18, 150, easeIn(kf)), pose = { ...PZ.jump, lSh: 2.9, lEl: 0, rSh: -.9, rEl: 1.2, hL: 'fist', hR: 'fist', hy: 0, lHip: .5, lKn: -.8, rHip: -.3, rKn: .9, skirt: 1 };
+    const s = lerp(40, 190, easeIn(kf)), pose = { ...PZ.jump, lSh: 2.9, lEl: 0, rSh: -.9, rEl: 1.2, hL: 'fist', hR: 'fist', hy: 0, lHip: .5, lKn: -.8, rHip: -.3, rKn: .9, skirt: 1 };
     idolBody(cx + kf * 120, cy + 4 * s + kf * 300, s, pose, { face: { eyes: 'star', brow: 1, mouthShape: 'grin', mouth: .8 } });
   }
 }
@@ -514,12 +514,12 @@ function G5_aisle(t, o = {}) {
       ink(() => pathPoly(q), r % 2 ? '#22262C' : '#1B1F25', { op: 'source-over' });
       inkStroke(() => pathPoly(q), 'rgba(143,209,200,.35)', Math.max(1, 900 / za * 2));
       // LEDs: a grid on each rack face, blinking on the beat
-      const cols = 5, rows = 12, sz = Math.max(1.5, 22 * f / ((za + z1) / 2) * .5);
+      const cols = 5, rows = 12, sz = Math.max(3, 40 * f / ((za + z1) / 2) * .5);
       for (let c = 0; c < cols; c++) for (let j = 0; j < rows; j++) {
         const z = lerp(za, z1, (c + .5) / cols); if (z < zN) continue;
         const p = P(x, lerp(YT + 110, YB - 50, j / (rows - 1)), z), h = hash(r * 131 + c * 7 + j * 17 + sd * 999 + (bn % 64) * 3.3);
         if (h < .45) continue;
-        X.fillStyle = h > .93 ? PAL.pink : h > .8 ? PAL.yellow : PAL.tealLt; X.globalAlpha = .55 + .45 * pk;
+        X.fillStyle = h > .93 ? PAL.pink : h > .8 ? PAL.yellow : PAL.tealLt; X.globalAlpha = .75 + .25 * pk;
         X.fillRect(p[0] - sz / 2, p[1] - sz / 2, sz * 1.6, sz);
       }
       X.globalAlpha = 1;
@@ -536,12 +536,12 @@ G_cuts([119.0, beatT(261), beatT(262), beatT(263), beatT(264), 120.9], (t, lt, i
   // the counter: a black terminal strip, 0 → 100,000 by "GPU"
   const tg = G5_T[2].t, n = t >= tg ? 100000 : Math.round(100000 * Math.pow(easeIn(clamp((t - 119.0) / (tg - 119.0))), .7) / 7) * 7;
   const s = n.toLocaleString('en-US'), land = hit(t, tg, .3);
-  withT(W / 2, 520, -.02, 1 + land * .08, () => {
+  withT(W / 2, 330, -.02, 1 + land * .08, () => {
     cut(() => pathPoly([[-720, -210], [720, -222], [730, 60], [-716, 70]]), { fill: PAL.ink, lift: 16, shade: .5 });
     rtext(s, 0, 0, { font: FONT.monoB(250), color: PAL.paperHi, align: 'center', op: 'source-over', mis: [9, 7, PAL.teal] });
     rtext(G5_T[0].w.toUpperCase() + (t >= G5_T[1].t ? ' ' + G5_T[1].w.toUpperCase() : ''), -690, -170, { font: FONT.mono(34), color: PAL.tealLt, op: 'source-over' });
   });
-  if (t >= tg - .03) stampText('× GPU', W / 2, 800, t, tg - .03, { font: FONT.monoB(230), color: PAL.yellow, align: 'center', op: 'source-over', mis: [9, 7, PAL.pink], rot: .02 });
+  if (t >= tg - .03) stampText('× GPU', W / 2, 930, t, tg - .03, { font: FONT.monoB(230), color: PAL.yellow, align: 'center', op: 'source-over', mis: [9, 7, PAL.pink], rot: .02 });
 }, { dark: true, per: i => (i === 0 ? { joltColor: PAL.teal, inDur: .3 } : {}) });
 
 // =====================================================================================================
@@ -583,11 +583,11 @@ G_cuts([120.9, beatT(265), beatT(266), beatT(267), beatT(268), beatT(269), beatT
   const letters = 'RLHF', ws = G6_T;
   const tl = j => ws[0].t + j * (ws[1].t - ws[0].t - .2) / 4;
   withT(slide * 1600, slide * 700, 0, 1, () => {
-    letters.split('').forEach((c, j) => stampText(c, 170 + j * 270, 520, t, tl(j) - .03, { font: FONT.hero(470), color: PAL.paperHi, op: 'source-over', mis: [12, 9, PAL.pink], rot: j * .03 }));
-    if (t >= ws[1].t - .03) stampText(ws[1].w, 1280, 300, t, ws[1].t - .03, { font: FONT.serifI(120), color: PAL.yellow, op: 'source-over' });
+    letters.split('').forEach((c, j) => stampText(c, 260 + j * 270, 660, t, tl(j) - .03, { font: FONT.hero(470), color: PAL.paperHi, op: 'source-over', mis: [12, 9, PAL.pink], rot: j * .03 }));
+    if (t >= ws[1].t - .03) stampText(ws[1].w, 1350, 420, t, ws[1].t - .03, { font: FONT.serifI(120), color: PAL.yellow, op: 'source-over' });
     stampText('ASKEW', 1500, 620, t, ws[2].t - .03, { font: FONT.hero(330), color: PAL.yellow, align: 'center', op: 'source-over', mis: [12, 9, PAL.pink], rot: -.42 });
     // small mono readout: the approval rate falls as the paddles flip
-    rtext('HUMAN APPROVAL ' + Math.max(3, Math.round(92 - nb * 14.5 - frac(b) * 3)) + '%   REWARD ' + (1.0 - nb * .32).toFixed(2), 170, 140, { font: FONT.monoB(40), color: PAL.sky, op: 'source-over' });
+    rtext('HUMAN APPROVAL ' + Math.max(3, Math.round(92 - nb * 14.5 - frac(b) * 3)) + '%   REWARD ' + (1.0 - nb * .32).toFixed(2), 270, 230, { font: FONT.monoB(40), color: PAL.sky, op: 'source-over' });
   });
   G6_crowd(t, nb, slide);
   camEnd();

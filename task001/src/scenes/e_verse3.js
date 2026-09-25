@@ -213,7 +213,7 @@ shot(beatT(163), beatT(165), (t, lt) => {
   camBegin({ zoom: 1.1 - lt * .04 + kick * .012, x: 1000, y: 585, rot: -.03, shake: kick * 4 });
   E_formation(t, { floor: '#FFD9E6', dots: PAL.pink });
   camEnd();
-  const tB = ws[2].t - .03, ak = easeOut(clamp((t - tB) / .2));
+  const tB = ws[2].t - .03, ak = easeOut(clamp(lt / .2));
   if (ak > 0) E_arrow(90 + 330, 158, 330 * ak, 110, -1, PAL.blue, { lift: 10 });
   stampText('BACKWARD', 470, 240, t, tB, { font: FONT.hero(220), color: PAL.ink, mis: [8, 6, PAL.blue] });
   E_epoch(t);
@@ -482,9 +482,9 @@ function E_form(t, o = {}) {
     cut(() => pathPoly([[-380, -490], [382, -486], [378, 490], [-376, 486]]), { fill: PAL.paperHi, lift: 18 });
     X.save(); pathPoly([[-380, -490], [382, -486], [378, 490], [-376, 486]]); X.clip();
     X.fillStyle = 'rgba(0,0,0,.06)'; X.fillRect(-380, -490, 18, 980);
-    rtext('CDR', -320, -300, { font: FONT.logo(170), color: PAL.ink, mis: [6, 4, PAL.orange] });
-    rtext('FORM CDR-1 · REV 0', 330, -392, { font: FONT.monoB(24), color: PAL.ink, align: 'right' });
-    rtext('file before deployment', 330, -356, { font: FONT.mono(22), color: PAL.ink2, align: 'right' });
+    rtext('CDR', -320, -280, { font: FONT.logo(150), color: PAL.ink, mis: [6, 4, PAL.orange] });
+    rtext('FORM CDR-1 · REV 0', 330, -330, { font: FONT.monoB(24), color: PAL.ink, align: 'right' });
+    rtext('file before deployment', 330, -296, { font: FONT.mono(22), color: PAL.ink2, align: 'right' });
     inkStroke(() => { X.beginPath(); X.moveTo(-320, -250); X.lineTo(330, -250); }, PAL.ink, 6);
     ['CAPABILITY EVALS', 'RED-TEAM RESULTS', 'RISK ASSESSMENT', 'MITIGATIONS', 'SIGN-OFF'].forEach((lab, i) => {
       const y = -150 + i * 120;
