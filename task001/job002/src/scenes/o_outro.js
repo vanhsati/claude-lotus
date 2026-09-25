@@ -244,10 +244,10 @@ function O_star(x, y, t, t0, R) {
 
 // ---------- the credits plaque ----------
 const O_CREDITS = [
-  { t: barT(100) + BEAT * 1.5, str: 'COME MY WAY', y: 470, font: () => FONT.vn(186), mat: 'gold', tr: 10, n: 34 },
-  { t: barT(101), str: 'Sơn Mài Cut', y: 640, font: () => FONT.vnI(118), mat: 'egg', tr: 0, n: 22 },
-  { t: barT(101) + BEAT * 2, str: 'Music: Sơn Tùng M-TP × Tyga', y: 800, font: () => FONT.vnSansB(46), mat: 'gold', tr: 3, n: 16 },
-  { t: barT(102), str: 'Animation drawn in code by Claude', y: 876, font: () => FONT.vnSansB(46), mat: 'gold', tr: 3, n: 16 },
+  { t: barT(100), str: 'COME MY WAY', y: 470, font: () => FONT.vn(186), mat: 'gold', tr: 10, n: 34 },
+  { t: barT(100) + BEAT * 2, str: 'Sơn Mài Cut', y: 640, font: () => FONT.vnI(118), mat: 'egg', tr: 0, n: 22 },
+  { t: barT(101), str: 'Music: Sơn Tùng M-TP × Tyga', y: 800, font: () => FONT.vnSansB(46), mat: 'gold', tr: 3, n: 16 },
+  { t: barT(101) + BEAT * 2, str: 'Animation drawn in code by Claude', y: 876, font: () => FONT.vnSansB(46), mat: 'gold', tr: 3, n: 16 },
 ];
 function O_plaque(t) {
   const [px, py, pw, ph] = O_PLQ, dim = O_dim(t), end = barT(105) + BEAT * 2, lit = clamp((t - 216.3) / 2.6);
@@ -321,7 +321,15 @@ function O_endStar(t) {
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); O_star(W / 2, H / 2, t, barT(107) + .1, 38); X.restore();
 }
 
-shot(O_T0, barT(96), (t) => O_frame(t), { seed: 901 });
+// Enter by sanding away the finale's last frame (its whole-mural framing) in the first 0.6 s.
+function O_enter(t) {
+  const lt = t - O_T0;
+  if (lt >= .6) return O_frame(t);
+  const prev = shotAt(O_T0 - .001);
+  lqReveal(() => O_frame(t), () => { if (prev) { const sd = SEED; X.save(); paintShot(prev, Math.min(t, O_T0 - .001)); X.restore(); SEED = sd; } },
+    easeOut(lt / .6) * 1.02, 96, { from: 'center', name: 'O_in', halo: '#5a3a24', res: .4 });
+}
+shot(O_T0, barT(96), (t) => O_enter(t), { seed: 901 });
 shot(barT(96), barT(100), (t) => O_frame(t), { seed: 902 });
 shot(barT(100), barT(105), (t) => O_frame(t), { seed: 903 });
 shot(barT(105), O_T1 + 1, (t) => O_frame(t), { seed: 904 });
