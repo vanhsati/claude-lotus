@@ -132,11 +132,10 @@ function D2_panelA(t) {
   X.save(); const vg = X.createRadialGradient(1380, 520, 150, 960, 540, 1250); vg.addColorStop(0, 'rgba(40,5,3,0)'); vg.addColorStop(1, 'rgba(30,4,2,.7)'); X.fillStyle = vg; X.fillRect(0, 0, W, H); X.restore();
   camBegin({ zoom: 1.02 + lt * .025 + KICK(t) * .012, x: 960, y: 540, shake: KICK(t) * 5 });
   // gold-leaf ground line and a wedge of sun rays behind the head
-  D2_sun(1440, 470, 170, t, { rays: 20, len: 3.2, spin: .12, rayA: .5, halo: true, haloA: .6 });
-  idolHead(1440, 600, 225, { hat: 'nonla', hatMat: 'gold', bust: true, eyes: t > 159.1 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), look: [-.35, .05], tilt: -.05 + Math.sin(beatF(t) * Math.PI / 2) * .04, blush: .8, brow: .4 });
+  D2_sun(1540, 500, 150, t, { rays: 20, len: 3.2, spin: .12, rayA: .5, halo: true, haloA: .6 });
+  idolHead(1540, 640, 200, { hat: 'nonla', hatMat: 'gold', bust: true, eyes: t > 159.1 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), look: [-.35, .05], tilt: -.05 + Math.sin(beatF(t) * Math.PI / 2) * .04, blush: .8, brow: .4 });
   camEnd();
   // I DO NOT / GAMBLE / AND E TOO SURE
-  const a = D2_wt(56), b = D2_wt(57);
   let x = 110;
   x += D2_stamp('I', x, 300, t, D2_w(56, 0, 157.66), { size: 170 }) + 50;
   x += D2_stamp('DO', x, 300, t, D2_w(56, 1, 157.79), { size: 170 }) + 50;
@@ -148,7 +147,6 @@ function D2_panelA(t) {
   x += D2_stamp('e', x, 800, t, D2_w(57, 1, 158.75), eg) + 40;
   x += D2_stamp('too', x, 800, t, D2_w(57, 2, 159.02), eg) + 40;
   D2_stamp('sure', x, 800, t, D2_w(57, 3, 159.15), { ...eg, flakes: true, n: 10 });
-  if (!a.length && !b.length) return;
 }
 shot(157.6, 159.428, (t, lt) => {
   D2_panelA(t);
@@ -168,24 +166,23 @@ function D2_silverPanel(t) {
   // masked frieze, black robes against the silver
   const call = D2_call(t, [58]);
   for (let i = 0; i < 9; i++) {
-    const x = 70 + i * 118 + (i > 3 ? 190 : 0), h = 300 + (i % 2) * 40;
-    D2_dancer(x, 900 + (i % 2) * 14, h, t, i, { robe: '#1b1311', robeDk: '#0b0706', gold: .9, up: call * .9, mask: i % 3 === 1 ? 'gold' : 'egg' });
+    const x = 40 + i * 112 + (i > 3 ? 240 : 0), h = 240 + (i % 2) * 36;
+    D2_dancer(x, 895 + (i % 2) * 10, h, t, i, { robe: '#1b1311', robeDk: '#0b0706', gold: .9, up: call * .9, mask: i % 3 === 1 ? 'gold' : 'egg' });
   }
   const pose = t < 161.2 ? dance(t, 'break') : { ...PZ.point };
-  D2_idol(560, 600, 44, t, pose, { eyes: t > 161.6 ? 'wink' : 'open' });
+  D2_idol(560, 590, 50, t, pose, { eyes: t > 161.6 ? 'wink' : 'open' });
   camEnd();
   // GIRL YOU NEED TO (small, black lacquer) / COME / MY!
-  const ws = D2_wt(58), fs = FONT.vnSansB(58);
-  let x = 1110;
+  const fs = FONT.vnSansB(58);
+  let x = 1080;
   ['GIRL', 'YOU', 'NEED', 'TO'].forEach((w, j) => {
     const t0 = D2_w(58, j, 159.43 + j * .4), k = easeOut((t - t0) / .12);
     if (k > 0) { X.save(); X.globalAlpha = k; X.font = fs; X.fillStyle = '#120D0B'; X.fillText(w, x, 250 - (1 - k) * 18); X.restore(); }
     x += textW(w + ' ', fs) + 6;
   });
-  X.fillStyle = 'rgba(18,13,11,.8)'; X.fillRect(1110, 280, 700 * clamp((t - 159.43) / .4), 5);
-  D2_stamp('COME', 1090, 590, t, D2_w(58, 4, 161.2), { size: 300, n: 22 });
-  D2_stamp('MY!', 1180, 930, t, D2_w(58, 5, 161.61), { size: 380, n: 30, material: 'gold' });
-  if (!ws.length) return;
+  X.fillStyle = 'rgba(18,13,11,.8)'; X.fillRect(1080, 280, 700 * clamp((t - 159.43) / .4), 5);
+  D2_stamp('COME', 1060, 600, t, D2_w(58, 4, 161.2), { size: 250, n: 22 });
+  D2_stamp('MY!', 1180, 930, t, D2_w(58, 5, 161.61), { size: 330, n: 30 });
 }
 shot(159.428, 162.564, (t, lt) => {
   const k = expoOut((t - 159.428) / .42);
@@ -224,7 +221,7 @@ function D2_river(t, o = {}) {
   items.sort((p, q) => p[0] - q[0]).forEach(p => p[1]());
   // foreground crowd at the corners, backlit
   for (let i = 0; i < 4; i++) {
-    const x = [70, 300, 1640, 1870][i], y = 1200 + (i % 2) * 30;
+    const x = [-10, 190, 1730, 1930][i], y = 1200 + (i % 2) * 30;
     D2_dancer(x, y, 560, t, i + 3, { robe: '#26160d', robeDk: '#120a05', mask: 'gold', up: Math.max(call, jump) * .9, flip: i > 1 });
   }
 }
@@ -321,8 +318,8 @@ shot(170.746, 175.655, (t, lt) => {
     // drifting gold flakes
     X.save(); for (let i = 0; i < 40; i++) { const x = frac(hash(i * 3.3) + t * .01 * (hash(i) - .5)) * W, y = frac(hash(i * 5.1) + t * (.03 + hash(i * 2) * .04)) * (H + 100) - 50, s = 4 + hash(i * 7) * 10; X.globalAlpha = .35 + hash(i * 9) * .4; X.fillStyle = i % 3 ? LQ_PAL.gold : LQ_PAL.goldHi; withT(x, y, t * (1 + hash(i)) + i, 1, () => X.fillRect(-s / 2, -s / 2, s, s * .7)); } X.restore();
     camBegin({ zoom: 1.0 + lt * .03, x: 1300, y: 600, shake: KICK(t) * 2 });
-    D2_sun(1510, 440, 150, t, { rays: 16, len: 3.4, spin: .05, rayA: .45 });
-    idolHead(1510, 640, 230, { hat: 'nonla', hatMat: 'gold', bust: true, eyes: t > 172.2 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), look: [-.25, 0], tilt: .06 + Math.sin(t * 1.4) * .03, blush: 1 });
+    D2_sun(1580, 520, 140, t, { rays: 16, len: 3.4, spin: .05, rayA: .45 });
+    idolHead(1580, 720, 205, { hat: 'nonla', hatMat: 'gold', bust: true, eyes: t > 172.2 ? 'happy' : 'open', mouth: clamp(VOX(t) * 1.3 - .2), look: [-.25, 0], tilt: .06 + Math.sin(t * 1.4) * .03, blush: 1 });
     camEnd();
   } else {
     const l2 = t - tc;
@@ -348,15 +345,14 @@ shot(175.655, beatT(324), (t, lt) => {
   lqGround(t, { tone: 'black', sheen: 1.4 });
   const zp = ws.slice(0, 4).reduce((p, w) => p + .035 * hit(t, w.t, .3), 0);
   camBegin({ zoom: 1.0 + k * .08 + zp, x: 1100, y: 560, shake: KICK(t) * 8 + k * 6 });
-  D2_sun(1480, 470, 120 + k * 130, t, { rays: 28, len: 2.4 + k * 1.6, spin: .4, rayA: .6 + k * .35 });
+  D2_sun(1560, 470, 120 + k * 130, t, { rays: 28, len: 2.4 + k * 1.6, spin: .4, rayA: .6 + k * .35 });
   for (let i = 0; i < 12; i++) D2_dancer(-40 + i * 175, 1130 + (i % 2) * 20, 420, t, i, { robe: '#2a180d', robeDk: '#140b05', up: k * .8, lag: .3 });
-  D2_clawd(1180, 900, 170, t, 'pdoom');
-  D2_idol(1500, 900 - 5.5 * 46, 46, t, lt < .9 ? dance(t, 'hype') : PZ.crouch, { eyes: 'open', face: { brow: .8 } });
+  D2_clawd(1330, 905, 150, t, 'pdoom');
+  D2_idol(1590, 900 - 5.5 * 46, 46, t, lt < .9 ? dance(t, 'hype') : PZ.crouch, { eyes: 'open', face: { brow: .8 } });
   camEnd();
   D2_stamp('I CAN', 110, 330, t, D2_w(64, 0, 175.66), { size: 180 });
-  X.save(); X.globalAlpha = t < D2_w(64, 1, 175.93) ? 0 : 1; X.restore();
   D2_stamp('NEVER', 100, 600, t, D2_w(64, 2, 176.2), { size: 250, n: 22 });
-  D2_stamp('REFUSE', 90, 900, t, D2_w(64, 3, 176.61), { size: 290, n: 28 });
+  D2_stamp('REFUSE', 90, 900, t, D2_w(64, 3, 176.61), { size: 260, n: 28 });
   D2_sweep(t, 175.655, .22, .45);
 }, { seed: 641 });
 
@@ -496,13 +492,11 @@ function D2_emptyPanel(r, t) {
 // Gold frame and dividers of the whole panel.
 function D2_frame(t) {
   const g = frac(t * .1 + .3);
-  lqGold(() => { X.rect(0, 0, W, H); X.rect(22, 22, W - 44, H - 44); }, { bounds: [0, 0, W, H], glint: g, bevel: 2, lift: 0, scale: .8 });
-  X.save(); X.fillStyle = 'rgba(0,0,0,0)';
+  lqGold(() => { X.rect(0, 0, W, H); X.moveTo(22, 22); X.lineTo(22, H - 22); X.lineTo(W - 22, H - 22); X.lineTo(W - 22, 22); X.closePath(); }, { bounds: [0, 0, W, H], glint: g, bevel: 2, lift: 0, scale: .8 });
   lqGold(() => {
     X.rect(505, 22, 10, H - 44); X.rect(1405, 22, 10, H - 44);
     for (const x of [22, 1415]) { X.rect(x, 365, 483, 10); X.rect(x, 705, 483, 10); }
   }, { bounds: [0, 0, W, H], glint: frac(g + .2), bevel: 1, lift: 0, scale: .8 });
-  X.restore();
 }
 // The live stage in the centre: a gold sun, the red disc, the idol, the Clawd and a ring of masked dancers.
 function D2_stage(t, call) {

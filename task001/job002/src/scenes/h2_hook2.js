@@ -293,7 +293,7 @@ function H2_A(t) {
   H2_big('COME', 90, 400, t, ws[3].t, { font: FONT.hero, size: 200 });
   H2_big('THROUGH', 90, 610, t, ws[4].t, { font: FONT.hero, size: 200 });
   H2_big('MY', 90, 820, t, ws[5].t, { font: FONT.hero, size: 200 });
-  H2_ways(t, [ws[6].t], { x: 470, y: 820, size: 200, font: FONT.hero, vp: [cx, cy], k: .5, drift: .6 });
+  H2_ways(t, [ws[6].t], { x: 540, y: 820, size: 200, font: FONT.hero, vp: [cx, cy], k: .5, drift: .6 });
 }
 shot(H2_T.a, H2_T.b, (t) => {
   H2_sandCut(t, H2_T.a, .42, () => H2_A(t), () => {
