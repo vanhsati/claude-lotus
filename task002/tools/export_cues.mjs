@@ -1,8 +1,13 @@
 // Writes tools/cues.json: every narration sentence of the film, in playback order.
 // Usage (from task002/): node tools/export_cues.mjs   (needs the playwright package)
-import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { execSync } from "node:child_process";
+
+// Use a local playwright if installed, otherwise the global one.
+const pw = await import("playwright").catch(() =>
+  import(resolve(execSync("npm root -g").toString().trim(), "playwright", "index.mjs")));
+const { chromium } = pw;
 
 const browser = await chromium.launch();
 const page = await browser.newPage();
