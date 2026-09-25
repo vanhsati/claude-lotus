@@ -9,6 +9,7 @@ function shotAt(t) { let s = null; for (const x of SHOTS) if (t >= x.start && t 
 
 // Per-job settings (set window.JOB before this file loads):
 //   title: slug-line title · clockStart: [y, m, d, h, min] · clockFreeze / clockInf: song times where the clock stops / hits ∞
+//   marks: false hides the sheet marks and slug · finish: fn(t, shot) replaces the paper print finish
 const JOBCFG = Object.assign({ title: 'UNTITLED', clockStart: [2026, 9, 25, 14, 3], clockFreeze: null, clockInf: null }, window.JOB || {});
 // Hyperbolic clock on the slug line: minutes → days → years → ∞ as the song runs.
 const CLOCK0 = Date.UTC(JOBCFG.clockStart[0], JOBCFG.clockStart[1] - 1, JOBCFG.clockStart[2], JOBCFG.clockStart[3], JOBCFG.clockStart[4]);
@@ -121,5 +122,9 @@ function drawFrame(t) {
   if (window.TEST) window.TEST(t);
   else if (sh) paintWithTransition(sh, t);
   X.setTransform(SX, 0, 0, SX, 0, 0);
-  if (!window.TEST || window.TEST_FINISH) { printFinish(t, sh); sheetMarks(t, sh); }
+  if (!window.TEST || window.TEST_FINISH) {
+    if (JOBCFG.finish) { X.save(); JOBCFG.finish(t, sh); X.restore(); } else printFinish(t, sh);
+    X.setTransform(SX, 0, 0, SX, 0, 0);
+    if (JOBCFG.marks !== false) sheetMarks(t, sh);
+  }
 }

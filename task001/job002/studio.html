@@ -57,7 +57,7 @@ window.grab = (t, q = .93) => { drawFrame(t); return cv.toDataURL('image/jpeg', 
   await window.ready;
   if (Q.has('t')) drawFrame(parseFloat(Q.get('t')));
   if (Q.has('play')) {
-    const au = new Audio('audio/song.mp3'); au.currentTime = parseFloat(Q.get('t') || '0');
+    const au = new Audio('audio/song.m4a'); au.currentTime = parseFloat(Q.get('t') || '0');
     document.body.onclick = () => au.paused ? au.play() : au.pause();
     const loop = () => { drawFrame(au.currentTime); document.getElementById('ui').textContent = au.currentTime.toFixed(2); requestAnimationFrame(loop); }; loop();
   }
