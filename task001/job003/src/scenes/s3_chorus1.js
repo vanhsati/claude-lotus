@@ -159,10 +159,9 @@ function S3_silk(t) {
   const lights = [[380, 300, 280, S3_PINK], [1560, 260, 320, S3_CYAN], [980, 820, 240, SK_PAL.neonAmber],
     ...[120, 360, 600, 840, 1040].map((y, i) => [960 + noise1(i * 1.7) * 60, y, 60 + 150 * seam * (1 + kk * .4), i % 2 ? S3_PINK : '#FFB0DD'])];
   skSilk(t, { backlight: .02 + .45 * ramp + kk * .12 * ramp + seam * .2, dim: .55, lights });
-  // the memory: an indigo night wash, a rose pool where the tears fall, the weeping face (painted once)
+  // the memory: an indigo night wash and the weeping face (painted once)
   S3_painted('face', () => {
     skWash(() => S3_blob(W / 2, 170, 1150, 330, 3), SK_PAL.indigo, { a: .5, edge: .5, grad: [0, -60, 0, 520], gradTo: .05, feather: .6, rough: .7, seed: 31, scale: 3, color2: SK_PAL.cobalt, mix: .3 });
-    skWash(() => S3_blob(1370, 900, 330, 130, 5), SK_PAL.rose, { a: .3, edge: .55, feather: .45, rough: .6, seed: 32, scale: 3, color2: SK_PAL.indigo, mix: .25 });
     skFacePortrait(1370, 470, 215, S3_T0, { tears: .9, eyes: 'down', mouth: 0 });
     skSeal(650, 830, 46, 'LỤA', {});
   });
@@ -378,28 +377,3 @@ shot(barT(30), barT(31), S3_shotF, { seed: 306, dark: true });
 shot(barT(31), barT(32), S3_shotG, { seed: 307, dark: true });
 shot(barT(32), barT(33), S3_shotH, { seed: 308, dark: true });
 shot(barT(33), S3_END, S3_shotI, { seed: 309, dark: true });
-// S3PERF-TEMP
-window.TESTS = window.TESTS || {};
-TESTS.S3perf = () => {
-  const flush = () => X.getImageData(0, 0, 1, 1), out = [];
-  for (const tt of [64.9, 65.6, 66.2, 66.5, 67.5, 69.0, 72.0, 74.5, 77.5, 79.0, 82.0, 84.3, 85.4, 86.1]) {
-    const ms = []; for (let i = 0; i < 3; i++) { const a = performance.now(); drawFrameReal(tt + i * .033); flush(); ms.push(Math.round(performance.now() - a)); }
-    out.push(tt + ': ' + ms.join('/'));
-  }
-  const tm = (nm, fn) => { const ms = []; for (let i = 0; i < 3; i++) { const a = performance.now(); X.setTransform(SX, 0, 0, SX, 0, 0); T = 65.2 + i * .033; fn(T); flush(); ms.push(Math.round(performance.now() - a)); } out.push(nm + ': ' + ms.join('/')); };
-  tm('silkBL', t => skSilk(t, { backlight: .4, dim: .55 }));
-  tm('silk', t => skSilk(t));
-  tm('wash', t => { skWash(() => S3_blob(W / 2, 170, 1150, 330, 3), SK_PAL.indigo, { a: .5, edge: .5, grad: [0, -60, 0, 520], gradTo: .05, feather: .6, rough: .7, seed: 31, scale: 3, color2: SK_PAL.cobalt, mix: .3 }); });
-  tm('face', t => skFacePortrait(1370, 470, 215, t, { tears: lerp(.45, 1, clamp((t - 64.7) / 1.2)), eyes: 'down', mouth: 0 }));
-  tm('faceStatic', t => skFacePortrait(1370, 470, 215, t, { tears: .8, eyes: 'down', mouth: 0 }));
-  tm('brush', t => skBrushText('Cánh', 150, 600, { size: 170, k: .5 }));
-  tm('fin', t => skFinish(t, null));
-  tm('night', t => S3_street(t));
-  tm('blocks', t => S3_blocks(t, 600));
-  tm('faceNeon', t => skFaceNeon(960, 330, 205, t, { eyes: 'down', reflect: { y: 600, a: .5 } }));
-  tm('faceNeonNoRef', t => skFaceNeon(960, 330, 205, t, { eyes: 'down' }));
-  tm('rain', t => S3_rain(t, S3_lights(t)));
-  tm('cap', t => S3_cap(66.5, 0, { a: 4 }));
-  console.error('S3 ms · ' + out.join(' · '));
-};
-function drawFrameReal(t) { T = t; BOIL = Math.floor(t * 12); X.setTransform(SX, 0, 0, SX, 0, 0); const sh = shotAt(t); SEED = sh.seed; paintWithTransition(sh, t); X.save(); skFinish(t, sh); X.restore(); }

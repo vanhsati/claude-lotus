@@ -104,23 +104,37 @@ function S7_ragged(ax, ay, bx, by, seed, amp = 7, step = 14) {
 // ---------------------------------------------------------------------------------------------------------------------
 // the paintings (silk) — each painted once under its camera
 // ---------------------------------------------------------------------------------------------------------------------
-const S7_SILKLIGHT = {
-  face: [[1320, 470, 560, SK_PAL.neonPink], [1560, 260, 330, SK_PAL.neonCyan], [420, 420, 520, SK_PAL.neonAmber], [900, 950, 380, SK_PAL.neonPink]],
-  lake: [[1250, 330, 520, SK_PAL.neonPink], [1680, 470, 260, SK_PAL.neonAmber], [380, 330, 520, SK_PAL.neonAmber], [1200, 900, 420, SK_PAL.neonCyan]],
-  umb: [[1260, 330, 480, SK_PAL.neonPink], [1560, 560, 340, SK_PAL.neonCyan], [420, 420, 470, SK_PAL.neonAmber]],
+// The room is dark: the painting is lit only in pools (a warm one where the words are written, a cooler one where the
+// neon is), multiplied over the finished painting. pools: [x, y, r, colour]; cam: the painting's camera (pools follow it)
+const S7_POOLS = {
+  face: [[420, 470, 640, '#FFF3E2'], [1320, 540, 720, '#EBD7EC']],
+  lake: [[420, 330, 620, '#FFF3E2'], [1210, 360, 700, '#E8D6EE'], [1700, 380, 320, '#FFE6BC']],
+  umb: [[380, 420, 620, '#FFF3E2'], [1250, 470, 620, '#FBE3D2']],
 };
+function S7_room(pools, cam) {
+  const R = layer('_s7room'), prev = X; X = R.x;
+  X.fillStyle = '#3C3D5C'; X.fillRect(0, 0, W, H); X.globalCompositeOperation = 'lighten';
+  for (const [x0, y0, r, c] of pools) {
+    let x = x0, y = y0, rr = r;
+    if (cam && !(x0 < 800)) { x = W / 2 + (x0 - cam.x) * cam.zoom; y = H / 2 + (y0 - cam.y) * cam.zoom; rr = r * Math.sqrt(cam.zoom); }
+    const g = X.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, c); g.addColorStop(.45, skMix(c, '#3C3D5C', .35)); g.addColorStop(1, '#3C3D5C');
+    X.fillStyle = g; X.fillRect(0, 0, W, H);
+  }
+  X = prev; X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalCompositeOperation = 'multiply'; X.drawImage(R, 0, 0); X.restore();
+}
 function S7_paintFace(cam) {
   const F = S7_FACE;
-  skSilk(0, { backlight: .75, dim: .16, lights: S7_SILKLIGHT.face });
+  skSilk(0);
   if (cam) camBegin(cam);
   skWash(() => X.ellipse(F.x + 20, F.y + 30, 560, 500, -.15, 0, TAU), SK_PAL.indigo, { a: .28, edge: .55, color2: SK_PAL.rose, mix: .45, seed: 71, scale: 3.2, feather: .35 });
   skWash(() => X.ellipse(430, 250, 300, 170, .2, 0, TAU), SK_PAL.ochre, { a: .22, edge: .45, seed: 72, scale: 2.5, feather: .5 });
   skWash(() => X.ellipse(1690, 960, 360, 150, -.1, 0, TAU), SK_PAL.celadon, { a: .25, edge: .5, seed: 73, scale: 2.5 });
   skFacePortrait(F.x, F.y, F.R, 0, { eyes: 'down', mouth: 0, seed: 7 });
   if (cam) camEnd();
+  S7_room(S7_POOLS.face, cam);
 }
 function S7_paintLake() {
-  skSilk(0, { backlight: .75, dim: .16, lights: S7_SILKLIGHT.lake });
+  skSilk(0);
   const hz = 690;
   skWash(() => X.rect(-40, -40, W + 80, hz + 40), SK_PAL.indigo, { a: .42, edge: .3, grad: [0, 0, 0, hz], gradTo: .25, seed: 81, scale: 4, rough: .5 });
   skWash(() => X.arc(1640, 190, 74, 0, TAU), SK_PAL.ochre, { a: .55, edge: .8, color2: SK_PAL.sienna, mix: .3, seed: 82 });
@@ -140,10 +154,11 @@ function S7_paintLake() {
   skBloom(1700, 380, 60, SK_PAL.ochre, 5, 0, { seed: 91 });
   // the ∞, brushed in one stroke over the water
   const inf = S7_inf(1210, 340, 430, 120).map((p, i) => [p[0], p[1], .5 + .5 * Math.abs(Math.sin(i / 120 * TAU * 2 + .6))]);
+  S7_room(S7_POOLS.lake);
   skInk([inf.slice(0, 62), inf.slice(60)], { w: 30, dry: .5, dryTail: .6, seed: 92, alpha: .85 });   // two strokes (a closed figure-8 cancels itself)
 }
 function S7_paintUmb() {
-  skSilk(0, { backlight: .75, dim: .16, lights: S7_SILKLIGHT.umb });
+  skSilk(0);
   const fy = 950;
   skWash(() => X.arc(1260, 420, 330, 0, TAU), SK_PAL.ochre, { a: .3, edge: .5, seed: 101, feather: .5, scale: 3 });
   skWash(() => X.rect(-40, 820, W + 80, 300), SK_PAL.indigo, { a: .4, edge: .35, grad: [0, 820, 0, H], gradTo: 1.6, seed: 102, scale: 4, rough: .5 });
@@ -166,6 +181,7 @@ function S7_paintUmb() {
   skInk([her.slice(4, 14).map((p, i) => [p[0], p[1], .5]), her.slice(17, 27).map(p => [p[0], p[1], .5])], { w: 4, dry: .5, alpha: .6, seed: 110 });
   // two petals from her crown, fallen on the street
   skWash(() => { X.ellipse(1380, 990, 26, 10, .3, 0, TAU); X.ellipse(1470, 1010, 22, 8, -.4, 0, TAU); }, SK_PAL.ochre, { a: .6, edge: .8, seed: 111 });
+  S7_room(S7_POOLS.umb);
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -248,12 +264,13 @@ function S7_night(kind) {
 // o: {n, gap, dir 'v'|'h', amp, seed, rot}
 // ---------------------------------------------------------------------------------------------------------------------
 function S7_strips(t, silk, o = {}) {
-  const n = o.n ?? 8, gap = o.gap ?? 20, dir = o.dir || 'v', amp = o.amp ?? 24, sd = o.seed ?? 1, len = dir === 'v' ? W : H, cross = dir === 'v' ? H : W;
+  const n = o.n ?? 8, gap = o.gap ?? 20, dir = o.dir || 'v', amp = (o.amp ?? 24) * 1.6, sd = o.seed ?? 1, len = dir === 'v' ? W : H, cross = dir === 'v' ? H : W;
   const b = beatF(t), bi = Math.floor(b), bp = b - bi;
   for (let i = 0; i < n; i++) {
     // cut positions (uneven widths)
-    const c0 = i === 0 ? -40 : len * (i + sjit(i * 3 + sd, .22)) / n, c1 = i === n - 1 ? len + 40 : len * (i + 1 + sjit(i * 3 + 3 + sd, .22)) / n;
-    const a0 = c0 + (i ? gap / 2 : 0), a1 = c1 - (i < n - 1 ? gap / 2 : 0);
+    const cut = j => j <= 0 ? -60 : j >= n ? len + 60 : len * (j + sjit(j * 3 + sd, .3)) / n, c0 = cut(i), c1 = cut(i + 1);
+    const g = gap * (.4 + 1.3 * hash(i * 5.7 + sd)), g1 = gap * (.4 + 1.3 * hash((i + 1) * 5.7 + sd));
+    const a0 = c0 + (i ? g / 2 : 0), a1 = c1 - (i < n - 1 ? g1 / 2 : 0);
     // the jump: every beat each strip snaps to a new offset
     const tg = k => (hash(i * 7.13 + k * 1.31 + sd) - .5) * 2 * amp * (i % 2 ? 1 : -1);
     const off = lerp(tg(bi - 1), tg(bi), expoOut(clamp(bp / .22))) + (o.drop ? o.drop(i) : 0), rot = (o.rot ?? 0) * (hash(i * 2.9 + sd) - .5);
@@ -301,7 +318,7 @@ function S7_wrap(ws, fnt, maxW) {
 }
 function S7_layout(li, box) {
   const L = S7_LY[li]; if (!L) return null;
-  const sp = S7_split(L, S7_KEYS[li % 4]), sm = box.small ?? 50, fs = FONT.vnIR(sm), fsB = FONT.vnI(sm);
+  const sp = S7_split(L, S7_KEYS[li % 4]), sm = box.small ?? 50, fs = FONT.vnI(sm), fsB = FONT.vnI(sm);
   const keyStr = sp.key.map(w => w.w).join(' ');
   let big = box.big ?? 210; const kw0 = textW(keyStr, FONT.vnI(big)); if (kw0 > box.maxW) big = Math.floor(big * box.maxW / kw0);
   const fk = FONT.vnI(big), kw = textW(keyStr, fk), rows = [];
@@ -361,13 +378,13 @@ function S7_banner(t, seed = 1) {
   X.globalCompositeOperation = 'lighter'; X.strokeStyle = skRgba(SK_PAL.neonPink, .3 * S7_pulse(t)); X.lineWidth = 5; X.beginPath(); top.forEach((p, j) => j ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); X.stroke();
   X.restore();
 }
-const S7_BANBOX = { x: 110, y: 812, maxW: 1680, big: 180, small: 54, inline: true, tx: W / 2, ty: (S7_BAN.y0 + S7_BAN.y1) / 2, rot: S7_BAN.rot };
+const S7_BANBOX = { x: 110, y: 812, maxW: 1680, big: 180, small: 48, inline: true, tx: W / 2, ty: (S7_BAN.y0 + S7_BAN.y1) / 2, rot: S7_BAN.rot };
 function S7_banBox(extra) { const b = { ...S7_BANBOX, ...extra }; b.x -= b.tx; b.y -= b.ty; return b; }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // shots
 // ---------------------------------------------------------------------------------------------------------------------
-const S7_COLBOX = { x: 110, y: 300, maxW: 760, big: 220, small: 56 };
+const S7_COLBOX = { x: 110, y: 300, maxW: 760, big: 220, small: 50 };
 // Face with neon over silk (first half). view: 'wide' | 'ecu' | 'mid'
 function S7_faceShot(t, lt, view, o = {}) {
   const cam = view === 'ecu' ? S7_ECU : view === 'mid' ? S7_MID : null;
@@ -430,7 +447,7 @@ function S7_stripFace(t, lt, view, o = {}) {
   const P = S7_pulse(t);
   S7_put(S7_night('face'), live);
   S7_drawNeonFace(t, cam, live, i => P * 1.1 * (o.I ? o.I(i) : 1), { dx: 0, dy: 0 });
-  camBegin(live); S7_strips(t, silk, { n: o.n ?? 7, gap: o.gap ?? 26, amp: o.amp ?? 26, seed: o.seed ?? 1, rot: o.srot ?? .03, rim: SK_PAL.neonPink }); camEnd();
+  camBegin(live); S7_strips(t, silk, { n: o.n ?? 7, gap: o.gap ?? 26, amp: o.amp ?? 26, seed: o.seed ?? 1, rot: o.srot ?? .05, rim: SK_PAL.neonPink }); camEnd();
   S7_drawNeonFace(t, cam, live, i => P * .75 * (o.I ? o.I(i) : 1));
   if (o.tearT) {
     camBegin(live); if (cam) { X.translate(W / 2, H / 2); X.scale(cam.zoom, cam.zoom); X.translate(-cam.x, -cam.y); }
@@ -490,7 +507,7 @@ shot(S7_B(322), S7_B(325), (t, lt) => { S7_faceShot(t, lt, 'wide', { tears: S7_t
 shot(S7_B(325), S7_B(326), (t, lt) => {
   // the build: the silk splits into strips, the gaps opening onto the neon street
   const k = clamp(lt / BEAT);
-  S7_stripFace(t, lt, 'wide', { gap: 2 + 40 * easeIn(k), amp: 4 + 20 * k, n: 7, z0: 1.02 + .03 * k, tearT: S7_tearBeats });
+  S7_stripFace(t, lt, 'wide', { gap: 2 + 70 * easeIn(k), amp: 4 + 20 * k, n: 5, z0: 1.02 + .03 * k, tearT: S7_tearBeats });
   S7_lyric(t, 3, S7_c0);
 }, { dark: true });
 
@@ -501,33 +518,33 @@ function S7_esc(b0, b1, li, fn, jolt = 1) {
 }
 const S7_tearE = b => [b, b + 1].map(S7_B);
 // L52 "ánh mắt"
-S7_esc(326, 328, 4, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 7, gap: 34, amp: 26, seed: 1, cy: -60, tearT: S7_tearE(326) }), 1.4);
-S7_esc(328, 330, 4, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 6, gap: 30, amp: 30, seed: 2, px: -16, tearT: S7_tearE(328) }));
-S7_esc(330, 332, 4, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 9, gap: 40, amp: 34, seed: 3, rot: -.04, z0: 1.12, px: -20, tearT: S7_tearE(330) }));
-S7_esc(332, 334, 4, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 8, gap: 60, amp: 40, seed: 4, rot: .03, z0: 1.08, tearT: S7_tearE(332) }));
+S7_esc(326, 328, 4, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 5, gap: 80, amp: 26, seed: 1, cy: -60, tearT: S7_tearE(326) }), 1.4);
+S7_esc(328, 330, 4, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 5, gap: 90, amp: 30, seed: 2, px: -16, tearT: S7_tearE(328) }));
+S7_esc(330, 332, 4, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 6, gap: 100, amp: 34, seed: 3, rot: -.04, z0: 1.12, px: -20, tearT: S7_tearE(330) }));
+S7_esc(332, 334, 4, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 6, gap: 120, amp: 40, seed: 4, rot: .03, z0: 1.08, tearT: S7_tearE(332) }));
 // L53 "mãi mãi"
 const S7_m2 = () => (S7_LY[5] ? S7_split(S7_LY[5], 'mãi mãi').key.map(w => w.t) : [213.31, 213.63]);
-S7_esc(334, 336, 5, (t, lt) => S7_stripLake(t, lt, { n: 6, gap: 30, amp: 30, seed: 3 }));
-S7_esc(336, 338, 5, (t, lt) => S7_stripLake(t, lt, { n: 7, gap: 36, amp: 38, seed: 4, z0: 1.3, cx: 150, cy: -170, px: 10, hits: t => S7_m2().reduce((a, q) => a + 1.4 * hit(t, q, .45), 0), more: S7_m2()[1] }));
-S7_esc(338, 340, 5, (t, lt) => S7_stripLake(t, lt, { n: 8, gap: 44, amp: 40, seed: 5, rot: .03, more: S7_B(338) }));
-S7_esc(340, 342, 5, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 10, gap: 46, amp: 40, seed: 6, rot: .04, z0: 1.1, tearT: S7_tearE(340) }));
+S7_esc(334, 336, 5, (t, lt) => S7_stripLake(t, lt, { n: 4, gap: 70, amp: 30, seed: 3 }));
+S7_esc(336, 338, 5, (t, lt) => S7_stripLake(t, lt, { n: 5, gap: 80, amp: 38, seed: 4, z0: 1.3, cx: 150, cy: -170, px: 10, hits: t => S7_m2().reduce((a, q) => a + 1.4 * hit(t, q, .45), 0), more: S7_m2()[1] }));
+S7_esc(338, 340, 5, (t, lt) => S7_stripLake(t, lt, { n: 5, gap: 100, amp: 40, seed: 5, rot: .03, more: S7_B(338) }));
+S7_esc(340, 342, 5, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 6, gap: 120, amp: 40, seed: 6, rot: .04, z0: 1.1, tearT: S7_tearE(340) }));
 // L54 "không bên em"
 const S7_k2 = () => (S7_LY[6] ? S7_split(S7_LY[6], 'không bên em').key.map(w => w.t) : [218.99, 219.31, 219.63]);
 const S7_himE = t => { const [a, b, c] = S7_k2(); if (t >= c) return t < c + .08 ? 1 : 0; if (t >= b) return hash(Math.floor(t * 30)) < .6 ? .05 : .8; if (t >= a) return hash(Math.floor(t * 20)) < .5 ? .15 : 1; return 1; };
-S7_esc(342, 344, 6, (t, lt) => S7_stripUmb(t, lt, { n: 8, gap: 30, amp: 30, seed: 5 }));
-S7_esc(344, 346, 6, (t, lt) => S7_stripUmb(t, lt, { n: 7, gap: 40, amp: 34, seed: 6, z0: 1.35, cx: 290, cy: 60, px: -12 }));
-S7_esc(346, 348, 6, (t, lt) => S7_stripUmb(t, lt, { n: 9, gap: 46, amp: 40, seed: 7, rot: -.03, him: S7_himE }));
-S7_esc(348, 350, 6, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 9, gap: 56, amp: 44, seed: 8, rot: .04, tearT: S7_tearE(348) }));
+S7_esc(342, 344, 6, (t, lt) => S7_stripUmb(t, lt, { n: 5, gap: 90, amp: 30, seed: 5 }));
+S7_esc(344, 346, 6, (t, lt) => S7_stripUmb(t, lt, { n: 5, gap: 100, amp: 34, seed: 6, z0: 1.35, cx: 290, cy: 60, px: -12 }));
+S7_esc(346, 348, 6, (t, lt) => S7_stripUmb(t, lt, { n: 6, gap: 120, amp: 40, seed: 7, rot: -.03, him: S7_himE }));
+S7_esc(348, 350, 6, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 6, gap: 140, amp: 44, seed: 8, rot: .04, tearT: S7_tearE(348) }));
 // L55 "nơi nào": every scene, faster, then the last hit
-S7_esc(350, 352, 7, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 10, gap: 54, amp: 44, seed: 9, tearT: S7_tearE(350) }));
-S7_esc(352, 354, 7, (t, lt) => S7_stripLake(t, lt, { n: 9, gap: 50, amp: 50, seed: 10, more: S7_B(352) }));
-S7_esc(354, 356, 7, (t, lt) => S7_stripUmb(t, lt, { n: 10, gap: 56, amp: 50, seed: 11, him: () => 0 }));
-S7_esc(356, 357, 7, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 10, gap: 60, amp: 50, seed: 12, rot: -.04, tearT: [S7_B(356)] }));
-S7_esc(357, 358, 7, (t, lt) => S7_stripLake(t, lt, { n: 10, gap: 60, amp: 56, seed: 13, z0: 1.2, more: S7_B(352) }));
+S7_esc(350, 352, 7, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 7, gap: 140, amp: 44, seed: 9, tearT: S7_tearE(350) }));
+S7_esc(352, 354, 7, (t, lt) => S7_stripLake(t, lt, { n: 6, gap: 120, amp: 50, seed: 10, more: S7_B(352) }));
+S7_esc(354, 356, 7, (t, lt) => S7_stripUmb(t, lt, { n: 7, gap: 150, amp: 50, seed: 11, him: () => 0 }));
+S7_esc(356, 357, 7, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 7, gap: 160, amp: 50, seed: 12, rot: -.04, tearT: [S7_B(356)] }));
+S7_esc(357, 358, 7, (t, lt) => S7_stripLake(t, lt, { n: 7, gap: 160, amp: 56, seed: 13, z0: 1.2, more: S7_B(352) }));
 // 226.42–227.70: the face, everything lit; "nơi nào" lands, the last big hit, then the tubes begin to die
 shot(S7_B(358), S7_END, (t, lt) => {
   const hk = hit(t, S7_HIT, .5), die = i => S7_die(t, 90 + i * 3);
-  S7_stripFace(t, lt, 'wide', { n: 11, gap: 40 + 40 * hk, amp: 50 + 60 * hk, seed: 14, z0: 1.06 + .05 * hk, tearT: [S7_B(358), S7_HIT], I: i => die(i) * (1 + 1.5 * hk) });
+  S7_stripFace(t, lt, 'wide', { n: 7, gap: 130 + 80 * hk, amp: 50 + 60 * hk, seed: 14, z0: 1.06 + .05 * hk, tearT: [S7_B(358), S7_HIT], I: i => die(i) * (1 + 1.5 * hk) });
   S7_banner(t, 8); S7_lyric(t, 7, S7_bb(7), 1 + hk);
   S7_jolt(t, S7_B(358), 1.2); S7_jolt(t, S7_HIT, 2, .25);
   S7_flash(t, S7_HIT, .8, '#FFF0F8', .3);

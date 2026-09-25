@@ -103,7 +103,7 @@ function S4_row(t, ws, r) {
     // the brush follows the voice: its front runs to the end of the word being sung
     const L = layout(str, fnt, 0), wEnds = [], wStarts = []; let acc = 0;
     words.forEach((w, wi) => { const ww = textW(w.w, fnt); wStarts.push(acc); wEnds.push(acc + ww); acc += ww + textW(' ', fnt); });
-    let j = -1; words.forEach((w, wi) => { if (t >= w.t - .02) j = wi; });
+    let j = 0; words.forEach((w, wi) => { if (t >= w.t - .02) j = wi; });
     const dur = Math.max(.12, Math.min(.3, (words[j + 1] ? words[j + 1].t : words[j].t + .3) - words[j].t));
     const p = easeOut(clamp((t - words[j].t + .02) / dur)), fx = lerp(wStarts[j], wEnds[j], p) + size * .5;
     const w = L.width, x0 = r.align === 'center' ? r.x - w / 2 : r.align === 'right' ? r.x - w : r.x;
@@ -196,6 +196,17 @@ function S4_split(t, v) {
     if (v.drip !== undefined && v.drip < 1) {
       skDrip(v.drip, 7, () => S4_neonSide(t, v, Z, F, [eL - 900, 0], true), drawSilk, { rect: [0, 0, sL + 12, H], color: S4_P.neonPink, glow: true, n: 14 });
     } else drawSilk();
+    X.restore();
+    // long silk threads still bridging the gap: they sag as it widens, snap, and hang from the torn edge
+    X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); X.lineCap = 'round'; X.lineWidth = 1.1;
+    for (let i = 0; i < 16; i++) {
+      const y = 70 + hash(i * 4.3 + 1) * 940, blen = (60 + hash(i * 2.9) * 620) * Z, span = sR - sL;
+      if (span < 4) break;
+      X.strokeStyle = `rgba(247,241,228,${.35 + hash(i * 7.7) * .3})`; X.beginPath();
+      if (span < blen) { const sag = (span / blen) * 40 + 3 + noise1(t * .7 + i) * 4; X.moveTo(sL, y); X.quadraticCurveTo((sL + sR) / 2, y + sag, sR, y + sag * .2); }
+      else { const hl = Math.min(blen * .35, 160), sw = noise1(t * .6 + i * 3) * 8; X.moveTo(sL, y); X.quadraticCurveTo(sL + hl * .35 + sw, y + hl * .4, sL + hl * .1 + sw * 1.5, y + hl); }
+      X.stroke();
+    }
     X.restore();
     // the torn edge: a pale cut line and loose threads reaching into the dark
     X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); X.lineCap = 'round';
@@ -307,7 +318,7 @@ function S4_rapType(t) {
     for (let j = 0; j < 4 && ws[j]; j++) {
       const t1 = ws[j].t, t2 = ws[j + 4] ? ws[j + 4].t : 1e9; if (t < t1 - .02) continue;
       const again = t >= t2 - .02, tl = again ? t2 : t1, pop = lerp(1.3, 1, expoOut((t - tl) / .2));
-      const y = 250 + j * 200, str = ws[j].w.toUpperCase(), size = 170;
+      const y = 245 + j * 205, str = ws[j].w.toUpperCase(), size = 190;
       X.save(); X.translate(960, y - size * .35); X.scale(pop, pop); X.translate(-960, -(y - size * .35));
       skNeonText(str, 960, y, { size, font: FONT.vnSans(size), align: 'center', color: again ? S4_P.neonCyan : S4_P.neonPink, on: t - tl < .06 ? .5 : 1, t, seed: 40 + j, flicker: .05 });
       X.restore();
@@ -391,11 +402,11 @@ function S4_v2Painting() {
   skWash(() => { X.moveTo(1450, 720); X.lineTo(1510, 720); X.lineTo(1540, 1080); X.lineTo(1420, 1080); X.closePath(); }, S4_P.ochre, { a: .3, feather: .6, seed: 76, grad: [0, 720, 0, 1080], gradTo: .1 });
   skInk([[[40, 702, .4], [900, 698], [1880, 703, .4]]], { w: 3, alpha: .5, dry: .6, color: S4_P.ink, seed: 77 });
   // two figures under one umbrella on the shore path (ink silhouettes, áo dài long and loose)
-  const ux = 1180, uy = 470;
+  const ux = 1330, uy = 470;
   skWash(() => {
     pathSmooth([[ux - 70, uy + 60], [ux - 40, uy + 50], [ux - 22, uy + 140], [ux - 12, uy + 330], [ux - 30, uy + 345], [ux - 92, uy + 340], [ux - 80, uy + 150]]);
-    pathSmooth([[ux + 20, uy + 64], [ux + 58, uy + 58], [ux + 82, uy + 150], [ux + 96, uy + 336], [ux + 70, uy + 348], [ux + 10, uy + 340], [ux + 12, uy + 150]]);
   }, S4_P.ink, { a: .5, edge: .7, seed: 78, color2: S4_P.indigo, mix: .55 });
+  skWash(() => pathSmooth([[ux + 20, uy + 64], [ux + 58, uy + 58], [ux + 82, uy + 150], [ux + 96, uy + 336], [ux + 70, uy + 348], [ux + 10, uy + 340], [ux + 12, uy + 150]]), S4_P.rose, { a: .5, edge: .8, seed: 83, color2: S4_P.indigo, mix: .35 });
   skWash(() => { X.ellipse(ux - 52, uy + 30, 22, 26, 0, 0, TAU); X.moveTo(ux + 62, uy + 34); X.ellipse(ux + 40, uy + 34, 22, 26, 0, 0, TAU); }, S4_P.ink, { a: .62, edge: .6, seed: 81 });
   skWash(() => { X.moveTo(ux - 190, uy - 10); X.quadraticCurveTo(ux, uy - 190, ux + 190, uy - 10); X.quadraticCurveTo(ux, uy - 50, ux - 190, uy - 10); }, S4_P.rose, { a: .62, edge: .85, seed: 79, color2: S4_P.cinnabar, mix: .35 });
   skInk([[[ux - 190, uy - 10, .5], [ux - 80, uy - 135], [ux + 80, uy - 135], [ux + 190, uy - 10, .5]], [[ux, uy - 100], [ux + 6, uy + 120, .5]]], { w: 4.5, dry: .35, seed: 80 });
@@ -409,17 +420,17 @@ function S4_v2(t) {
   S4_bleed(t, .4, 'rt');
   S4_rows(t, 9, [
     { a: 0, b: 2, m: 'ink', size: 170, x: 100, y: 330 },
-    { a: 3, b: 5, m: 'ink', size: 170, x: 200, y: 520 },
+    { a: 3, b: 5, m: 'ink', size: 170, x: 150, y: 510 },
   ]);
 }
 // V3: the dream, eyes closed, blooms of colour on the beat
-const S4_V3F = [1340, 490], S4_V3R = 240;
+const S4_V3F = [1390, 490], S4_V3R = 240;
 function S4_v3Painting() {
   skSilk(0);
   skWash(() => X.ellipse(1260, 500, 600, 480, 0, 0, TAU), S4_P.indigo, { a: .16, edge: .4, feather: .6, seed: 91, scale: 4, color2: S4_P.rose, mix: .5 });
   skFacePortrait(S4_V3F[0], S4_V3F[1], S4_V3R, 0, { turn: 0, eyes: 'closed', seed: 9 });
 }
-const S4_V3B = [[1640, 200, 120, 'rose'], [860, 760, 140, 'indigo'], [1690, 780, 110, 'celadon'], [900, 190, 100, 'ochre'], [1760, 470, 90, 'rose'], [760, 470, 90, 'celadon']];
+const S4_V3B = [[1770, 200, 110, 'rose'], [960, 820, 130, 'indigo'], [1750, 820, 110, 'celadon'], [990, 190, 80, 'ochre'], [1830, 520, 80, 'rose'], [900, 560, 80, 'celadon']];
 function S4_v3(t) {
   const lt = t - S4_CUTS.v3, Z = 1 + lt * .014, F = [1000, 520 - lt * 4];
   S4_place(S4_render('v3', 1, [1000, 520], S4_v3Painting), 1, [1000, 520], Z, F, [0, 0]);
@@ -475,9 +486,9 @@ const S4_VP = [1180, 520];
 function S4_v5Painting() {
   skSilk(0);
   skWash(() => X.rect(-60, -60, W + 120, 600), S4_P.indigo, { a: .3, grad: [0, -60, 0, 560], gradTo: .1, seed: 121, scale: 3 });
-  skWash(() => { const pts = [[-60, 560]]; for (let x = -60; x <= W + 60; x += 40) pts.push([x, 520 - 50 * (noise1(x / 230 + 5) + 1) * (Math.abs(x - S4_VP[0]) > 160 ? 1 : .2)]); pts.push([W + 60, 560]); pathSmooth(pts); }, S4_P.ink, { a: .2, edge: .6, seed: 122, scale: 2, color2: S4_P.celadon, mix: .35 });
+  skWash(() => { const pts = [[-60, 560]]; for (let x = -60; x <= W + 60; x += 40) pts.push([x, 520 - 50 * (noise1(x / 230 + 5) + 1) * (Math.abs(x - S4_VP[0]) > 160 ? 1 : .2)]); pts.push([W + 60, 560]); pathSmooth(pts); }, S4_P.ink, { a: .34, edge: .7, seed: 122, scale: 2, color2: S4_P.indigo, mix: .45 });
   // the road: two ink edges converging, a sienna wash between
-  skWash(() => { X.moveTo(S4_VP[0] - 12, S4_VP[1]); X.lineTo(S4_VP[0] + 12, S4_VP[1]); X.lineTo(1900, 1100); X.lineTo(250, 1100); X.closePath(); }, S4_P.sienna, { a: .2, grad: [0, 1100, 0, 520], gradTo: .15, seed: 123, scale: 3, color2: S4_P.ochre, mix: .4 });
+  skWash(() => { X.moveTo(S4_VP[0] - 12, S4_VP[1]); X.lineTo(S4_VP[0] + 12, S4_VP[1]); X.lineTo(1900, 1100); X.lineTo(250, 1100); X.closePath(); }, S4_P.sienna, { a: .3, grad: [0, 1100, 0, 520], gradTo: .15, seed: 123, scale: 3, color2: S4_P.ochre, mix: .4 });
   skInk([[[250, 1100, 1], [700, 830], [S4_VP[0] - 12, S4_VP[1], .2]], [[1900, 1100, 1], [1560, 830], [S4_VP[0] + 12, S4_VP[1], .2]]], { w: 10, dry: .45, seed: 124, tail: .6 });
   // lamps along it, smaller with distance
   for (let i = 0; i < 5; i++) {

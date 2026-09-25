@@ -590,3 +590,4 @@ function S2_shot(i, t) {
   } else S2_SCENES[i](t);
 }
 S2_SCENES.forEach((fn, i) => shot(S2_CUT[i], S2_CUT[i + 1], t => S2_shot(i, t), { seed: 3320 + i, S2: true }));
+shot(70, 71, t => { skSilk(t); const B = S2_bake('E', S2E_RECT, 590, S2E_paint); X.save(); X.translate(500, 20); X.scale(.53, .53); X.translate(0, 840); S2_put(B); X.restore(); }, { S2: true });

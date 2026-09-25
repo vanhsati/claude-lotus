@@ -107,13 +107,6 @@ function S1_faceReveal(t, c) {
   S1_face(c, 1, 'source-over', L.x);
   L.x.globalCompositeOperation = 'destination-in'; L.x.filter = `blur(${Math.max(1, 2.5 * SX)}px)`; L.x.drawImage(M, 0, 0, L.width, L.height); L.x.filter = 'none'; L.x.globalCompositeOperation = 'source-over';
   X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalCompositeOperation = 'multiply'; X.drawImage(L, 0, 0); X.restore();
-  // the wet brush: a pale wash where the bristles are working now
-  S1_STROKES.forEach(s => {
-    const k0 = (t - s.t0) / (s.t1 - s.t0); if (k0 <= 0 || k0 >= 1.25) return;
-    const P = s.pts.map(p => [S1_FX + p[0] * S1_R, S1_FY + p[1] * S1_R]), part = S1_polyPart(P, easeInOut(clamp(k0))), h = part[part.length - 1];
-    const wet = k0 < 1 ? 1 : 1 - (k0 - 1) / .25;
-    skWash(() => X.ellipse(h[0], h[1], s.w * S1_R * .5, s.w * S1_R * .42, 0, 0, TAU), SK_PAL.indigo, { a: .06 * wet, edge: .25 * wet, feather: .7, seed: 7, memo: false, res: .3 });
-  });
 }
 
 // ---------- the single painted tear ----------
@@ -124,8 +117,6 @@ function S1_tear(t) {
   const x = S1_FX + e.x + e.rx * .35, y = S1_FY + e.y + e.ry * .85;
   // it gathers at the lower lid first (a small bloom), then runs down the cheek and past the chin into the silk
   const k = S1_tearK(t);
-  // where it stops at the jaw it spreads into the silk: a soft indigo bloom
-  skBloom(x + 4, y + S1_R * .8, S1_R * .13, SK_PAL.indigo, t, S1_TEAR0 + 4.6, { dur: 2.4, seed: 8, a: .22, color2: SK_PAL.rose, mix: .5 });
   if (k > 0) skBleed(x, y, SK_PAL.indigo, t, 0, { k: Math.pow(k, .8), len: S1_R * .78, w: S1_R * .13, seed: 11, a: .42, color2: SK_PAL.rose, dur: 3 });
 }
 
@@ -155,6 +146,8 @@ function S1_colophon(alpha = 1) {
 }
 // The sung lines: brushed small in the top-right margin as they are sung (write-on follows the word times).
 function S1_capK(L, t) {
+  // a line still being sung when the section ends is written a little faster, so it is complete on the last frame
+  if (L[1] > S1_END - .25) t = L[0] + (t - L[0]) * (L[1] - L[0]) / (S1_END - .25 - L[0]);
   const ws = wordTimes(L), tot = L[2].length; let done = 0;
   for (const w of ws) {
     const len = w.w.length + 1;
@@ -176,10 +169,10 @@ function S1_captions(t, o = {}) {
   lines.forEach((L, i) => {
     const rows = S1_capRows(L[2], f), y0 = y; y += rows.length * 60 + 26;
     if (t < L[0]) return;
-    const k = S1_capK(L, t), newer = lines[i + 1] && t >= lines[i + 1][0], a = (newer ? .6 : 1) * (o.alpha ?? 1);
+    const k = S1_capK(L, t), newer = lines[i + 1] && t >= lines[i + 1][0], a = (newer ? (o.old ?? .6) : 1) * (o.alpha ?? 1);
     const tot = L[2].length;
     const draw = (kc, al = .95) => { let c0 = 0; rows.forEach((r, j) => { const kk = clamp((kc * tot - c0) / r.length); c0 += r.length + 1; if (kk > 0) skBrushText(r, S1_CAP_X + (j ? 34 : 0), y0 + j * 60, { size: S1_CAP_S, font: f, k: Math.max(.02, kk), color: o.color || SK_PAL.indigo, alpha: al, dry: .25, seed: 60 + i * 3 + j }); }); };
-    if (k >= 1) S1_put(S1_snap('cap' + i, 'screen', () => draw(1)), 'screen', S1_CAMS.screen, a);
+    if (k >= 1) S1_put(S1_snap('cap' + i + (o.color || ''), 'screen', () => draw(1)), 'screen', S1_CAMS.screen, a);
     else draw(Math.max(.01, k), .95 * a);
   });
   X.restore();
@@ -250,16 +243,16 @@ function S1_sceneB(t) {
 const S1_LIGHTS = t => {
   const k = KICK(t), g = .55 + .45 * clamp((t - S1_TC) / 7);
   return [
-    { x: 300, y: 330, r: 380 * (1 + k * .25), color: SK_PAL.neonPink, a: (.7 + k * .6) * g },
-    { x: 1480, y: 280, r: 420 * (1 + k * .2), color: SK_PAL.neonCyan, a: (.65 + k * .5) * g },
-    { x: 980, y: 640, r: 300, color: SK_PAL.neonAmber, a: .45 * g },
-    { x: 1150, y: 420, r: 260 * (1 + k * .3), color: SK_PAL.neonPink, a: (.4 + k * .6) * g },
-    { x: 560, y: 380, r: 420 * (1 + k * .2), color: SK_PAL.neonAmber, a: (.25 + k * .35) * clamp((t - S1_TD) / 1.2) },
+    { x: 300, y: 330, r: 400 * (1 + k * .25), color: SK_PAL.neonPink, a: (.95 + k * .7) * g },
+    { x: 1150, y: 300, r: 440 * (1 + k * .2), color: SK_PAL.neonCyan, a: (.9 + k * .6) * g },
+    { x: 980, y: 700, r: 340, color: SK_PAL.neonAmber, a: .6 * g },
+    { x: 1640, y: 760, r: 300 * (1 + k * .3), color: '#8A7CFF', a: (.55 + k * .7) * g },
+    { x: 540, y: 420, r: 460 * (1 + k * .2), color: SK_PAL.neonAmber, a: (.5 + k * .45) * clamp((t - S1_TD) / 1.2) },
   ];
 };
 function S1_city(t) {   // the neon street behind the silk (drawn in world space, then diffused through the weave)
   const Ls = S1_LIGHTS(t), k = KICK(t);
-  skNight(t, { horizon: 700, lights: Ls, bokeh: 34 });
+  skNight(t, { horizon: 700, lights: Ls, bokeh: 50 });
   // tubes, cheaply: they are only ever seen blurred through the silk
   const tube = (fn, col, w, I) => {
     X.save(); X.globalCompositeOperation = 'lighter'; X.lineCap = 'round'; X.lineJoin = 'round';
@@ -268,8 +261,8 @@ function S1_city(t) {   // the neon street behind the silk (drawn in world space
     X.strokeStyle = skRgba(SK_PAL.neonWhite, .7 * I); X.lineWidth = w * .35; X.beginPath(); fn(); X.stroke(); X.restore();
   };
   const I = .7 + k * .3, fl = hash(Math.floor(t * 12) * 1.7) < .12 ? .35 : 1;
-  tube(() => { X.moveTo(1560, 120); X.lineTo(1560, 560); }, SK_PAL.neonCyan, 14, I);
-  tube(() => X.rect(1640, 150, 120, 360), SK_PAL.neonPink, 10, I * fl);
+  tube(() => { X.moveTo(1050, 130); X.lineTo(1050, 560); }, SK_PAL.neonCyan, 14, I);
+  tube(() => X.rect(1660, 690, 130, 290), SK_PAL.neonPink, 10, I * fl);
   tube(() => heartPath(340, 360, 90), SK_PAL.neonPink, 12, I);
   tube(() => { X.moveTo(640, 250); X.lineTo(980, 250); }, SK_PAL.neonAmber, 10, .8);
   tube(() => X.arc(760, 170, 62, 0, TAU), SK_PAL.neonCyan, 9, I * .9);
@@ -294,7 +287,7 @@ function S1_sceneCD(t, c, big) {
     if (k >= 1) { X.save(); S1_put(S1_snap('title', 'C', () => draw(1)), 'C', c); X.restore(); } else if (k > 0) draw(easeInOut(k));
   }
   X.restore();
-  S1_captions(t);
+  S1_captions(t, { color: S1_INK, old: .7 });
 }
 
 // ---------- shots ----------

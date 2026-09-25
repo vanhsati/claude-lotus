@@ -223,7 +223,7 @@ const S5_SIGNS = [
   { side: -1, xa: 30, v: .3, w: 300, h: 330, kind: 'face', c: { line: '#35E0FF', petal: '#FF3EA5' }, k: 0 },
   { side: -1, xa: 330, v: .5, w: 250, h: 88, kind: 'text', str: 'CÀ PHÊ', col: '#FFB547', k: 1 },
   { side: -1, xa: 600, v: .3, w: 280, h: 300, kind: 'face', c: { line: '#FF3EA5', petal: '#FFB547' }, k: 2 },
-  { side: 1, xa: 20, v: .52, w: 380, h: 92, kind: 'text', str: 'KARAOKE', col: '#FF3EA5', k: 3 },
+  { side: 1, xa: 20, v: .64, w: 380, h: 92, kind: 'text', str: 'KARAOKE', col: '#FF3EA5', k: 3 },
   { side: 1, xa: 330, v: .22, w: 290, h: 320, kind: 'face', c: { line: '#FFB547', petal: '#35E0FF' }, k: 1 },
   { side: 1, xa: 640, v: .5, w: 230, h: 84, kind: 'text', str: 'HOA TƯƠI', col: '#35E0FF', k: 2 },
 ];
@@ -250,10 +250,27 @@ function S5_signNeon(t, pw = k => S5_on(t, k)) {
 }
 // the far billboard at the end of the street (frontal): the big neon face
 function S5_farBoard(t, pw, onX) {
-  const x = 790, y = 300, w = 340, h = 230;
+  const x = 790, y = 196, w = 340, h = 226;
   if (!onX) { X.fillStyle = '#06070B'; X.fillRect(x, y, w, h); X.fillStyle = '#10131D'; X.fillRect(x + 60, y + h, 8, S5_HZ - y - h + 20); X.fillRect(x + w - 68, y + h, 8, S5_HZ - y - h + 20); return; }
   skNeon(() => X.rect(x + 5, y + 5, w - 10, h - 10), S5_P.neonCyan, { w: 2.4, on: pw, flicker: S5_flick(t), seed: 61, I: .7 * S5_kI(t), halo: .7, t });
   skFaceNeon(x + w / 2, y + h / 2 + 8, 54, t, { on: pw, flicker: S5_flick(t), w: 2.2, eyes: 'down', tearT: [beatT(beatN(t)), beatT(beatN(t) - 2)] });
+}
+// festoon wires strung across the street, bulbs chasing on the 8ths (drawn on the neon layer)
+function S5_festoon(t, pw) {
+  const e8 = Math.floor(beatF(t) * 2), C = [S5_P.neonPink, S5_P.neonAmber, S5_P.neonCyan];
+  X.save();
+  [[120, 90, .92, 58], [420, 330, .56, 34], [640, 452, .33, 20]].forEach(([xa, yy, s, n], wi) => {
+    const x0 = xa, x1 = 1920 - xa, sag = 90 * s, P = u => [lerp(x0, x1, u), yy + Math.sin(u * Math.PI) * sag];
+    X.globalCompositeOperation = 'source-over'; X.strokeStyle = 'rgba(20,22,32,.9)'; X.lineWidth = 2 * s; X.beginPath();
+    for (let i = 0; i <= 24; i++) { const [x, y] = P(i / 24); i ? X.lineTo(x, y) : X.moveTo(x, y); } X.stroke();
+    X.globalCompositeOperation = 'lighter';
+    for (let i = 1; i < n; i++) {
+      const [x, y] = P(i / n), c = C[(i + wi) % 3], lit = (((i + e8 + wi) % 3) ? .45 : 1) * pw, r = 9 * s, cy = y + r * .6;
+      const g = X.createRadialGradient(x, cy, 0, x, cy, r * 2.4); g.addColorStop(0, `rgba(255,248,240,${lit})`); g.addColorStop(.13, `rgba(255,248,240,${.8 * lit})`); g.addColorStop(.24, skRgba(c, .55 * lit)); g.addColorStop(1, skRgba(c, 0));
+      X.fillStyle = g; X.fillRect(x - r * 2.4, cy - r * 2.4, r * 4.8, r * 4.8);
+    }
+  });
+  X.restore();
 }
 // the crossing stripes (zebra) in perspective, wet and pale
 function S5_zebra(t) {
@@ -269,8 +286,8 @@ function S5_zebra(t) {
 }
 // a traffic light pole on the right corner: the red lamp pulses on the kick
 function S5_signal(t, pw) {
-  const x = 1700, y = 250;
-  X.fillStyle = '#0A0C12'; X.fillRect(x - 7, y, 14, 700); X.fillRect(x - 34, y - 20, 68, 170);
+  const x = 250, y = 560;
+  X.fillStyle = '#0A0C12'; X.fillRect(x - 7, y, 14, 600); X.fillRect(x - 34, y - 20, 68, 170);
   const on = clamp(pw);
   for (let i = 0; i < 3; i++) {
     const cy = y + 12 + i * 48, lit = i === 0, c = lit ? '#FF3A4A' : i === 1 ? '#FFB547' : '#3CFFB0', a = lit ? on * (.7 + .3 * KICK(t)) : .06;
@@ -288,17 +305,17 @@ function S5_street(t, o = {}) {
   const m = S5_camM(t, o), pw = o.pw ?? 1;
   skNight(t, { horizon: S5_HZ, lights: S5_lights(m, S5_STREET_LIGHTS, pw), bokeh: 34, haze: '#4A2A6A', hazeA: .6 + .4 * pw });
   X.save(); S5_set(m);
-  X.fillStyle = '#05060A'; X.fillRect(740, 380, 440, 240);   // the far block closing the street
+  X.fillStyle = '#05060A'; X.fillRect(740, 360, 440, 260);   // the far block closing the street
   S5_farBoard(t, pw, false);
   S5_facade(560, 800, -1, '#0B0C14', t, 3); S5_facade(560, 800, 1, '#0B0D15', t, 4);
   S5_facade(-40, 470, -1, '#0D0E17', t, 1); S5_facade(-40, 470, 1, '#0C0E18', t, 2);
   S5_signPanels(); S5_zebra(t); S5_signal(t, pw);
   X.restore();
-  const N = S5_layer('S5_neon', m, () => { S5_signNeon(t, k => S5_on(t, k) * (o.signPw ? o.signPw(k) : 1)); S5_farBoard(t, S5_on(t, 3), true); if (o.neonExtra) o.neonExtra(); });
+  const N = S5_layer('S5_neon', m, () => { S5_signNeon(t, k => S5_on(t, k) * (o.signPw ? o.signPw(k) : 1)); S5_farBoard(t, S5_on(t, 3), true); S5_festoon(t, S5_on(t, 2)); if (o.neonExtra) o.neonExtra(); });
   S5_reflect(N, m, S5_HZ + 30, { a: .6, stretch: 1.1, fade: 420, t });
   S5_blit(N);
   if (o.mask) {
-    const M = o.mask, ML = S5_maskLayer(t, m, M.x, M.y, M.R, { rot: M.rot });
+    const M = o.mask, ML = S5_maskLayer(t, m, M.x, M.y, M.R, { rot: M.rot, key: 'st', ref: S5_camM(0, { z: 1.06 }) });
     S5_reflect(ML, m, M.y + M.R * 1.3 + 90, { a: .35, stretch: 1, fade: 260, t, op: 'screen' });
     S5_maskDraw(ML, m, t, M.x, M.y, M.R);
   }
@@ -346,7 +363,7 @@ const S5_hookWT = (t0) => { const L = S5_LINES.find(l => Math.abs(l[1] - t0) < 3
 // S5a · the verse tears open onto the dark crossroads; the signs strike on the pickup beats
 function S5_a(t, lt) {
   const under = () => {
-    S5_street(t, { z: 1.08 - .05 * easeOut(lt / 1.3), pw: .25 + .75 * clamp((t - 125.4) / 1.1), mask: { x: 960, y: 470, R: 64 } });
+    S5_street(t, { z: 1.08 - .05 * easeOut(lt / 1.3), pw: .25 + .75 * clamp((t - 125.4) / 1.1), mask: { x: 960, y: 600, R: 58 } });
   };
   const prev = shotAt(S5_T0 - .01);
   const over = () => {
@@ -365,7 +382,7 @@ function S5_b(t, lt, dur) {
   S5_bokehBG(t);
   const m = S5_camM(t, { z: S5_punch(lt, .08) * (1 + lt * .018), shake: 10 * hit(t, t0, .5) + KICK(t) * 3, cy: 540 });
   const x = 960, y = 520, R = 290, rot = -.04 + .02 * Math.sin(lt * .9);
-  const ML = S5_maskLayer(t, m, x, y, R, { rot });
+  const ML = S5_maskLayer(t, m, x, y, R, { rot, key: 'b', ref: S5_camM(0, { z: 1.06, cy: 540 }) });
   S5_maskDraw(ML, m, t, x, y, R);
   X.save(); S5_set(m); S5_chips(t, x, y, R); X.restore();
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); skRainNeon(t, { n: 150, len: 60, speed: 1500, lights: [{ x: 260, y: 300, r: 620, color: S5_P.neonPink }, { x: 1680, y: 360, r: 600, color: S5_P.neonCyan }] }); X.restore();
@@ -374,7 +391,7 @@ function S5_b(t, lt, dur) {
 }
 // S5c · the crossroads wide: the signs burn, the far billboard, the mask floating over the crossing
 function S5_c(t, lt) {
-  S5_street(t, { z: S5_punch(lt, .05) * (1.0 + lt * .014), x: -lt * 6, shake: KICK(t) * 3, mask: { x: 960, y: 480 + Math.sin(lt * 1.6) * 6, R: 70, rot: Math.sin(lt) * .03 } });
+  S5_street(t, { z: S5_punch(lt, .05) * (1.0 + lt * .014), x: -lt * 6, shake: KICK(t) * 3, mask: { x: 960, y: 600 + Math.sin(lt * 1.6) * 6, R: 58, rot: Math.sin(lt) * .03 } });
   S5_flash(lt, S5_P.neonCyan, .6);
   S5_caption(t);
 }
@@ -430,8 +447,8 @@ function S5_e(t, lt) {
     }
     X.restore();
     skNeon(() => X.rect(bx + 34, by + 34, bw - 68, bh - 68), S5_P.neonCyan, { w: 3, on: 1, seed: 101, I: .5, halo: .6, t });
-    skNeonText('KHUÔN MẶT', 960, by + 290, { size: 230, align: 'center', color: S5_P.neonPink, on: on1, flicker: .05, seed: 111, I: S5_kI(t), w: 7, t });
-    skNeonText(S5_up('Đáng Thương'), 960, by + 540, { size: 210, align: 'center', color: S5_P.neonCyan, on: on2, flicker: .05, seed: 121, I: S5_kI(t), w: 6.5, t });
+    skNeonText('KHUÔN MẶT', 960, by + 285, { size: 215, align: 'center', color: S5_P.neonPink, on: on1, flicker: .05, seed: 111, I: S5_kI(t), w: 7, t });
+    skNeonText(S5_up('Đáng Thương'), 960, by + 530, { size: 178, align: 'center', color: S5_P.neonCyan, on: on2, flicker: .05, seed: 121, I: S5_kI(t), w: 6.5, t });
   });
   S5_reflect(N, m, 850, { a: .5, stretch: 1, fade: 300, t, wet: false, ripple: 1.6 });
   S5_blit(N);
@@ -445,7 +462,7 @@ function S5_f(t, lt) {
   const m = S5_camM(t, { z: S5_punch(lt, .05) * (1.0 + lt * .016), y: -lt * 4, shake: KICK(t) * 2, cy: 540 });
   S5_bokehBG(t, { lights: [{ x: 300, y: 260, r: 600, color: S5_P.neonCyan }, { x: 1620, y: 300, r: 620, color: S5_P.neonPink }, { x: 960, y: 900, r: 420, color: S5_P.neonPink, a: .5 }], bokeh: 40 });
   const x = 960, y = 360, R = 180, rot = .05 + .03 * Math.sin(lt * .8);
-  const ML = S5_maskLayer(t, m, x, y, R, { rot, glow: S5_P.neonCyan, left: S5_P.neonCyan, right: S5_P.neonPink });
+  const ML = S5_maskLayer(t, m, x, y, R, { rot, key: 'f', ref: S5_camM(0, { z: 1.03, cy: 540 }), glow: S5_P.neonCyan, left: S5_P.neonCyan, right: S5_P.neonPink });
   // ripples on each beat disturb the reflection (a wave that runs outward)
   const bt = beatN(t), rip = [0, 1, 2].map(j => beatT(bt - j));
   const wave = d => rip.reduce((s, tt) => { const a = t - tt, r = a * 520; return s + Math.sin((d - r) / 9) * 14 * Math.exp(-Math.abs(d - r) / 40) * Math.exp(-a * 1.5); }, 0);
@@ -486,9 +503,9 @@ function S5_g(t, lt) {
 // S5h · extreme close-up on the mask's eye, light pouring through the cracks
 function S5_h(t, lt) {
   S5_bokehBG(t, { bokeh: 30 });
-  const m = S5_camM(t, { z: S5_punch(lt, .06) * (1 + lt * .03), cx: 720, cy: 420, x: 240, y: 120, shake: 8 * hit(t, barT(56), .4) + KICK(t) * 3 });
+  const m = S5_camM(t, { z: S5_punch(lt, .06) * (1 + lt * .02), cx: 720, cy: 420, x: 240, y: 120, shake: 8 * hit(t, barT(56), .4) + KICK(t) * 3 });
   const x = 960, y = 640, R = 560;
-  const ML = S5_maskLayer(t, m, x, y, R, { rot: .08 });
+  const ML = S5_maskLayer(t, m, x, y, R, { rot: .08, key: 'h', ref: S5_camM(0, { z: 1, cx: 720, cy: 420, x: 240, y: 120 }) });
   S5_maskDraw(ML, m, t, x, y, R);
   // god-rays: the light behind the mask leaks through the cracks as soft beams
   X.save(); S5_set(m); X.globalCompositeOperation = 'lighter';
@@ -511,12 +528,12 @@ function S5_i(t, lt) {
   skNight(t, { horizon: S5_HZ, lights: S5_lights(m, [{ x: 960, y: 250, r: 800, color: S5_P.neonPink, gy: 950 }, { x: 960, y: 900, r: 700, color: S5_P.neonCyan, gy: 950 }], 1 - dk * .8), bokeh: 40, haze: '#5A2A70', hazeA: 1 - dk * .7 });
   const on1 = S5_titleOn(t, 'KHUÔN MẶT', wts.slice(0, 2), 11), on2 = S5_titleOn(t, S5_up('Đáng Thương'), wts.slice(2, 4), 23);
   const N = S5_layer('S5_neon', m, () => {
-    skNeonText('KHUÔN MẶT', 960, 300, { size: 250, align: 'center', color: S5_P.neonPink, on: on1, flicker: S5_flick(t), seed: 151, I: S5_kI(t), w: 7.5, t });
-    skNeonText(S5_up('Đáng Thương'), 960, 930, { size: 220, align: 'center', color: S5_P.neonCyan, on: on2, flicker: S5_flick(t), broken: 7, seed: 161, I: S5_kI(t), w: 7, t });
+    skNeonText('KHUÔN MẶT', 960, 290, { size: 235, align: 'center', color: S5_P.neonPink, on: on1, flicker: S5_flick(t), seed: 151, I: S5_kI(t), w: 7.5, t });
+    skNeonText(S5_up('Đáng Thương'), 960, 905, { size: 188, align: 'center', color: S5_P.neonCyan, on: on2, flicker: S5_flick(t), broken: 7, seed: 161, I: S5_kI(t), w: 7, t });
   });
   S5_blit(N);
   const x = 960, y = 590, R = 128;
-  const ML = S5_maskLayer(t, m, x, y, R, { rot: -.03 });
+  const ML = S5_maskLayer(t, m, x, y, R, { rot: -.03, key: 'i', ref: S5_camM(0, { z: 1.04, cy: 560 }) });
   S5_maskDraw(ML, m, t, x, y, R);
   X.save(); S5_set(m); S5_chips(t, x, y, R); X.restore();
   X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); skRainNeon(t, { n: 170, lights: [{ x: 960, y: 250, r: 800, color: S5_P.neonPink, a: 1 - dk }, { x: 960, y: 900, r: 700, color: S5_P.neonCyan, a: 1 - dk }], ground: 960, splash: 30 }); X.restore();
