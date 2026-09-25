@@ -7,9 +7,15 @@ const SHOTS = [];
 function shot(start, end, fn, opts = {}) { SHOTS.push({ start, end, fn, ...opts }); SHOTS.sort((a, b) => a.start - b.start); }
 function shotAt(t) { let s = null; for (const x of SHOTS) if (t >= x.start && t < x.end) s = x; return s; }
 
+// Per-job settings (set window.JOB before this file loads):
+//   title: slug-line title · clockStart: [y, m, d, h, min] · clockFreeze / clockInf: song times where the clock stops / hits ∞
+const JOBCFG = Object.assign({ title: 'UNTITLED', clockStart: [2026, 9, 25, 14, 3], clockFreeze: null, clockInf: null }, window.JOB || {});
 // Hyperbolic clock on the slug line: minutes → days → years → ∞ as the song runs.
-const CLOCK0 = Date.UTC(2026, 8, 25, 14, 3);
-function clockDays(t) { if (t >= 141.18) return Infinity; const tt = Math.min(t, 137.4); return Math.pow(10, -2.6 + 7.9 * Math.pow(tt / 137.4, 1.35)); }
+const CLOCK0 = Date.UTC(JOBCFG.clockStart[0], JOBCFG.clockStart[1] - 1, JOBCFG.clockStart[2], JOBCFG.clockStart[3], JOBCFG.clockStart[4]);
+function clockDays(t) {
+  const inf = JOBCFG.clockInf ?? Infinity, fr = JOBCFG.clockFreeze ?? (isFinite(inf) ? inf - 1 : SONG_END);
+  if (t >= inf) return Infinity; const tt = Math.min(t, fr); return Math.pow(10, -2.6 + 7.9 * Math.pow(Math.max(0, tt) / fr, 1.35));
+}
 function clockStr(t) {
   const d = clockDays(t);
   if (!isFinite(d)) return '∞';
@@ -33,7 +39,7 @@ function sheetMarks(t, sh) {
   const idx = SHOTS.indexOf(sh) + 1, sp = runSpeed(t);
   const spd = !isFinite(sp) ? '∞' : sp < 10 ? sp.toFixed(1) : sp < 1e6 ? Math.round(sp).toLocaleString('en-US') : sp.toExponential(1).replace('e+', 'e');
   X.font = FONT.mono(15); X.fillStyle = col; X.textBaseline = 'middle';
-  X.fillText(`P(DOOM) · SHEET ${String(idx).padStart(4, '0')} · ${clockStr(t)} · RUN ×${spd}`, m + 24, m);
+  X.fillText(`${JOBCFG.title} · SHEET ${String(idx).padStart(4, '0')} · ${clockStr(t)} · RUN ×${spd}`, m + 24, m);
   X.textAlign = 'right'; X.fillText(`${Math.floor(beatF(Math.max(t, BEAT0)) / 4) + 1}.${(beatN(Math.max(t, BEAT0)) % 4 + 4) % 4 + 1} · 132 BPM`, W - m - 24, m);
   // riso colour check strip
   const cols = [PAL.orange, PAL.pink, PAL.yellow, PAL.blue, PAL.teal, PAL.ink];

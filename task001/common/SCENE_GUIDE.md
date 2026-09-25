@@ -1,12 +1,12 @@
 # Scene guide (for section builders)
 
-You are painting one section of a music video entirely in canvas 2D. Read `DIRECTION.md` first: it has the concept,
+You are painting one section of a music video entirely in canvas 2D. Read the job's `DIRECTION.md` first: it has the concept,
 palette, type system, cast and **your section's shot list** (the rows you own). Then read the two finished reference
 sections, `src/scenes/a_hook.js` and `src/scenes/b_chorus1.js`. They set the quality bar and show every idiom below in use.
 
 ## How a frame is made
 
-* `studio.html` loads `src/*.js`, then every file listed in `src/scenes/manifest.js`, in order. All code shares one global scope.
+* A job's `studio.html` loads the engine from `../common/src/*.js` and its own `src/*.js`, then every file listed in `src/scenes/manifest.js`, in order. All code shares one global scope.
 * A section file registers shots: `shot(start, end, fn, opts)`. `fn(t, lt, dur)` paints the **entire** frame
   (background included). `t` = song seconds, `lt` = `t - start`. The frame driver then adds the paper stock, speckle,
   sheet marks and slug line.
@@ -31,7 +31,7 @@ sections, `src/scenes/a_hook.js` and `src/scenes/b_chorus1.js`. They set the qua
   `stampK / stampText(str, x, y, t, t0, opts)` (a word slamming down), `wordTimes(LY[i])` → `[{w, t, end}]` (estimated sung
   time of each word; **use these to time type**), `lineAt(t)`, `caption(t, {line, y})`.
 * **lyrics.js**: `LY[i] = [start, end, text]`. The line numbers you need are in the shot list; find them by text.
-* **props.js**: `meter(x, y, scale, value, {crack, rot})`, `pdoomAt(t)` (P(doom) value), `tape`, `stamp(x, y, text, t, t0, {size, rot, color, op})`,
+* **props.js**: `tape`, `stamp(x, y, text, t, t0, {size, rot, color, op})`,
   `sticky(x, y, lines, {rot, s, color})`, `headline(x, y, w, title, {kicker, sub, big, t, t0, rot})` (xerox printout),
   `post(x, y, w, {name, handle, text, likes, t, t0})` (anonymous accounts only), `confetti(t, t0, {n, burst, seed, colors})`,
   `sparkBurst(x, y, t, t0, {n, r, size})`, `flash(t, t0, dur)`.
@@ -43,7 +43,7 @@ sections, `src/scenes/a_hook.js` and `src/scenes/b_chorus1.js`. They set the qua
 * **chars/clawd.js**: `clawd(x, y_ground, width, {hat, squash, lean, arms:[l,r], step, eyes:'open|happy|x|heart|shades|closed|wide|red', jump, flip, body, hardhat})`, `CLAWD_HATS`.
 * **chars/cast.js**: `nextSun(x, y, R, {crown, pulse, eyes, look, rot, glow, mono})` (NEXT, the successor), `kid(x, y_floor, s, {look, flip})`
   (the Shinji-pose kid in a chair; s=1 ≈ 400 px tall), `shoggoth(x, y, R, {mask, wiggle, eyes})`.
-* **scenes/stage.js**: `stageBG(t, {v:1..4, text, pattern:'logo|rings|stripes|alarm|dim'})`, `stageFront(t, {v})`, `danceLine(t, {move, x, y, s, spread, clawdS, face})`.
+* **job001 only:** `meter`/`pdoomAt` (src/pdoom.js), **scenes/stage.js**: `stageBG(t, {v:1..4, text, pattern:'logo|rings|stripes|alarm|dim'})`, `stageFront(t, {v})`, `danceLine(t, {move, x, y, s, spread, clawdS, face})`.
   **scenes/b_chorus1.js**: `B_stageShot(t, lt, v, LY[i], opts)` (the whole chorus stage shot with the staircase type) and `B_staircase`.
 
 ## Style rules
@@ -71,10 +71,10 @@ sections, `src/scenes/a_hook.js` and `src/scenes/b_chorus1.js`. They set the qua
 ## Verify, or it isn't done
 
 ```bash
-cd task001
-node tools/render.mjs --stills=38.6,39.5,41.2 --scale=.5 --dir=C      # renders out/C/t_*.jpg
-python3 tools/contact.py out/C/t_*.jpg -o out/C/sheet.jpg --cols 4     # one image to Read
-node tools/render.mjs --preview=38.5:59 --scale=.5 --fps=15            # low-res mp4 (checks it runs end to end)
+cd task001/common
+node tools/render.mjs --job=job001 --stills=38.6,39.5,41.2 --scale=.5 --dir=C   # renders job001/out/C/t_*.jpg
+python3 tools/contact.py ../job001/out/C/t_*.jpg -o ../job001/out/C/sheet.jpg --cols 4
+node tools/render.mjs --job=job001 --preview=38.5:59 --scale=.5 --fps=15         # low-res mp4 (checks it runs end to end)
 ```
 
 Look at the images with the Read tool. Render several times per shot, including just after each word lands and the first

@@ -1,8 +1,10 @@
 # Precomputes audio features at 60 Hz so the renderer can react to the real mix while staying a pure function of time.
+# Usage: python3 common/tools/analyze_audio.py JOB_DIR   (reads JOB_DIR/job.json → audio; writes JOB_DIR/src/audio_data.js)
 # Output: src/audio_data.js (window.AUD = {fps, beat, offset, rms, kick, snare, hat, vox})
 import librosa, numpy as np, json, os
-here=os.path.dirname(os.path.abspath(__file__)); root=os.path.join(here,'..')
-y, sr = librosa.load(os.path.join(root,'audio/pdoom.mp3'), sr=22050, mono=False)
+import sys
+root=os.path.abspath(sys.argv[1]); job=json.load(open(os.path.join(root,'job.json')))
+y, sr = librosa.load(os.path.join(root,job['audio']), sr=22050, mono=False)
 mono=y.mean(0); side=(y[0]-y[1])/2
 FPS=60; hop=sr//FPS
 S=np.abs(librosa.stft(mono,n_fft=2048,hop_length=hop)); f=librosa.fft_frequencies(sr=sr,n_fft=2048)
@@ -25,7 +27,14 @@ Ss=np.abs(librosa.stft(side,n_fft=2048,hop_length=hop)); sb=Ss[(f>=300)&(f<3400)
 vox=np.maximum(0,vb-0.6*sb[:len(vb)]); vox=norm(np.convolve(vox,np.ones(3)/3,'same'),98)
 n=min(len(rms),len(kick),len(vox))
 q=lambda a: [round(float(v),3) for v in a[:n]]
-d=dict(fps=FPS,beat=0.45454440523533524,offset=0.7265692141817615,bar0=0.7265692141817615+0.45454440523533524,dur=156.65,
+# beat grid: a straight line fitted to librosa's beat track, unless job.json pins it (beat, offset, bar_phase)
+if 'beat' in job and 'offset' in job: beat, offset = job['beat'], job['offset']
+else:
+    _, bts = librosa.beat.beat_track(y=mono, sr=sr, units='time', tightness=200)
+    k = np.arange(len(bts)); beat, offset = [float(v) for v in np.polyfit(k, bts, 1)]
+    while offset - beat > 0: offset -= beat
+bar0 = offset + beat * job.get('bar_phase', 0)
+d=dict(fps=FPS,beat=beat,offset=offset,bar0=bar0,dur=round(len(mono)/sr,3),
        rms=q(rms),kick=q(kick),snare=q(snare),hat=q(hat),vox=q(vox))
 open(os.path.join(root,'src/audio_data.js'),'w').write('window.AUD='+json.dumps(d,separators=(',',':'))+';\n')
 print('frames',n, 'size', os.path.getsize(os.path.join(root,'src/audio_data.js')))

@@ -3,8 +3,9 @@
 // so nothing in here may carry state from one frame to the next.
 
 const W = 1920, H = 1080, FPS = 30;
-const BEAT = 0.45454440523533524, BEAT0 = 0.7265692141817615, BAR0 = BEAT0 + BEAT, BAR = BEAT * 4;
-const SONG_END = 156.65;
+// The beat grid and song length come from the job's audio analysis (src/audio_data.js, loaded first).
+const BEAT = AUD.beat, BEAT0 = AUD.offset, BAR0 = AUD.bar0 ?? BEAT0 + BEAT, BAR = BEAT * 4;
+const SONG_END = AUD.dur;
 
 const PAL = {
   paper: '#F2EDE3', paperHi: '#FFFBF3', paperDk: '#E4DCCB', ink: '#1D1B20', ink2: '#3A3640',
