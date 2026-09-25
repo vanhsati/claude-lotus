@@ -93,7 +93,7 @@ function S7_jolt(t, t0, s = 1, dur = .16) {
   const k = (t - t0) / dur; if (k < 0 || k > 1) return;
   const e = Math.pow(1 - k, 2) * s, c = layer('_s7j'); c.x.setTransform(1, 0, 0, 1, 0, 0); c.x.drawImage(X.canvas, 0, 0);
   X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalCompositeOperation = 'lighter';
-  X.globalAlpha = .28 * e; X.drawImage(c, 22 * SX * e, 0); X.globalAlpha = .18 * e; X.drawImage(c, -16 * SX * e, 6 * SX * e); X.restore();
+  X.globalAlpha = .15 * e; X.drawImage(c, 22 * SX * e, 0); X.globalAlpha = .09 * e; X.drawImage(c, -16 * SX * e, 6 * SX * e); X.restore();
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -131,11 +131,11 @@ const S7_POOLS = {
 };
 function S7_room(pools, cam) {
   const R = layer('_s7room'), prev = X; X = R.x;
-  X.fillStyle = '#3C3D5C'; X.fillRect(0, 0, W, H); X.globalCompositeOperation = 'lighten';
+  X.fillStyle = '#2E2F4A'; X.fillRect(0, 0, W, H); X.globalCompositeOperation = 'lighten';
   for (const [x0, y0, r, c] of pools) {
     let x = x0, y = y0, rr = r;
     if (cam && !(x0 < 800)) { x = W / 2 + (x0 - cam.x) * cam.zoom; y = H / 2 + (y0 - cam.y) * cam.zoom; rr = r * Math.sqrt(cam.zoom); }
-    const g = X.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, c); g.addColorStop(.45, skMix(c, '#3C3D5C', .35)); g.addColorStop(1, '#3C3D5C');
+    const g = X.createRadialGradient(x, y, 0, x, y, rr); g.addColorStop(0, c); g.addColorStop(.45, skMix(c, '#2E2F4A', .35)); g.addColorStop(1, '#2E2F4A');
     X.fillStyle = g; X.fillRect(0, 0, W, H);
   }
   X = prev; X.save(); X.setTransform(1, 0, 0, 1, 0, 0); X.globalCompositeOperation = 'multiply'; X.drawImage(R, 0, 0); X.restore();
@@ -173,7 +173,7 @@ function S7_paintLake() {
   // the ∞, brushed in one stroke over the water
   const inf = S7_inf(1210, 340, 430, 120).map((p, i) => [p[0], p[1], .5 + .5 * Math.abs(Math.sin(i / 120 * TAU * 2 + .6))]);
   S7_room(S7_POOLS.lake);
-  skInk([inf.slice(0, 62), inf.slice(60)], { w: 30, dry: .5, dryTail: .6, seed: 92, alpha: .85 });   // two strokes (a closed figure-8 cancels itself)
+  skInk([inf.slice(0, 59), inf.slice(57, 119)], { w: 30, dry: .5, dryTail: .6, seed: 92, alpha: .85 });   // two open strokes (a closed loop fills to nothing)
 }
 function S7_paintUmb() {
   skSilk(0);
@@ -553,7 +553,7 @@ const S7_k2 = () => (S7_LY[6] ? S7_split(S7_LY[6], 'không bên em').key.map(w =
 const S7_himE = t => { const [a, b, c] = S7_k2(); if (t >= c) return t < c + .08 ? 1 : 0; if (t >= b) return hash(Math.floor(t * 30)) < .6 ? .05 : .8; if (t >= a) return hash(Math.floor(t * 20)) < .5 ? .15 : 1; return 1; };
 S7_esc(342, 344, 6, (t, lt) => S7_stripUmb(t, lt, { n: 5, gap: 90, amp: 30, seed: 5 }));
 S7_esc(344, 346, 6, (t, lt) => S7_stripUmb(t, lt, { n: 5, gap: 100, amp: 34, seed: 6, z0: 1.35, cx: 290, cy: 60, px: -12 }));
-S7_esc(346, 348, 6, (t, lt) => S7_stripUmb(t, lt, { n: 6, gap: 120, amp: 40, seed: 7, rot: -.03, him: S7_himE }));
+S7_esc(346, 348, 6, (t, lt) => S7_stripUmb(t, lt, { n: 6, gap: 80, amp: 40, seed: 7, rot: -.03, him: S7_himE }));
 S7_esc(348, 350, 6, (t, lt) => S7_stripFace(t, lt, 'ecu', { n: 6, gap: 140, amp: 44, seed: 8, rot: .04, tearT: S7_tearE(348) }));
 // L55 "nơi nào": every scene, faster, then the last hit
 S7_esc(350, 352, 7, (t, lt) => S7_stripFace(t, lt, 'wide', { n: 7, gap: 140, amp: 44, seed: 9, tearT: S7_tearE(350) }));
@@ -566,10 +566,6 @@ shot(S7_B(358), S7_END, (t, lt) => {
   const hk = hit(t, S7_HIT, .5), die = i => S7_die(t, 90 + i * 3);
   S7_stripFace(t, lt, 'wide', { n: 7, gap: 130 + 80 * hk, amp: 50 + 60 * hk, seed: 14, z0: 1.06 + .05 * hk, tearT: [S7_B(358), S7_HIT], I: i => die(i) * (1 + 1.5 * hk) });
   S7_banner(t, 8); S7_lyric(t, 7, S7_bb(7), 1 + hk);
-  S7_jolt(t, S7_B(358), 1.2); S7_jolt(t, S7_HIT, 2, .25);
-  S7_flash(t, S7_HIT, .8, '#FFF0F8', .3);
+  S7_jolt(t, S7_B(358), 1.2); S7_jolt(t, S7_HIT, 1.6, .25);
+  S7_flash(t, S7_HIT, .45, '#FFE4F2', .28);
 }, { dark: true });
-TESTS.s7perf = () => { window.TEST = null; const out = []; for (const t0 of [186.5, 189.5, 192.5, 193.3, 194.5, 197.5, 199.2, 202.5, 205.8, 207.3, 208.3, 212, 213.5, 217, 219.2, 222, 224, 226.9, 227.5]) { const ms = []; for (let i = 0; i < 4; i++) { const a = performance.now(); drawFrame(t0 + i / 30); X.getImageData(0, 0, 1, 1); ms.push(Math.round(performance.now() - a)); } out.push(t0 + ': ' + ms.join(',')); } console.error('S7 ms ' + out.join(' | ')); };
-TESTS.s7perf2 = () => { window.TEST = null; drawFrame(208.3); const tm = (nm, fn) => { const ms = []; for (let i = 0; i < 3; i++) { const a = performance.now(); T = 208.3 + i / 30; fn(T); X.getImageData(0, 0, 1, 1); ms.push(Math.round(performance.now() - a)); } return nm + ':' + ms.join(','); };
-  const r = [tm('stripFace', t => S7_stripFace(t, 2, 'ecu', { n: 5, gap: 90, amp: 30, seed: 2 })), tm('strips', t => S7_strips(t, S7_cache('face:ecu', () => 0), { n: 5, gap: 90 })), tm('banner', t => S7_banner(t, 5)), tm('lyric', t => S7_lyric(t, 4, S7_bb(4))), tm('jolt', t => S7_jolt(t, t - .05)), tm('finish', t => skFinish(t, null)), tm('neonface', t => S7_drawNeonFace(t, S7_ECU, null, () => 1)), tm('night', t => S7_put(S7_night('face'), null))];
-  console.error('S7 parts ' + r.join(' | ')); };

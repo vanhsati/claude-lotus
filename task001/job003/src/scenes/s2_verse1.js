@@ -125,12 +125,8 @@ function S2_lampPost(x, yb, h, s = 1, seed = 0) {
 }
 function S2_lampGlow(x, y, s = 1, seed = 0) {
   S2_light(x, y, 260 * s, .9);
-  skWash(() => S2_blob(x, y + 10 * s, 190 * s, 170 * s, seed, 28, .1), S2_P.ochre, { a: .2, edge: .18, feather: .9, spread: 70 * s, blur: 12 * s, seed: seed + 3, color2: S2_P.rose, mix: .25 });
-  skWash(() => S2_blob(x, y, 70 * s, 64 * s, seed + 2, 20, .1), S2_P.ochre, { a: .18, edge: .5, feather: .8, seed: seed + 4 });
-}
-// the lamp's reflection: stacked ochre dashes down the water
-function S2_lampRefl(x, y0, len, s = 1, seed = 0) {
-  skWash(() => { for (let i = 0; i < 9; i++) { const u = i / 9, yy = y0 + u * len, w = (26 + 30 * u) * s * (.6 + hash(seed + i) * .8), hh = 7 * s * (1 + u); X.moveTo(x - w, yy); X.ellipse(x + (hash(seed * 3 + i) - .5) * 20 * s, yy, w, hh, 0, 0, TAU); } }, S2_P.ochre, { a: .42, edge: .6, feather: .15, seed: seed + 5 });
+  skWash(() => S2_blob(x, y + 10 * s, 190 * s, 170 * s, seed, 28, .1), S2_P.ochre, { a: .13, edge: .04, feather: 1, spread: 90 * s, blur: 18 * s, gran: .2, seed: seed + 3, color2: S2_P.rose, mix: .25 });
+  skWash(() => S2_blob(x, y, 62 * s, 58 * s, seed + 2, 20, .1), S2_P.ochre, { a: .2, edge: .25, feather: .9, seed: seed + 4 });
 }
 // water ripple marks: short horizontal brush strokes, longer near the viewer
 function S2_ripples(x0, x1, y0, y1, n, seed, o = {}) {
@@ -176,8 +172,6 @@ function S2_tower(x, yb, s, seed = 0) {
   ink.push([[x - 42 * s, yb - 174 * s], [x - 20 * s, yb - 184 * s], [x, yb - 208 * s], [x + 20 * s, yb - 184 * s], [x + 42 * s, yb - 174 * s]]);
   skInk(ink, { w: 3 * s, dry: .5, seed: seed + 9, alpha: .8 });
   // arched openings
-  const arch = [];
-  const win = (cx, by, w, h) => { arch.push([cx - w / 2, by]); };
   const archP = () => {
     [[-30, 22, 3], [0, 22, 3], [30, 22, 3]].forEach(([dx]) => { const cx = x + dx * s, by = yb - 22 * s, w = 9 * s, h = 34 * s; X.moveTo(cx - w, by); X.lineTo(cx - w, by - h + w); X.arc(cx, by - h + w, w, Math.PI, 0); X.lineTo(cx + w, by); X.closePath(); });
     [[-17], [17]].forEach(([dx]) => { const cx = x + dx * s, by = yb - 92 * s, w = 7 * s, h = 28 * s; X.moveTo(cx - w, by); X.lineTo(cx - w, by - h + w); X.arc(cx, by - h + w, w, Math.PI, 0); X.lineTo(cx + w, by); X.closePath(); });
@@ -189,83 +183,87 @@ function S2_tower(x, yb, s, seed = 0) {
   skWash(() => { body(); roof(); }, S2_P.indigo, { a: .2, edge: .3, feather: .5, seed: seed + 11, color2: S2_P.ochre, mix: .5 });
   X.restore();
 }
-// Small painted people. (x, y) = feet, h = standing height. o: {who 'her'|'him', pose 'walk'|'back'|'sit', dir 1|-1, alpha, reach, ghost}
+// a tapered limb: polyline pts [[u, v], ...] with half-widths ws, as a closed outline (unit coords)
+function S2_strip(pts, ws) {
+  const L = [], R = [];
+  pts.forEach((p, i) => {
+    const a = pts[Math.max(0, i - 1)], b = pts[Math.min(pts.length - 1, i + 1)], dx = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dx, dy) || 1, nx = -dy / l, ny = dx / l;
+    L.push([p[0] + nx * ws[i], p[1] + ny * ws[i]]); R.push([p[0] - nx * ws[i], p[1] - ny * ws[i]]);
+  });
+  return [...L, ...R.reverse()];
+}
+// Small painted people. (x, y) = feet, h = standing height. o: {who 'her'|'him', pose 'walk'|'back'|'sit', dir 1|-1, alpha, reach, ghost, arm: [[u, v]...]}
 function S2_person(x, y, h, o = {}) {
   const d = o.dir ?? 1, P = pts => pts.map(([u, v]) => [x + d * u * h, y + v * h]), her = o.who === 'her', pose = o.pose || 'walk', A = o.alpha ?? 1;
   const sd = (o.seed ?? 0) + (her ? 50 : 10), ns = h / 400;
-  const wash = (fn, c, a, opt = {}) => skWash(fn, c, { a: a * A, edge: .7, seed: sd + (opt.k || 0), scale: ns, blur: 3 * ns + 1, spread: 8 * ns + 2, color2: opt.c2, mix: opt.mix ?? .5, feather: opt.feather ?? .12 });
-  let head, parts;
+  const wash = (fn, c, a, opt = {}) => skWash(fn, c, { a: a * A, edge: .7, seed: sd + (opt.k || 0), scale: ns, blur: 2.5 * ns + 1, spread: 7 * ns + 2, color2: opt.c2, mix: opt.mix ?? .5, feather: opt.feather ?? .1, rough: .25 });
+  let head, top, flaps = [], legs = [], arms = [], hair;
   if (pose === 'sit') {
-    const hy = -.27;
-    head = [.02, -.705, .06];
-    parts = her ? {
-      top: P([[-.07, -.63], [.05, -.63], [.07, -.52], [.05, -.36], [.08, hy + .02], [-.08, hy + .02], [-.08, -.45]]),
-      flap: P([[.03, hy - .02], [.25, hy - .03], [.27, hy + .03], [.02, hy + .04]]),
-      legs: P([[.0, hy - .01], [.22, hy - .02], [.26, -.02], [.2, 0], [.17, hy + .04], [-.02, hy + .05]]),
-      hair: P([[-.08, -.72], [.0, -.78], [.07, -.73], [.03, -.66], [-.05, -.4], [-.1, -.42], [-.09, -.6]]),
-    } : {
-      top: P([[-.085, -.62], [.07, -.62], [.09, -.5], [.07, hy - .02], [-.08, hy - .01], [-.1, -.48]]),
-      legs: P([[-.06, hy - .04], [.25, hy - .05], [.27, -.01], [.2, 0], [.19, hy + .05], [-.07, hy + .05]]),
-      hair: P([[-.07, -.72], [0, -.77], [.07, -.73], [.06, -.69], [-.05, -.68], [-.07, -.66]]),
-    };
+    head = [.045, -.705, her ? .054 : .058];
+    top = her ? [[-.03, -.64], [.04, -.64], [.065, -.58], [.055, -.46], [.06, -.3], [-.07, -.28], [-.07, -.46], [-.06, -.58]]
+      : [[-.05, -.645], [.05, -.645], [.085, -.58], [.075, -.42], [.06, -.28], [-.08, -.27], [-.085, -.45], [-.075, -.58]];
+    legs = [S2_strip([[0, -.285], [.12, -.29], [.24, -.29]], [.06, .055, .045]), S2_strip([[.24, -.29], [.245, -.15], [.25, -.02]], [.04, .035, .03])];
+    if (her) flaps = [[[.0, -.33], [.22, -.34], [.26, -.28], [.2, -.24], [.0, -.25]]];
+    arms = [S2_strip([[.02, -.6], [.08, -.46], [.17, -.36]], [.03, .026, .022])];
+    hair = her ? [[-.05, -.72], [.0, -.765], [.07, -.74], [.08, -.7], [.04, -.72], [.0, -.66], [-.04, -.5], [-.08, -.46], [-.08, -.6], [-.07, -.69]]
+      : [[-.02, -.72], [.03, -.765], [.09, -.745], [.1, -.71], [.06, -.72], [.0, -.69], [-.02, -.68]];
   } else if (pose === 'back') {
-    head = [0, -.925, her ? .06 : .066];
-    parts = her ? {
-      top: P([[-.1, -.83], [.1, -.83], [.075, -.6], [-.075, -.6]]),
-      flap: P([[-.075, -.61], [.075, -.61], [.095, -.26], [-.095, -.26]]),
-      legs: P([[-.08, -.3], [.08, -.3], [.1, 0], [.01, 0], [0, -.2], [-.01, 0], [-.1, 0]]),
-      hair: P([[-.066, -.95], [0, -.995], [.066, -.95], [.074, -.72], [.05, -.56], [0, -.54], [-.05, -.56], [-.074, -.72]]),
-    } : {
-      top: P([[-.135, -.84], [.135, -.84], [.105, -.5], [-.105, -.5]]),
-      legs: P([[-.1, -.51], [.1, -.51], [.105, 0], [.02, 0], [0, -.3], [-.02, 0], [-.105, 0]]),
-      hair: P([[-.07, -.93], [-.06, -.97], [0, -.995], [.06, -.97], [.07, -.93], [.066, -.88], [0, -.87], [-.066, -.88]]),
-    };
+    head = [0, -.93, her ? .058 : .064];
+    if (her) {
+      top = [[-.03, -.86], [-.1, -.83], [-.095, -.75], [-.07, -.62], [.07, -.62], [.095, -.75], [.1, -.83], [.03, -.86]];
+      flaps = [[[-.07, -.625], [-.085, -.45], [-.1, -.26], [.1, -.26], [.085, -.45], [.07, -.625]]];
+      legs = [S2_strip([[-.035, -.32], [-.04, -.15], [-.045, -.01]], [.04, .042, .045]), S2_strip([[.035, -.32], [.04, -.15], [.045, -.01]], [.04, .042, .045])];
+      hair = [[-.062, -.95], [-.03, -.995], [.03, -.995], [.062, -.95], [.07, -.88], [.055, -.8], [.06, -.7], [.05, -.6], [.02, -.56], [-.02, -.555], [-.05, -.6], [-.06, -.7], [-.055, -.8], [-.07, -.88]];
+      arms = [S2_strip([[-.095, -.81], [-.11, -.68], [-.1, -.56]], [.028, .024, .02])];
+    } else {
+      top = [[-.04, -.86], [-.135, -.825], [-.13, -.7], [-.11, -.52], [.11, -.52], [.13, -.7], [.135, -.825], [.04, -.86]];
+      legs = [S2_strip([[-.055, -.53], [-.055, -.26], [-.055, -.01]], [.055, .048, .044]), S2_strip([[.055, -.53], [.055, -.26], [.055, -.01]], [.055, .048, .044])];
+      hair = [[-.066, -.92], [-.06, -.97], [0, -.998], [.06, -.97], [.066, -.92], [.06, -.875], [0, -.868], [-.06, -.875]];
+      arms = [S2_strip(o.arm || [[.125, -.8], [.14, -.66], [.125, -.54]], [.034, .03, .026])];
+    }
   } else {   // walking, side view facing dir
-    head = [.01, -.925, her ? .058 : .062];
-    parts = her ? {
-      top: P([[-.06, -.845], [.05, -.845], [.072, -.72], [.046, -.6], [-.056, -.6], [-.074, -.72]]),
-      flap: P([[.046, -.6], [.075, -.4], [.07, -.25], [.02, -.24], [.0, -.6], [-.056, -.6], [-.1, -.42], [-.17, -.27], [-.11, -.25]]),
-      legs: P([[-.05, -.58], [.04, -.58], [.1, -.01], [.04, 0], [0, -.28], [-.06, -.01], [-.12, 0]]),
-      hair: P([[-.07, -.95], [0, -.99], [.06, -.955], [.03, -.9], [-.03, -.8], [-.07, -.62], [-.12, -.6], [-.1, -.8]]),
-    } : {
-      top: P([[-.075, -.845], [.06, -.845], [.09, -.72], [.08, -.5], [-.08, -.5], [-.095, -.7]]),
-      legs: P([[-.07, -.52], [.075, -.52], [.14, -.02], [.075, 0], [.0, -.3], [-.08, -.01], [-.15, -.01]]),
-      hair: P([[-.07, -.93], [-.055, -.975], [.01, -.99], [.07, -.96], [.07, -.925], [.0, -.93], [-.04, -.87], [-.07, -.88]]),
-    };
+    head = [.015, -.927, her ? .056 : .06];
+    if (her) {
+      top = [[-.035, -.86], [.035, -.86], [.06, -.8], [.055, -.7], [.04, -.62], [-.045, -.62], [-.06, -.72], [-.065, -.8]];
+      flaps = [[[.04, -.63], [.075, -.45], [.085, -.27], [.03, -.27], [.0, -.62]], [[-.045, -.63], [-.0, -.62], [-.06, -.29], [-.17, -.31], [-.09, -.46]]];
+      legs = [S2_strip([[.01, -.6], [.05, -.3], [.09, -.02]], [.035, .033, .03]), S2_strip([[-.01, -.6], [-.04, -.3], [-.085, -.02]], [.035, .033, .03])];
+      hair = [[-.055, -.94], [-.03, -.985], [.03, -.985], [.065, -.95], [.06, -.9], [.02, -.93], [-.02, -.9], [-.04, -.8], [-.05, -.68], [-.09, -.6], [-.1, -.64], [-.085, -.78], [-.07, -.88]];
+      arms = [S2_strip([[0, -.83], [.02, -.7], [.0, -.6]], [.024, .021, .018])];
+    } else {
+      top = [[-.05, -.86], [.04, -.86], [.075, -.8], [.08, -.64], [.07, -.5], [-.07, -.5], [-.08, -.66], [-.075, -.8]];
+      legs = [S2_strip([[-.01, -.51], [-.04, -.27], [-.1, -.03], [-.06, -.005]], [.05, .042, .034, .03]), S2_strip([[.02, -.51], [.07, -.27], [.12, -.03], [.16, -.01]], [.05, .042, .034, .03])];
+      hair = [[-.06, -.93], [-.05, -.975], [0, -.99], [.05, -.975], [.07, -.94], [.03, -.95], [-.02, -.93], [-.05, -.88], [-.065, -.89]];
+      arms = [S2_strip(o.reach ? [[.02, -.82], [.12, -.74], [.22, -.71]] : [[0, -.82], [.03, -.68], [.04, -.56]], [.03, .026, .022])];
+    }
   }
-  const hx = x + d * head[0] * h, hy2 = y + head[1] * h, hr = head[2] * h;
+  const hx = x + d * head[0] * h, hy = y + head[1] * h, hr = head[2] * h;
   // crown of petals (the idol's sunflower), behind the head
   if (her && o.crown !== false) {
-    wash(() => { for (let i = 0; i < 11; i++) { const a = -Math.PI / 2 + (i - 5) * .33; const px = hx + Math.cos(a) * hr * 1.35, py = hy2 + Math.sin(a) * hr * 1.35; X.moveTo(px + Math.cos(a) * hr * .5, py + Math.sin(a) * hr * .5); X.ellipse(px, py, hr * .55, hr * .24, a, 0, TAU); } }, S2_P.ochre, .55, { k: 1, c2: S2_P.sienna, mix: .5 });
+    wash(() => { for (let i = 0; i < 11; i++) { const a = -Math.PI / 2 + (i - 5) * .33; const px = hx + Math.cos(a) * hr * 1.3, py = hy + Math.sin(a) * hr * 1.3; X.moveTo(px + Math.cos(a) * hr * .5, py + Math.sin(a) * hr * .5); X.ellipse(px, py, hr * .52, hr * .22, a, 0, TAU); } }, S2_P.ochre, .6, { k: 1, c2: S2_P.sienna, mix: .5 });
   }
-  if (parts.legs) wash(() => pathSmooth(parts.legs, true, .5), her ? S2_P.celadon : S2_P.ink, her ? .3 : .62, { k: 2, c2: her ? S2_P.silkDk : S2_P.indigo, mix: .5 });
-  if (parts.flap) wash(() => pathSmooth(parts.flap, true, .5), S2_P.rose, .5, { k: 3, c2: S2_P.cinnabar, mix: .35, feather: .2 });
-  wash(() => pathSmooth(parts.top, true, .5), her ? S2_P.rose : S2_P.indigo, her ? .58 : .7, { k: 4, c2: her ? S2_P.cinnabar : S2_P.cobalt, mix: .4 });
-  wash(() => X.arc(hx, hy2, hr, 0, TAU), S2_P.skin, .5, { k: 5, c2: S2_P.rose, mix: .3 });
-  wash(() => pathSmooth(parts.hair, true, .6), S2_P.ink, .78, { k: 6, c2: S2_P.sienna, mix: .25 });
+  wash(() => legs.forEach(l => pathSmooth(P(l), true, .4)), her ? S2_P.celadon : S2_P.ink, her ? .28 : .6, { k: 2, c2: her ? S2_P.silkDk : S2_P.indigo, mix: .5 });
+  if (flaps.length) wash(() => flaps.forEach(f => pathSmooth(P(f), true, .5)), S2_P.rose, .52, { k: 3, c2: S2_P.cinnabar, mix: .35 });
+  wash(() => pathSmooth(P(top), true, .5), her ? S2_P.rose : S2_P.indigo, her ? .6 : .66, { k: 4, c2: her ? S2_P.cinnabar : S2_P.cobalt, mix: .4 });
+  wash(() => arms.forEach(a => pathSmooth(P(a), true, .4)), her ? S2_P.rose : S2_P.indigo, her ? .62 : .74, { k: 8, c2: her ? S2_P.cinnabar : S2_P.cobalt, mix: .4 });
+  wash(() => X.arc(hx, hy, hr, 0, TAU), S2_P.skin, .5, { k: 5, c2: S2_P.rose, mix: .3 });
+  wash(() => pathSmooth(P(hair), true, .6), S2_P.ink, .8, { k: 6, c2: S2_P.sienna, mix: .25 });
   if (!o.ghost) {
-    // a few ink contour touches
-    const lw = Math.max(1.4, h * .006);
-    skInk([parts.top.slice(0, 3).map(p => [...p, .7]), parts.legs ? parts.legs.slice(1, 3) : []].filter(s => s.length > 1), { w: lw, alpha: .55 * A, dry: .5, seed: sd + 7 });
-    // arms (sleeves)
-    let arm;
-    if (pose === 'walk') arm = o.reach ? [[.03, -.8], [.14, -.7], [.24, -.66, .5]] : [[.0, -.8], [.04, -.66], [.03, -.54, .5]];
-    else if (pose === 'sit') arm = [[.0, -.58], [.08, -.44], [.16, -.36, .5]];
-    else arm = her ? [[-.09, -.8], [-.1, -.66], [-.08, -.55, .5]] : [[.12, -.82], [.08, -.95], [.02, -1.08, .5]];
-    skWash(() => { const q = P(arm.map(p => [p[0], p[1]])); X.moveTo(q[0][0], q[0][1]); const n = q.length; for (let i = 1; i < n; i++) X.lineTo(q[i][0], q[i][1]); for (let i = n - 1; i >= 0; i--) X.lineTo(q[i][0] + h * .03, q[i][1] + h * .012); X.closePath(); }, her ? S2_P.rose : S2_P.indigo, { a: .6 * A, edge: .6, seed: sd + 8, scale: ns });
+    const lw = Math.max(1.3, h * .005), T = P(top);
+    skInk([T.slice(0, 4).map((p, i) => [...p, .4 + i * .2])], { w: lw, alpha: .5 * A, dry: .5, seed: sd + 7 });
   }
 }
-// an oil-paper umbrella: apex (x, y), half width w
+// an oil-paper umbrella: apex (x, y), half width w (dome down to its rim)
 function S2_umbrella(x, y, w, seed = 0) {
-  const n = 8, ry = w * .5, rim = [];
-  for (let i = 0; i <= n; i++) { const a = Math.PI + i / n * Math.PI; rim.push([x + Math.cos(a) * w, y + ry + Math.sin(a) * ry * .1 + ry * .0]); }
-  const canopy = () => { X.moveTo(x - w, y + ry); X.bezierCurveTo(x - w * .95, y + ry * .1, x - w * .45, y - ry * .02, x, y); X.bezierCurveTo(x + w * .45, y - ry * .02, x + w * .95, y + ry * .1, x + w, y + ry); for (let i = n; i > 0; i--) { const a = rim[i], b = rim[i - 1]; X.quadraticCurveTo((a[0] + b[0]) / 2, a[1] - ry * .1, b[0], b[1]); } };
-  skWash(canopy, S2_P.cinnabar, { a: .5, edge: .8, color2: S2_P.rose, mix: .55, seed, rough: .25 });
-  skWash(canopy, S2_P.ochre, { a: .3, edge: .3, feather: .5, seed: seed + 1, grad: [x, y, x, y + ry], gradTo: .2 });
-  const ribs = rim.map((p, i) => [[x, y + 2, .4], [lerp(x, p[0], .55), lerp(y, p[1], .55) - ry * .12 * Math.sin(i / n * Math.PI)], [p[0], p[1], .8]]);
-  skInk(ribs, { w: 2.4, alpha: .6, dry: .4, seed: seed + 2 });
-  skInk([[[x - w, y + ry], [x - w * .95, y + ry * .1 - 2], [x - w * .45, y - ry * .02 - 2], [x, y]], [[x, y], [x + w * .45, y - ry * .02 - 2], [x + w * .95, y + ry * .1 - 2], [x + w, y + ry]]], { w: 4, dry: .4, seed: seed + 3, alpha: .85 });
-  skInk([[[x, y - 16], [x, y + 2]]], { w: 5, seed: seed + 4 });
+  const n = 10, hd = w * .42, yr = y + hd, rim = [];
+  for (let i = 0; i <= n; i++) rim.push([x - w + 2 * w * i / n, yr + Math.sin(i / n * Math.PI) * w * .02]);
+  const arcP = k => { const a = Math.PI + k * Math.PI; return [x + Math.cos(a) * w, yr + Math.sin(a) * hd]; };
+  const canopy = () => { for (let i = 0; i <= 40; i++) { const p = arcP(i / 40); if (i) X.lineTo(p[0], p[1]); else X.moveTo(p[0], p[1]); } for (let i = n; i > 0; i--) { const a = rim[i], b = rim[i - 1]; X.quadraticCurveTo((a[0] + b[0]) / 2, a[1] - w * .05, b[0], b[1]); } };
+  skWash(canopy, S2_P.cinnabar, { a: .52, edge: .8, color2: S2_P.rose, mix: .55, seed, rough: .25 });
+  skWash(canopy, S2_P.ochre, { a: .3, edge: .3, feather: .5, seed: seed + 1, grad: [x, y, x, yr], gradTo: .2 });
+  const ribs = rim.map((p, i) => { const k = i / n, q = arcP(k), m = [lerp(x, q[0], .5), lerp(y, q[1], .5) - hd * .08]; return [[x, y + 2, .4], m, [p[0], p[1], .8]]; });
+  skInk(ribs.slice(1, -1), { w: 2.2, alpha: .5, dry: .4, seed: seed + 2 });
+  skInk([Array.from({ length: 21 }, (_, i) => { const p = arcP(i / 20); return [p[0], p[1], .5 + .5 * Math.sin(i / 20 * Math.PI)]; })], { w: 4.5, dry: .45, seed: seed + 3, alpha: .85 });
+  skInk([[[x, y - 18], [x, y + 2]]], { w: 5, seed: seed + 4 });
 }
 // night sky over [x0, x1], graded, with a bare-silk moon hole; horizon y
 function S2_sky(x0, x1, y0, yh, moon, o = {}) {
@@ -286,7 +284,7 @@ function S2_farShore(x0, x1, yh, seed) {
   skInk([[[x0, yh + 6, .5], [lerp(x0, x1, .33), yh + 4], [lerp(x0, x1, .66), yh + 7], [x1, yh + 5, .5]]], { w: 3, alpha: .6, dry: .6, seed: seed + 1 });
   const lights = []; for (let i = 0; i < (x1 - x0) / 55; i++) lights.push([x0 + r() * (x1 - x0), yh - 6 - r() * 22, 3 + r() * 5]);
   lights.forEach(([x, y, s]) => S2_light(x, y, s * 5, .8));
-  skWash(() => lights.forEach(([x, y, s]) => { X.moveTo(x + s, y); X.arc(x, y, s, 0, TAU); X.moveTo(x + s * .6, y + 20); X.ellipse(x, y + 24 + s, s * .6, s * 3, 0, 0, TAU); }), S2_P.ochre, { a: .5, edge: .6, seed: seed + 2, blur: 2, spread: 5 });
+  skWash(() => lights.forEach(([x, y, s]) => { X.moveTo(x + s, y); X.arc(x, y, s, 0, TAU); X.moveTo(x + s * .5, y + 20); X.ellipse(x, y + 20 + s, s * .5, s * 1.8, 0, 0, TAU); }), S2_P.ochre, { a: .5, edge: .6, seed: seed + 2, blur: 2, spread: 5 });
 }
 function S2_water(pts, seed, o = {}) {
   skWash(() => pathPoly(pts), S2_P.indigo, { a: o.a ?? .5, edge: .3, feather: .25, color2: S2_P.ink, mix: .25, grad: [0, o.y1 ?? 1080, 0, o.y0 ?? 540], gradTo: o.gradTo ?? .45, seed, scale: 3, rough: .12 });
@@ -304,14 +302,14 @@ function S2_walk(x0, x1, y, seed) {
 const S2A_RECT = [-160, 0, 6060, 1080], S2A_HZ = 520;
 function S2A_paint() {
   const [x0, , w] = S2A_RECT, x1 = x0 + w;
-  S2_sky(x0 - 40, x1 + 40, -40, S2A_HZ, [430, 215, 78], { a: .66, seed: 2, gradTo: .35 });
+  S2_sky(x0 - 40, x1 + 40, -40, S2A_HZ, [430, 215, 78], { a: .72, seed: 2, gradTo: .32 });
   // mist bands over the far shore
   for (const [yy, a] of [[455, .5], [490, .35]]) { X.save(); X.globalCompositeOperation = 'screen'; const g = X.createLinearGradient(0, yy - 40, 0, yy + 40); g.addColorStop(0, 'rgba(240,232,215,0)'); g.addColorStop(.5, `rgba(240,232,215,${a})`); g.addColorStop(1, 'rgba(240,232,215,0)'); X.fillStyle = g; X.fillRect(x0, yy - 40, w, 80); X.restore(); }
   S2_farShore(x0 - 40, x1 + 40, S2A_HZ, 5);
   // water: all the way down in the wide view, then behind the embankment of the promenade
   S2_water([[x0 - 40, S2A_HZ], [x1 + 40, S2A_HZ], [x1 + 40, 832], [2050, 832], [1920, 870], [1760, 1000], [1600, 1140], [x0 - 40, 1140]], 7, { y0: S2A_HZ, y1: 1080, a: .6 });
   // near bank under the willow (V1 lower right) and the embankment face of the promenade
-  skWash(() => pathSmooth([[1420, 1140], [1560, 1020], [1760, 960], [1960, 880], [2150, 846], [2300, 846], [2300, 1140]], true, .6), S2_P.celadon, { a: .45, edge: .6, color2: S2_P.ink, mix: .45, seed: 9, scale: 2 });
+  skWash(() => pathSmooth([[1420, 1140], [1560, 1020], [1760, 960], [1940, 890], [2040, 862], [2100, 1140]], true, .6), S2_P.celadon, { a: .45, edge: .6, color2: S2_P.ink, mix: .45, seed: 9, scale: 2 });
   S2_walk(2060, x1 + 40, 832, 11);
   // the lamps (glow first, then the posts over it)
   const lamps = [[2610, 832, 470, 1], [5230, 832, 480, 1], [3900, 832, 440, .95]];
@@ -409,12 +407,12 @@ function S2C_paint() {
   skWash(() => { X.moveTo(2550, 830); X.quadraticCurveTo(2700, 860, 2870, 826); X.quadraticCurveTo(2700, 880, 2550, 830); }, S2_P.indigo, { a: .25, edge: .3, feather: .6, seed: 22 });
   // embankment of V4, the lamp, the couple under one umbrella (from behind)
   S2_walk(x0 - 40, 2000, 880, 23);
-  S2_lampGlow(260, 380, 1, 24); S2_lampRefl(260, 612, 250, 1, 25);
+  S2_lampGlow(260, 380, 1, 24);
   S2_lampPost(260, 880, 500, 1, 26);
   S2_person(820, 1045, 440, { who: 'her', pose: 'back', seed: 5 });
-  S2_person(985, 1050, 470, { who: 'him', pose: 'back', seed: 6 });
-  S2_umbrella(930, 470, 250, 27);
-  skInk([[[930, 480], [932, 600], [968, 620, .5]]], { w: 5, seed: 28, alpha: .9 });
+  S2_person(985, 1050, 470, { who: 'him', pose: 'back', seed: 6, arm: [[-.125, -.8], [-.15, -.9], [-.12, -.98]] });
+  S2_umbrella(930, 478, 255, 27);
+  skInk([[[930, 480], [930, 590], [932, 628, .6]]], { w: 5, seed: 28, alpha: .9 });
 }
 function S2C_scene(t) {
   S2_seeded(489, () => {
@@ -437,7 +435,7 @@ function S2C_scene(t) {
     S2_write(t, w7, 2, 8, 2040, 540, 52, { seed: 7 });
     X.restore();
     // the rain itself, in the frame (lighter as we reach the dream)
-    skRainInk(t, { n: 120, angle: .13, speed: 950, len: 46, dots: 26, alpha: lerp(1, .35, far) });
+    skRainInk(t, { n: 130, angle: .13, speed: 950, len: 50, dots: 26, w: 2, alpha: lerp(1.5, .5, far) });
   });
 }
 
@@ -522,6 +520,8 @@ function S2E_paint() {
   const r = rng(43);
   for (let i = 0; i < 70; i++) { const x = x0 + r() * w, y = y0 + r() * (yh - y0 - 160), s = r(); S2_light(x, y, 4 + s * 9, .5 + s * .4); }
   skWash(() => { for (let i = 0; i < 16; i++) { const x = x0 + r() * w, y = y0 + 40 + r() * 900, s = 2 + r() * 3; X.moveTo(x + s, y); X.arc(x, y, s, 0, TAU); } }, S2_P.ochre, { a: .5, edge: .6, seed: 44, blur: 1.5, spread: 3 });
+  // night clouds drifting across the stars
+  skWash(() => { S2_blob(420, -330, 360, 42, 2, 24, .25); S2_blob(1250, -150, 420, 38, 4, 24, .25); S2_blob(900, -680, 300, 34, 6, 24, .25); S2_blob(1500, 180, 380, 34, 8, 24, .25); }, S2_P.indigo, { a: .32, edge: .4, feather: .6, color2: S2_P.celadon, mix: .45, seed: 52, scale: 3 });
   // mist over the horizon
   X.save(); X.globalCompositeOperation = 'screen'; const g = X.createLinearGradient(0, yh - 120, 0, yh + 20); g.addColorStop(0, 'rgba(240,232,215,0)'); g.addColorStop(.7, 'rgba(240,232,215,.45)'); g.addColorStop(1, 'rgba(240,232,215,0)'); X.fillStyle = g; X.fillRect(x0, yh - 120, w, 140); X.restore();
   S2_farShore(x0 - 40, x1 + 40, yh - 4, 45);
@@ -538,7 +538,7 @@ function S2E_paint() {
     rail.push([[a[0] + 10, a[1] - 44], [S2E_VP[0] + 9, yh - 1]]); skInk(rail, { w: 3, dry: .5, seed: 51, alpha: .7 }); }
   // lamps and willows along the left, diminishing
   const lamps = [.2, .45, .62, .74, .82, .875, .91].map(u => { const p = S2E_road(u, -1), s = 1 - u; return [p[0] - 30 * s, p[1], 560 * s, s]; });
-  lamps.forEach(([x, yb, hh, s], i) => { S2_lampGlow(x, yb - hh, s * 1.1, 90 + i); if (i < 4) S2_lampRefl(x + 120 * s, yb + 10, 120 * s, s, 100 + i); });
+  lamps.forEach(([x, yb, hh, s], i) => S2_lampGlow(x, yb - hh, s * 1.1, 90 + i));
   [[.05, 1.3], [.36, .8], [.58, .55], [.72, .38], [.82, .25]].forEach(([u, s], i) => { const p = S2E_road(u, -1); S2_willow(p[0] - 260 * s, p[1] - 10 * s, s, 110 + i, 1, { len: .9 }); });
   lamps.forEach(([x, yb, hh, s], i) => S2_lampPost(x, yb, hh, Math.max(.2, s * 1.1), 120 + i));
   // him, at the end of the road, arms up to let the lantern go
@@ -547,7 +547,7 @@ function S2E_paint() {
 // the lantern's flight (after it is let go on the downbeat)
 function S2E_lantern(t) {
   const k = Math.max(0, t - S2E_REL), u = 1 - Math.exp(-k / 2.3);
-  return { x: S2E_VP[0] + 2 + Math.sin(k * .9) * 18 * u + 60 * u, y: 590 - 980 * u, s: 1 - .3 * u, k };
+  return { x: S2E_VP[0] + 2 + Math.sin(k * .9) * 18 * u + 230 * u, y: 588 - 960 * u, s: 2.1 - .8 * u, k };
 }
 function S2E_scene(t) {
   S2_seeded(590, () => {
@@ -564,8 +564,9 @@ function S2E_scene(t) {
     S2_put(B);
     // the lantern: paper glowing from inside, a warm halo reserved out of the night, embers trailing
     const fl = .85 + .15 * noise1(t * 9) + .1 * end * noise1(t * 31);
-    S2_light(L.x, L.y, 150 * L.s * fl, .65);
-    S2_light(L.x, L.y, 46 * L.s, .9);
+    { const g = X.createRadialGradient(L.x, L.y, 0, L.x, L.y, 110 * L.s); g.addColorStop(0, skRgba(S2_P.ochre, .0)); g.addColorStop(.25, skRgba(S2_P.ochre, .28 * fl)); g.addColorStop(1, skRgba(S2_P.ochre, 0)); X.save(); X.globalCompositeOperation = 'multiply'; X.fillStyle = g; X.beginPath(); X.arc(L.x, L.y, 110 * L.s, 0, TAU); X.fill(); X.restore(); }
+    S2_light(L.x, L.y, 170 * L.s * fl, .7);
+    S2_light(L.x, L.y, 50 * L.s, .95);
     withT(L.x, L.y, Math.sin(L.k * 1.3) * .06, L.s, () => {
       skWash(() => { X.moveTo(-13, -20); X.quadraticCurveTo(-19, 0, -11, 17); X.lineTo(11, 17); X.quadraticCurveTo(19, 0, 13, -20); X.quadraticCurveTo(0, -24, -13, -20); }, S2_P.ochre, { a: .45, edge: .8, color2: S2_P.cinnabar, mix: .4, seed: 91, blur: 1.2, spread: 3, memo: true });
       skInk([[[-13, -20], [0, -23], [13, -20]], [[-11, 17], [11, 17]]], { w: 1.6, alpha: .6, bleed: .3 });
@@ -576,7 +577,7 @@ function S2E_scene(t) {
     const w9 = S2_ws(7);
     if (w9.length) S2_write(t, w9, 3, 6, 110, 262, 54, { seed: 5 });
     S2_write(t, w9, 6, 8, 110, -150, 224, { big: true, seed: 6, dur: .3 });
-    S2_inscribe(t, 8, 1200, -470, [3, 3], { size: 50, seal: [330, 36] });
+    S2_inscribe(t, 8, 1200, -470, [3, 4], { size: 50, seal: [390, 36] });
     X.restore();
   });
 }
