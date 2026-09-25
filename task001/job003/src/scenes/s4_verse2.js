@@ -188,7 +188,7 @@ function S4_split(t, v) {
   if (sL > -20) {
     const edge = []; for (let y = -30; y <= H + 30; y += 10) edge.push([sL + noise1(y / 36 + 3.1) * 7 + noise1(y / 8.5 + 7) * 2.6, y]);
     const drawSilk = () => {
-      const Zq = v.Zq || 1, Fq = v.Fq || [F[0] - offS[0], F[1]];
+      const Zq = v.Zq || 1, Fq = v.Fq || [W / 2, H / 2];
       S4_place(S4_render('silkA' + (v.silkEyes || ''), Zq, Fq, () => S4_silkPainting({ eyes: v.silkEyes })), Zq, Fq, Z, F, offS);
       if (v.tears) S4_inCam(Z, F, offS, () => S4_silkTears(t, v.tears, S4_SF[0], S4_SF[1], S4_SR, .32));
     };
@@ -215,7 +215,7 @@ function S4_neonSide(t, v, Z, F, off, bare) {
   const lights = [{ x: fx, y: fy - 40 * Z, r: 460 * Z, color: S4_P.neonPink, a: .55 + KICK(t) * .25 }, { x: fx + 620 * Z, y: fy - 200 * Z, r: 380 * Z, color: S4_P.neonCyan, a: .7 }];
   skNight(t, { horizon: clamp(hz, 300, 1000), lights, bokeh: 26 });
   if (!bare) {
-    const Zq = v.nZq || 1, Fq = v.nFq || [F[0] - off[0], F[1]], turn = v.turnN ?? -.32;
+    const Zq = v.nZq || 1, Fq = v.nFq || [W / 2, H / 2], turn = v.turnN ?? -.32;
     const sp = S4_render('neonF' + turn + (v.neonEyes || ''), Zq, Fq, () => S4_neonFace(turn, v.neonEyes));
     const I = (v.neonA ?? 1) * (.82 + .18 * VOX(t) + .1 * KICK(t)), fl = hash(Math.floor(t * 24) * 1.7) < .04 ? .6 : 1;
     S4_place(sp, Zq, Fq, Z, F, off, 'lighter', clamp(I * fl));
@@ -246,9 +246,9 @@ function S4_rapView(t) {
   else if (t < C.p3) { const lt = t - C.p2; v.Z = 1 + lt * .01; v.F = [960, 540 - lt * 3]; }
   else if (t < C.p4) { const lt = t - C.p3; v.Z = 1.28 + lt * .012; v.F = [sF[0] - 170 + lt * 10, 470]; v.Zq = 1.3; v.Fq = [S4_SF[0] - 170, 470]; v.tears = clamp((t - 94.0) / 3) * .6; }
   else if (t < C.p5) { const lt = t - C.p4; v.Z = 1.28 + lt * .012; v.F = [nF[0] + 150 - lt * 10, 470]; v.nZq = 1.3; v.nFq = [S4_NF[0] + 150, 470]; v.tearT = [S4_lt(4, 4), S4_lt(4, 12)]; v.tears = .6; }
-  else if (t < C.p6) { const lt = t - C.p5; v.Z = .96 + lt * .01; v.F = [960, 520]; v.tears = .6 + lt * .05; v.tearT = [S4_lt(5, 5)]; }
+  else if (t < C.p6) { const lt = t - C.p5; v.Z = 1 + lt * .01; v.F = [960, 540]; v.tears = .6 + lt * .05; v.tearT = [S4_lt(5, 5)]; }
   else if (t < C.p7) { v.Z = 1 + KICK(t) * .012; v.F = [960, 540]; v.tears = .75; }
-  else { const lt = t - C.p7; v.Z = 1 - lt * .015; v.F = [960, 540]; v.tears = .75 + lt * .08; v.turnN = .3; }
+  else { const lt = t - C.p7; v.Z = 1 + lt * .008; v.F = [960, 540]; v.tears = .75 + lt * .08; v.turnN = .3; }
   return v;
 }
 // the words of the rap, set per line
@@ -258,17 +258,17 @@ function S4_rapType(t) {
   // L0: "Em giờ | KHÔNG PHẢI EM | mà anh thì | KHÔNG PHẢI EM mà"
   S4_rows(t, 0, [
     { a: 0, b: 1, m: 'ink', size: 50, x: 86, y: 862 },
-    { a: 2, b: 4, m: 'ink', size: 150, x: 70, y: 1010 },
+    { a: 2, b: 4, m: 'ink', size: 128, x: 64, y: 1010 },
     { a: 5, b: 7, m: 'neon', size: 42, x: 1010, y: 862, color: S4_P.neonCyan },
-    { a: 8, b: 11, m: 'neon', size: 104, x: 1000, y: 1000, punch: 1 },
+    { a: 8, b: 11, m: 'neon', size: 92, x: 1004, y: 1000, punch: 1 },
   ], C.p1);
   // L1: close on the faces. "Khuôn mặt em yêu vẫn thế nhưng nay | CẢM XÚC | đã quá nhạt phai mà" (the big word fades)
   const fade = 1 - .72 * easeOut((t - S4_lt(1, 12)) / .5);
   S4_rows(t, 1, [
     { a: 0, b: 5, m: 'ink', size: 50, x: 80, y: 110 },
     { a: 6, b: 7, m: 'neon', size: 42, x: 1840, y: 110, align: 'right', color: S4_P.neonCyan },
-    { a: 8, b: 9, m: 'ink', size: 190, x: 960, y: 1010, align: 'center', alpha: .95 * fade },
-    { a: 10, b: 14, m: 'ink', size: 48, x: 1320, y: 1040, color: S4_P.inkLt },
+    { a: 8, b: 9, m: 'ink', size: 180, x: 60, y: 1010, alpha: .95 * fade },
+    { a: 10, b: 14, m: 'neon', size: 42, x: 1840, y: 1030, align: 'right', color: S4_P.neonCyan, alpha: .5 + .5 * fade },
   ], C.p2);
   // L2: wide. "Nơi đâu cho anh cảm xúc thăng hoa | nơi đâu anh nhìn | KHOẢNG ‖ CÁCH | đôi ta"
   if (t >= C.p2 && t < C.p3) {
@@ -289,10 +289,10 @@ function S4_rapType(t) {
   ], C.p4);
   // L4: close on neon. "Em giờ đang ở | NƠI NÀO | cơn gió mang em đi đến | NƠI NÀO"
   S4_rows(t, 4, [
-    { a: 0, b: 3, m: 'neon', size: 44, x: 80, y: 120, color: S4_P.neonCyan },
-    { a: 4, b: 5, m: 'neon', size: 150, x: 70, y: 330, punch: 1 },
-    { a: 6, b: 11, m: 'neon', size: 44, x: 1840, y: 800, align: 'right', color: S4_P.neonCyan },
-    { a: 12, b: 13, m: 'neon', size: 150, x: 1850, y: 1000, align: 'right', punch: 1, color: S4_P.neonCyan },
+    { a: 0, b: 3, m: 'neon', size: 44, x: 1840, y: 120, align: 'right', color: S4_P.neonCyan },
+    { a: 4, b: 5, m: 'neon', size: 150, x: 1850, y: 320, align: 'right', punch: 1 },
+    { a: 6, b: 11, m: 'neon', size: 44, x: 1840, y: 820, align: 'right', color: S4_P.neonCyan },
+    { a: 12, b: 13, m: 'neon', size: 150, x: 1850, y: 1010, align: 'right', punch: 1, color: S4_P.neonCyan },
   ], C.p5);
   // L5: wide. "Bên cạnh ai kia ở | NƠI NÀO (ink) | đôi chân em lang thang đến | NƠI NÀO (neon)"
   S4_rows(t, 5, [

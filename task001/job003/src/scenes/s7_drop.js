@@ -22,7 +22,7 @@ const S7_KEYS = ['ánh mắt', 'mãi mãi', 'không bên em', 'nơi nào'];
 const S7_HIT = 227.2;                                     // the last big hit ("nào")
 const S7_FACE = { x: 1320, y: 560, R: 250 };              // the face (both media)
 const S7_ECU = { x: 1199, y: 606, zoom: 2.4 };            // camera for the eyes close-up (painted at this zoom)
-const S7_MID = { x: 1250, y: 585, zoom: 1.4 };            // camera for the closer face (tears)
+const S7_MID = { x: 1050, y: 585, zoom: 1.4 };            // camera for the closer face (tears)
 const S7_NOFS = [7, -5];                                  // the neon is traced slightly off the painting (misregistered)
 
 // ---------------------------------------------------------------------------------------------------------------------
@@ -45,6 +45,11 @@ function S7_put(c, cam, alpha = 1, op = 'source-over') {
   if (cam) camBegin(cam); else { X.save(); X.setTransform(SX, 0, 0, SX, 0, 0); }
   X.globalAlpha = alpha; X.globalCompositeOperation = op; X.imageSmoothingQuality = 'high'; X.drawImage(c, 0, 0, W, H);
   if (cam) camEnd(); else X.restore();
+}
+// Keep a camera inside the painting (the cached canvases end at the frame edge).
+function S7_cam(c) {
+  const z = Math.max(1.015, c.zoom ?? 1), m = 8 + (c.shake || 0) + Math.abs(c.rot || 0) * 600, hw = W / 2 / z + m / z, hh = H / 2 / z + m / z;
+  return { ...c, zoom: z, x: clamp(c.x ?? W / 2, hw, W - hw), y: clamp(c.y ?? H / 2, hh, H - hh) };
 }
 // A neon strike: dark, sputtering, then lit (0..1).
 function S7_strike(t, t0, seed = 1, dur = .32) {
@@ -101,12 +106,12 @@ function S7_ragged(ax, ay, bx, by, seed, amp = 7, step = 14) {
 // ---------------------------------------------------------------------------------------------------------------------
 const S7_SILKLIGHT = {
   face: [[1320, 470, 560, SK_PAL.neonPink], [1560, 260, 330, SK_PAL.neonCyan], [420, 420, 520, SK_PAL.neonAmber], [900, 950, 380, SK_PAL.neonPink]],
-  lake: [[1250, 330, 520, SK_PAL.neonPink], [1680, 470, 260, SK_PAL.neonAmber], [420, 260, 460, SK_PAL.neonCyan], [1200, 900, 420, SK_PAL.neonPink]],
+  lake: [[1250, 330, 520, SK_PAL.neonPink], [1680, 470, 260, SK_PAL.neonAmber], [380, 330, 520, SK_PAL.neonAmber], [1200, 900, 420, SK_PAL.neonCyan]],
   umb: [[1260, 330, 480, SK_PAL.neonPink], [1560, 560, 340, SK_PAL.neonCyan], [420, 420, 470, SK_PAL.neonAmber]],
 };
 function S7_paintFace(cam) {
   const F = S7_FACE;
-  skSilk(0, { backlight: .52, dim: .28, lights: S7_SILKLIGHT.face });
+  skSilk(0, { backlight: .75, dim: .16, lights: S7_SILKLIGHT.face });
   if (cam) camBegin(cam);
   skWash(() => X.ellipse(F.x + 20, F.y + 30, 560, 500, -.15, 0, TAU), SK_PAL.indigo, { a: .28, edge: .55, color2: SK_PAL.rose, mix: .45, seed: 71, scale: 3.2, feather: .35 });
   skWash(() => X.ellipse(430, 250, 300, 170, .2, 0, TAU), SK_PAL.ochre, { a: .22, edge: .45, seed: 72, scale: 2.5, feather: .5 });
@@ -115,13 +120,12 @@ function S7_paintFace(cam) {
   if (cam) camEnd();
 }
 function S7_paintLake() {
-  skSilk(0, { backlight: .5, dim: .3, lights: S7_SILKLIGHT.lake });
+  skSilk(0, { backlight: .75, dim: .16, lights: S7_SILKLIGHT.lake });
   const hz = 690;
   skWash(() => X.rect(-40, -40, W + 80, hz + 40), SK_PAL.indigo, { a: .42, edge: .3, grad: [0, 0, 0, hz], gradTo: .25, seed: 81, scale: 4, rough: .5 });
   skWash(() => X.arc(1640, 190, 74, 0, TAU), SK_PAL.ochre, { a: .55, edge: .8, color2: SK_PAL.sienna, mix: .3, seed: 82 });
   // far shore: a low wooded bank and the little tower on the water
   skWash(() => pathSmooth([[-40, hz + 8], [-40, hz - 40], [200, hz - 70], [420, hz - 52], [640, hz - 30], [900, hz - 22], [1300, hz - 30], [1500, hz - 58], [1750, hz - 44], [1960, hz - 60], [1960, hz + 8]], true), SK_PAL.ink, { a: .55, edge: .6, color2: SK_PAL.indigo, mix: .5, seed: 83, scale: 2 });
-  skWash(() => pathPoly([[1045, hz - 18], [1045, hz - 70], [1030, hz - 70], [1060, hz - 102], [1090, hz - 70], [1075, hz - 70], [1075, hz - 18]]), SK_PAL.ink, { a: .6, edge: .6, seed: 84 });
   // water
   skWash(() => X.rect(-40, hz, W + 80, H - hz + 40), SK_PAL.indigo, { a: .5, edge: .4, color2: SK_PAL.ink, mix: .35, grad: [0, hz, 0, H], gradTo: .55, seed: 85, scale: 4 });
   const rip = []; for (let i = 0; i < 16; i++) { const y = hz + 22 + Math.pow(i / 16, 1.5) * 360, x = 80 + hash(i * 3.1) * 1600, l = 60 + hash(i * 5.3) * 200 * (1 + i / 12); rip.push([[x, y, .4], [x + l * .5, y + sjit(i, 3)], [x + l, y, .3]]); }
@@ -135,10 +139,11 @@ function S7_paintLake() {
   skInk([[[1700, hz - 30, .9], [1702, 480], [1700, 400, .7]], [[1670, 400], [1730, 400]]], { w: 9, dry: .3, seed: 90 });
   skBloom(1700, 380, 60, SK_PAL.ochre, 5, 0, { seed: 91 });
   // the ∞, brushed in one stroke over the water
-  skInk([S7_inf(1210, 340, 430, 120).map((p, i) => [p[0], p[1], .45 + .55 * Math.abs(Math.sin(i / 120 * TAU * 2 + .6))])], { w: 30, dry: .5, dryTail: .6, seed: 92, alpha: .85 });
+  const inf = S7_inf(1210, 340, 430, 120).map((p, i) => [p[0], p[1], .5 + .5 * Math.abs(Math.sin(i / 120 * TAU * 2 + .6))]);
+  skInk([inf.slice(0, 62), inf.slice(60)], { w: 30, dry: .5, dryTail: .6, seed: 92, alpha: .85 });   // two strokes (a closed figure-8 cancels itself)
 }
 function S7_paintUmb() {
-  skSilk(0, { backlight: .5, dim: .3, lights: S7_SILKLIGHT.umb });
+  skSilk(0, { backlight: .75, dim: .16, lights: S7_SILKLIGHT.umb });
   const fy = 950;
   skWash(() => X.arc(1260, 420, 330, 0, TAU), SK_PAL.ochre, { a: .3, edge: .5, seed: 101, feather: .5, scale: 3 });
   skWash(() => X.rect(-40, 820, W + 80, 300), SK_PAL.indigo, { a: .4, edge: .35, grad: [0, 820, 0, H], gradTo: 1.6, seed: 102, scale: 4, rough: .5 });
@@ -264,8 +269,8 @@ function S7_strips(t, silk, o = {}) {
     X.lineJoin = 'round'; X.lineCap = 'round';
     for (const E of [e0, e1]) {
       const pts = E.map(p => dir === 'v' ? p : [p[1], p[0]]), path = () => { X.beginPath(); pts.forEach((p, j) => j ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); };
-      X.globalCompositeOperation = 'lighter'; X.strokeStyle = skRgba(o.rim || SK_PAL.neonPink, .16); X.lineWidth = 16; path(); X.stroke();
-      X.strokeStyle = skRgba(o.rim || SK_PAL.neonPink, .5); X.lineWidth = 3; path(); X.stroke();
+      X.globalCompositeOperation = 'lighter'; X.strokeStyle = skRgba(o.rim || SK_PAL.neonPink, .1); X.lineWidth = 22; path(); X.stroke();
+      X.strokeStyle = skRgba(o.rim || SK_PAL.neonPink, .18); X.lineWidth = 6; path(); X.stroke();
       X.globalCompositeOperation = 'source-over'; X.strokeStyle = 'rgba(244,236,220,.85)'; X.lineWidth = 1.3; path(); X.stroke();
     }
     X.restore();
@@ -356,18 +361,18 @@ function S7_banner(t, seed = 1) {
   X.globalCompositeOperation = 'lighter'; X.strokeStyle = skRgba(SK_PAL.neonPink, .3 * S7_pulse(t)); X.lineWidth = 5; X.beginPath(); top.forEach((p, j) => j ? X.lineTo(p[0], p[1]) : X.moveTo(p[0], p[1])); X.stroke();
   X.restore();
 }
-const S7_BANBOX = { x: 110, y: 812, maxW: 1680, big: 180, small: 48, inline: true, tx: W / 2, ty: (S7_BAN.y0 + S7_BAN.y1) / 2, rot: S7_BAN.rot };
+const S7_BANBOX = { x: 110, y: 812, maxW: 1680, big: 180, small: 54, inline: true, tx: W / 2, ty: (S7_BAN.y0 + S7_BAN.y1) / 2, rot: S7_BAN.rot };
 function S7_banBox(extra) { const b = { ...S7_BANBOX, ...extra }; b.x -= b.tx; b.y -= b.ty; return b; }
 
 // ---------------------------------------------------------------------------------------------------------------------
 // shots
 // ---------------------------------------------------------------------------------------------------------------------
-const S7_COLBOX = { x: 110, y: 300, maxW: 760, big: 220, small: 50 };
+const S7_COLBOX = { x: 110, y: 300, maxW: 760, big: 220, small: 56 };
 // Face with neon over silk (first half). view: 'wide' | 'ecu' | 'mid'
 function S7_faceShot(t, lt, view, o = {}) {
   const cam = view === 'ecu' ? S7_ECU : view === 'mid' ? S7_MID : null;
   const silk = S7_cache('face:' + view, () => S7_paintFace(cam));
-  const drift = { x: W / 2 + (o.px ?? -20) * lt, y: H / 2 + (o.py ?? -6) * lt, zoom: 1.02 + (o.zoom ?? .012) * lt + .012 * pulse(t, .4), shake: 2.5 * pulse(t, .3) };
+  const drift = S7_cam({ x: W / 2 + (o.px ?? -20) * lt, y: H / 2 + (o.py ?? -6) * lt, zoom: 1.02 + (o.zoom ?? .012) * lt + .012 * pulse(t, .4), shake: 2.5 * pulse(t, .3) });
   S7_put(silk, drift);
   // painted tears bleed down the silk
   if (o.tears) {
@@ -389,7 +394,7 @@ function S7_faceShot(t, lt, view, o = {}) {
 // Lake with the ∞ (first half)
 function S7_lakeShot(t, lt, closer) {
   const silk = S7_cache('lake', S7_paintLake), m1 = S7_LY[1] ? S7_split(S7_LY[1], 'mãi mãi').key : [{ t: 193.1 }, { t: 193.42 }];
-  const cam = closer ? { x: 1180 + lt * 8, y: 470, zoom: 1.26 + lt * .02 + .015 * pulse(t, .4), shake: 2 * pulse(t, .3) } : { x: W / 2 + 30 - lt * 10, y: H / 2, zoom: 1.03 + lt * .01 + .012 * pulse(t, .4), shake: 2 * pulse(t, .3) };
+  const cam = closer ? S7_cam({ x: 1180 + lt * 8, y: 470, zoom: 1.26 + lt * .02 + .015 * pulse(t, .4), shake: 2 * pulse(t, .3) }) : S7_cam({ x: W / 2 + 30 - lt * 10, y: H / 2, zoom: 1.03 + lt * .01 + .012 * pulse(t, .4), shake: 2 * pulse(t, .3) });
   S7_put(silk, cam);
   const P = S7_pulse(t), ex = S7_cache('nLake', S7_neonLakeExtras);
   S7_put(ex, cam, S7_strike(t, S7_B(302), 5) * P * .9, 'lighter');
@@ -403,7 +408,7 @@ function S7_lakeShot(t, lt, closer) {
 // Umbrella (first half)
 function S7_umbShot(t, lt, closer) {
   const silk = S7_cache('umb', S7_paintUmb), sp = S7_LY[2] ? S7_split(S7_LY[2], 'không bên em').key : [{ t: 198.78 }, { t: 199.1 }, { t: 199.42 }];
-  const cam = closer ? { x: 1330 - lt * 6, y: 640, zoom: 1.32 + lt * .02 + .012 * pulse(t, .4), shake: 2 * pulse(t, .3) } : { x: W / 2 + lt * 8, y: H / 2 - lt * 3, zoom: 1.03 + lt * .008 + .012 * pulse(t, .4), shake: 2 * pulse(t, .3) };
+  const cam = closer ? S7_cam({ x: 1330 - lt * 6, y: 640, zoom: 1.32 + lt * .02 + .012 * pulse(t, .4), shake: 2 * pulse(t, .3) }) : S7_cam({ x: W / 2 + lt * 8, y: H / 2 - lt * 3, zoom: 1.03 + lt * .008 + .012 * pulse(t, .4), shake: 2 * pulse(t, .3) });
   S7_put(silk, cam);
   const P = S7_pulse(t);
   S7_put(S7_cache('nUmb', S7_neonUmb), cam, S7_strike(t, S7_B(310), 3) * P, 'lighter');
@@ -421,7 +426,7 @@ function S7_umbShot(t, lt, closer) {
 // ---- escalation: the same scenes torn into strips over the neon street ----
 function S7_stripFace(t, lt, view, o = {}) {
   const cam = view === 'ecu' ? S7_ECU : null, silk = S7_cache('face:' + view, () => S7_paintFace(cam));
-  const live = { x: W / 2 + (o.px ?? 14) * lt, y: H / 2 + (o.py ?? -8) * lt, zoom: (o.z0 ?? 1.04) + .012 * lt + .02 * pulse(t, .4), rot: o.rot ?? 0, shake: 4 * pulse(t, .3) };
+  const live = S7_cam({ x: W / 2 + (o.px ?? 14) * lt, y: H / 2 + (o.py ?? -8) * lt, zoom: (o.z0 ?? 1.04) + .012 * lt + .02 * pulse(t, .4), rot: o.rot ?? 0, shake: 4 * pulse(t, .3) });
   const P = S7_pulse(t);
   S7_put(S7_night('face'), live);
   S7_drawNeonFace(t, cam, live, i => P * 1.1 * (o.I ? o.I(i) : 1), { dx: 0, dy: 0 });
@@ -436,7 +441,7 @@ function S7_stripFace(t, lt, view, o = {}) {
 }
 function S7_stripLake(t, lt, o = {}) {
   const silk = S7_cache('lake', S7_paintLake), P = S7_pulse(t);
-  const live = { x: W / 2 + (o.px ?? -12) * lt + (o.cx ?? 0), y: H / 2 + (o.cy ?? 0), zoom: (o.z0 ?? 1.05) + .015 * lt + .02 * pulse(t, .4), rot: o.rot ?? 0, shake: 4 * pulse(t, .3) };
+  const live = S7_cam({ x: W / 2 + (o.px ?? -12) * lt + (o.cx ?? 0), y: H / 2 + (o.cy ?? 0), zoom: (o.z0 ?? 1.05) + .015 * lt + .02 * pulse(t, .4), rot: o.rot ?? 0, shake: 4 * pulse(t, .3) });
   S7_put(S7_night('lake'), live);
   S7_put(S7_cache('nInf', () => S7_neonInf(1)), live, P * 1.1, 'lighter');
   camBegin(live); S7_strips(t, silk, { n: o.n ?? 6, gap: o.gap ?? 30, dir: 'h', amp: o.amp ?? 34, seed: o.seed ?? 3, rot: .02, rim: SK_PAL.neonCyan }); camEnd();
@@ -447,7 +452,7 @@ function S7_stripLake(t, lt, o = {}) {
 }
 function S7_stripUmb(t, lt, o = {}) {
   const silk = S7_cache('umb', S7_paintUmb), P = S7_pulse(t);
-  const live = { x: W / 2 + (o.px ?? 10) * lt + (o.cx ?? 0), y: H / 2 + (o.cy ?? 0), zoom: (o.z0 ?? 1.05) + .015 * lt + .02 * pulse(t, .4), rot: o.rot ?? 0, shake: 4 * pulse(t, .3) };
+  const live = S7_cam({ x: W / 2 + (o.px ?? 10) * lt + (o.cx ?? 0), y: H / 2 + (o.cy ?? 0), zoom: (o.z0 ?? 1.05) + .015 * lt + .02 * pulse(t, .4), rot: o.rot ?? 0, shake: 4 * pulse(t, .3) });
   S7_put(S7_night('face'), live);
   S7_put(S7_cache('nHim', () => S7_neonHim(1)), live, (o.him ? o.him(t) : 1) * P, 'lighter');
   camBegin(live); S7_strips(t, silk, { n: o.n ?? 8, gap: o.gap ?? 30, amp: o.amp ?? 30, seed: o.seed ?? 5, rot: .03, rim: SK_PAL.neonCyan }); camEnd();
@@ -527,4 +532,3 @@ shot(S7_B(358), S7_END, (t, lt) => {
   S7_jolt(t, S7_B(358), 1.2); S7_jolt(t, S7_HIT, 2, .25);
   S7_flash(t, S7_HIT, .8, '#FFF0F8', .3);
 }, { dark: true });
-TESTS.s7dbg = t => { skSilk(0); skInk([S7_inf(1210, 340, 430, 120).map((p, i) => [p[0], p[1], .45 + .55 * Math.abs(Math.sin(i / 120 * TAU * 2 + .6))])], { w: 30, dry: .5, seed: 92 }); skInk([S7_inf(600, 800, 300, 120)], { w: 20, seed: 3 }); skInk([S7_inf(1400, 800, 300, 120).slice(0, 60)], { w: 20, seed: 3 }); };
