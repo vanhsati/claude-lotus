@@ -74,13 +74,18 @@ async function main() {
       const todo = []; for (let f = f0; f < f1; f++) { const file = path.join(dir, String(f).padStart(5, '0') + '.jpg'); if (args.force || !fs.existsSync(file)) todo.push([f, file]); }
       console.log(`${todo.length} frames to paint with ${WORKERS} workers`);
       const t0 = Date.now(); let done = 0;
+      // Each worker paints a contiguous block of frames (so scene caches stay local), and reopens its page every
+      // --recycle frames (default 400) so caches from earlier scenes are released instead of piling up in memory.
+      const RECYCLE = +(args.recycle || 400), per = Math.ceil(todo.length / WORKERS);
       await Promise.all(Array.from({ length: WORKERS }, async (_, w) => {
-        const page = await openPage(browser, port);
-        for (let i = w; i < todo.length; i += WORKERS) {
-          const [f, file] = todo[i];
-          await grab(page, f / FPS, file + '.tmp', args.preview ? .85 : .95); fs.renameSync(file + '.tmp', file);
+        const mine = todo.slice(w * per, (w + 1) * per);
+        let page = await openPage(browser, port), n = 0;
+        for (const [f, file] of mine) {
+          if (n > 0 && n % RECYCLE === 0) { await page.close(); page = await openPage(browser, port); }
+          await grab(page, f / FPS, file + '.tmp', args.preview ? .85 : .95); fs.renameSync(file + '.tmp', file); n++;
           if (++done % 100 === 0) console.log(`${done}/${todo.length}  ${(done / ((Date.now() - t0) / 1000)).toFixed(1)} fps`);
         }
+        await page.close();
       }));
       console.log(`painted in ${((Date.now() - t0) / 1000).toFixed(0)}s`);
       if (args.preview) {
