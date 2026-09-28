@@ -1,0 +1,372 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>ResinEpic — brand film</title>
+<style>
+@font-face { font-family: 'Playfair'; font-style: normal; font-weight: 400; src: url(../fonts/PlayfairDisplay-400-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+@font-face { font-family: 'Playfair'; font-style: normal; font-weight: 400; src: url(../fonts/PlayfairDisplay-400-vietnamese.woff2) format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9, U+20AB; }
+@font-face { font-family: 'Playfair'; font-style: normal; font-weight: 400; src: url(../fonts/PlayfairDisplay-400-latin-ext.woff2) format('woff2'); unicode-range: U+0100-02AF, U+1E00-1E9F, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Playfair'; font-style: italic; font-weight: 400; src: url(../fonts/PlayfairDisplay-400i-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; }
+@font-face { font-family: 'Playfair'; font-style: italic; font-weight: 400; src: url(../fonts/PlayfairDisplay-400i-vietnamese.woff2) format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9; }
+@font-face { font-family: 'Playfair'; font-style: normal; font-weight: 700; src: url(../fonts/PlayfairDisplay-700-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; }
+@font-face { font-family: 'Inter'; font-weight: 500; src: url(../fonts/Inter-500-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F, U+2122; }
+@font-face { font-family: 'Inter'; font-weight: 500; src: url(../fonts/Inter-500-vietnamese.woff2) format('woff2'); unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+0300-0301, U+0303-0304, U+0308-0309, U+0323, U+0329, U+1EA0-1EF9; }
+@font-face { font-family: 'Inter'; font-weight: 800; src: url(../fonts/Inter-800-latin.woff2) format('woff2'); unicode-range: U+0000-00FF, U+2000-206F; }
+html, body { margin: 0; background: #000; }
+#out { display: block; }
+</style>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<canvas id="out"></canvas>
+<script type="module">
+// Every frame is a pure function of time t (seconds): window.frame(t) renders it.
+import * as THREE from 'three';
+import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
+import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
+import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
+import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { RoundedBoxGeometry } from 'three/addons/geometries/RoundedBoxGeometry.js';
+
+const Q = new URLSearchParams(location.search);
+const S = +(Q.get('s') || 1);
+const W = Math.round(1920 * S), H = Math.round(1080 * S);
+const DUR = 45;
+
+// ---------- helpers ----------------------------------------------------------------
+const clamp = (v, a = 0, b = 1) => Math.min(b, Math.max(a, v));
+const lerp = (a, b, k) => a + (b - a) * k;
+const ease = k => { k = clamp(k); return k * k * (3 - 2 * k); };
+const easeOut = k => 1 - Math.pow(1 - clamp(k), 3);
+const win = (t, a, b) => clamp((t - a) / (b - a));          // 0..1 across [a, b]
+const fade = (t, a, b, f = 0.6) => clamp(Math.min((t - a) / f, (b - t) / f));   // in/out envelope
+let seed = 7; const rnd = () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+const hue = (h, s = 1, l = 0.55) => new THREE.Color().setHSL(((h % 1) + 1) % 1, s, l);
+
+// ---------- renderer -------------------------------------------------------------------
+const gl = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+gl.setPixelRatio(1); gl.setSize(W, H, false);
+gl.toneMapping = THREE.ACESFilmicToneMapping; gl.toneMappingExposure = 1.0;
+gl.localClippingEnabled = true;
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(gl).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.35;
+scene.background = new THREE.Color(0x05060a);
+const camera = new THREE.PerspectiveCamera(32, W / H, 0.1, 200);
+const composer = new EffectComposer(gl);
+composer.setSize(W, H);
+composer.addPass(new RenderPass(scene, camera));
+const bloom = new UnrealBloomPass(new THREE.Vector2(W / 2, H / 2), 0.7, 0.5, 0.78);
+composer.addPass(bloom);
+composer.addPass(new OutputPass());
+const out = document.getElementById('out'); out.width = W; out.height = H;
+const ctx = out.getContext('2d');
+
+// ---------- textures -------------------------------------------------------------------
+function canvasTex(w, h, draw) { const c = document.createElement('canvas'); c.width = w; c.height = h; draw(c.getContext('2d'), w, h); const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t; }
+const woodTex = canvasTex(512, 256, (g, w, h) => {
+  g.fillStyle = '#3b2314'; g.fillRect(0, 0, w, h);
+  for (let i = 0; i < 90; i++) { const y = rnd() * h; g.strokeStyle = `rgba(${20 + rnd() * 30},${10 + rnd() * 15},5,${0.25 + rnd() * 0.4})`; g.lineWidth = 0.5 + rnd() * 2.5;
+    g.beginPath(); g.moveTo(0, y); for (let x = 0; x <= w; x += 16) g.lineTo(x, y + Math.sin(x * 0.02 + i) * 3 + (rnd() - 0.5) * 2); g.stroke(); }
+  const gr = g.createLinearGradient(0, 0, 0, h); gr.addColorStop(0, 'rgba(255,190,120,0.12)'); gr.addColorStop(1, 'rgba(0,0,0,0.2)'); g.fillStyle = gr; g.fillRect(0, 0, w, h);
+});
+woodTex.wrapS = woodTex.wrapT = THREE.RepeatWrapping;
+const glowTex = canvasTex(128, 128, (g, w) => { const r = g.createRadialGradient(64, 64, 0, 64, 64, 64); r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.25, 'rgba(255,255,255,0.55)'); r.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = r; g.fillRect(0, 0, w, w); });
+glowTex.colorSpace = THREE.NoColorSpace;
+const smokeTex = canvasTex(256, 256, (g, w) => {
+  for (let i = 0; i < 60; i++) { const x = 128 + (rnd() - 0.5) * 140, y = 128 + (rnd() - 0.5) * 140, r = 20 + rnd() * 70;
+    const gr = g.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, 'rgba(255,255,255,0.12)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); g.fillStyle = gr; g.fillRect(0, 0, w, w); }
+});
+smokeTex.colorSpace = THREE.NoColorSpace;
+
+// ---------- the room -------------------------------------------------------------------
+const floor = new THREE.Mesh(new THREE.PlaneGeometry(80, 80), new THREE.MeshStandardMaterial({ color: 0x0b0c10, roughness: 0.32, metalness: 0.2 }));
+floor.rotation.x = -Math.PI / 2; scene.add(floor);
+const backGlow = new THREE.Mesh(new THREE.PlaneGeometry(60, 30), new THREE.MeshBasicMaterial({ map: glowTex, color: 0x223355, transparent: true, opacity: 0.35, depthWrite: false }));
+backGlow.position.set(0, 6, -14); scene.add(backGlow);
+const hemi = new THREE.HemisphereLight(0x8899bb, 0x110a05, 0.25); scene.add(hemi);
+const key = new THREE.SpotLight(0xffe2c0, 30, 30, 0.5, 0.6, 1.5); key.position.set(-5, 9, 6); scene.add(key, key.target);
+
+// ---------- materials ----------------------------------------------------------------------
+const resinMat = () => new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: 0.04, metalness: 0, clearcoat: 1, clearcoatRoughness: 0.03,
+  transparent: true, opacity: 0.16, envMapIntensity: 2.2, depthWrite: false, side: THREE.DoubleSide });
+const std = (color, o = {}) => new THREE.MeshStandardMaterial({ color, roughness: 0.55, metalness: 0, ...o });
+const additive = (color, opacity = 1, map = glowTex) => new THREE.MeshBasicMaterial({ color, map, transparent: true, opacity, blending: THREE.AdditiveBlending, depthWrite: false });
+
+function sprite(color, size, opacity = 1, map = glowTex) {
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), additive(color, opacity, map)); m.userData.billboard = true; return m;
+}
+function sparkles(n, box, color, size = 0.05) {
+  const g = new THREE.BufferGeometry(); const p = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { p[i * 3] = (rnd() - 0.5) * box[0]; p[i * 3 + 1] = rnd() * box[1]; p[i * 3 + 2] = (rnd() - 0.5) * box[2]; }
+  g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+  return new THREE.Points(g, new THREE.PointsMaterial({ color, size, map: glowTex, transparent: true, blending: THREE.AdditiveBlending, depthWrite: false, sizeAttenuation: true }));
+}
+
+// ---------- figures (all original, built from simple shapes) --------------------------------
+function astronaut() {
+  const g = new THREE.Group(); const suit = std(0xeceae4, { roughness: 0.6 }), dark = std(0x2a2d33), accent = std(0xd9622b, { roughness: 0.5 }), gold = new THREE.MeshStandardMaterial({ color: 0xd9a441, metalness: 1, roughness: 0.18 });
+  const cap = (r, l, m, x, y, z, rx = 0, rz = 0) => { const k = new THREE.Mesh(new THREE.CapsuleGeometry(r, l, 6, 14), m); k.position.set(x, y, z); k.rotation.set(rx, 0, rz); g.add(k); return k; };
+  cap(0.33, 0.42, suit, 0, 1.25, 0);                                 // torso
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.3, 28, 20), suit); head.position.set(0, 1.92, 0.02); g.add(head);
+  const visor = new THREE.Mesh(new THREE.SphereGeometry(0.235, 28, 20, -1.2, 2.4, 0.7, 1.35), gold); visor.position.set(0, 1.93, 0.1); g.add(visor);
+  const pack = new THREE.Mesh(new RoundedBoxGeometry(0.5, 0.62, 0.26, 3, 0.06), accent); pack.position.set(0, 1.32, -0.33); g.add(pack);
+  cap(0.12, 0.52, suit, -0.46, 1.34, 0.08, 0.3, 0.9); cap(0.12, 0.5, suit, 0.44, 1.52, 0.1, -0.2, -2.3);   // arms: one waving
+  cap(0.14, 0.52, suit, -0.17, 0.55, 0.05, 0.25, 0.1); cap(0.14, 0.52, suit, 0.19, 0.6, -0.05, -0.35, -0.12);  // legs
+  cap(0.15, 0.1, dark, -0.2, 0.18, 0.18, 1.3); cap(0.15, 0.1, dark, 0.24, 0.26, 0.05, 1.1);                  // boots
+  const belt = new THREE.Mesh(new THREE.TorusGeometry(0.33, 0.05, 8, 24), accent); belt.rotation.x = Math.PI / 2; belt.position.y = 1.0; g.add(belt);
+  const patch = new THREE.Mesh(new THREE.CircleGeometry(0.08, 16), std(0x2f6fd0)); patch.position.set(-0.14, 1.45, 0.335); g.add(patch);
+  g.userData.materials = [suit, dark, gold];
+  return g;
+}
+function swordsman() {
+  const g = new THREE.Group(); const cloth = std(0x15161b, { roughness: 0.8 }), sash = std(0x9b1b1b), steel = new THREE.MeshStandardMaterial({ color: 0xdfe6ef, metalness: 1, roughness: 0.15 });
+  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.42, 1.25, 18, 1, true), cloth); robe.position.y = 0.72; g.add(robe);
+  const chest = new THREE.Mesh(new THREE.CapsuleGeometry(0.22, 0.38, 6, 12), cloth); chest.position.y = 1.45; g.add(chest);
+  const band = new THREE.Mesh(new THREE.TorusGeometry(0.23, 0.05, 8, 20), sash); band.position.y = 1.2; band.rotation.x = Math.PI / 2; g.add(band);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.17, 20, 14), cloth); head.position.y = 1.95; g.add(head);
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.46, 0.2, 24), std(0x6b4a26, { roughness: 0.9 })); hat.position.y = 2.12; g.add(hat);
+  const blade = new THREE.Mesh(new THREE.BoxGeometry(0.035, 1.25, 0.015), steel); blade.position.set(0.48, 1.55, 0.18); blade.rotation.z = -0.55; g.add(blade);
+  const arm = new THREE.Mesh(new THREE.CapsuleGeometry(0.08, 0.5, 4, 8), cloth); arm.position.set(0.3, 1.45, 0.1); arm.rotation.z = -0.9; g.add(arm);
+  const scarf = new THREE.Mesh(new THREE.PlaneGeometry(0.9, 0.12, 8, 1), std(0x9b1b1b, { side: THREE.DoubleSide })); scarf.position.set(-0.5, 1.72, -0.05); scarf.rotation.z = 0.15;
+  const sp = scarf.geometry.attributes.position; for (let i = 0; i < sp.count; i++) sp.setY(i, sp.getY(i) + Math.sin(sp.getX(i) * 5) * 0.06); g.add(scarf);
+  return g;
+}
+
+// ---------- lamps ------------------------------------------------------------------------------
+// block 2.6 x 3.9 x 2.6 on a walnut base; LEDs in the base light the resin from below
+function lamp(kind) {
+  const L = new THREE.Group(); const inner = new THREE.Group(); L.add(inner);
+  const base = new THREE.Mesh(new RoundedBoxGeometry(3.0, 0.55, 3.0, 4, 0.08), new THREE.MeshStandardMaterial({ map: woodTex, roughness: 0.45, metalness: 0.05, color: 0xffffff }));
+  base.position.y = 0.275; L.add(base);
+  const ledStrip = new THREE.Mesh(new THREE.BoxGeometry(2.62, 0.03, 2.62), new THREE.MeshBasicMaterial({ color: 0xffffff })); ledStrip.position.y = 0.565; L.add(ledStrip);
+  const block = new THREE.Mesh(new RoundedBoxGeometry(2.6, 3.9, 2.6, 5, 0.12), resinMat()); block.position.y = 0.58 + 1.95; block.renderOrder = 10; L.add(block);
+  const light = new THREE.PointLight(0xffffff, 0, 6, 1.2); light.position.set(0, 1.3, 0); L.add(light);
+  const halo = sprite(0xffffff, 4.2, 0.0); halo.position.set(0, 1.4, 0); L.add(halo);
+  const glow = [];                               // additive clouds that take the LED colour
+  inner.position.y = 0.6;
+  seed = kind.length * 97 + 11;
+  if (kind === 'space') {
+    const rock = new THREE.Mesh(new THREE.SphereGeometry(2.2, 40, 20, 0, Math.PI * 2, 0, 0.55), std(0x6d6a66, { roughness: 1, flatShading: true }));
+    rock.position.y = -1.55; rock.scale.set(0.55, 1, 0.55); inner.add(rock);
+    const a = astronaut(); a.scale.setScalar(0.72); a.position.set(-0.15, 0.62, 0.1); a.rotation.y = 0.35; inner.add(a); L.userData.figure = a;
+    const planet = new THREE.Mesh(new THREE.SphereGeometry(0.34, 32, 20), std(0x3f6fc2, { emissive: 0x10224a, roughness: 0.5 })); planet.position.set(0.7, 2.9, -0.5); inner.add(planet);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.55, 0.035, 8, 60), std(0xd8c7a0, { emissive: 0x302510 })); ring.rotation.x = 1.25; ring.position.copy(planet.position); inner.add(ring);
+    for (const [c, x, y, s] of [[0x6a3cff, -0.5, 2.4, 2.4], [0x00b7ff, 0.5, 1.6, 2.0], [0xff3fa8, 0.1, 3.0, 1.7]]) { const n = sprite(c, s, 0.5, smokeTex); n.position.set(x, y, -0.4); inner.add(n); glow.push(n); }
+    const st = sparkles(260, [2.3, 3.6, 2.3], 0xffffff, 0.045); inner.add(st); L.userData.stars = st;
+  } else if (kind === 'wave') {
+    // deep-sea jellyfish drifting over a coral floor
+    const bell = new THREE.Mesh(new THREE.SphereGeometry(0.62, 40, 20, 0, Math.PI * 2, 0, 1.45), new THREE.MeshPhysicalMaterial({ color: 0x9fe8ff, emissive: 0x1a6f9a, transparent: true, opacity: 0.75, roughness: 0.1, clearcoat: 1, side: THREE.DoubleSide }));
+    bell.scale.set(1, 0.75, 1); bell.position.y = 2.25; inner.add(bell); L.userData.bell = bell;
+    const core = sprite(0x7fe3ff, 1.4, 0.5); core.position.y = 2.1; inner.add(core); glow.push(core);
+    const tent = new THREE.Group(); tent.position.y = 2.0; inner.add(tent); L.userData.tent = tent;
+    for (let i = 0; i < 9; i++) { const a0 = i / 9 * Math.PI * 2, r0 = 0.45 * (0.5 + rnd() * 0.5); const pts = [];
+      for (let j = 0; j <= 12; j++) pts.push(new THREE.Vector3(Math.cos(a0) * r0 + Math.sin(j * 0.7 + i) * 0.08, -j * 0.12, Math.sin(a0) * r0 + Math.cos(j * 0.6 + i) * 0.08));
+      tent.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.018, 5), new THREE.MeshBasicMaterial({ color: 0x9fefff, transparent: true, opacity: 0.8 }))); }
+    const floorRock = new THREE.Mesh(new THREE.SphereGeometry(1.6, 32, 12, 0, Math.PI * 2, 0, 0.6), std(0x3a3f4a, { roughness: 1, flatShading: true })); floorRock.position.y = -1.2; floorRock.scale.set(0.75, 1, 0.75); inner.add(floorRock);
+    for (let i = 0; i < 7; i++) { const c = new THREE.Mesh(new THREE.ConeGeometry(0.06, 0.35 + rnd() * 0.4, 6), std([0xff6f61, 0xffb347, 0xe06bd6][i % 3], { emissive: 0x220a10 })); c.position.set((rnd() - 0.5) * 1.6, 0.25, (rnd() - 0.5) * 1.4); inner.add(c); }
+    for (const [c, x, y, sz] of [[0x0077ff, 0, 1.4, 2.6], [0x00e5ff, 0.5, 2.8, 1.8]]) { const n = sprite(c, sz, 0.45, smokeTex); n.position.set(x, y, -0.6); inner.add(n); glow.push(n); }
+    const bub = sparkles(160, [2.2, 3.6, 2.2], 0xcff6ff, 0.045); inner.add(bub); L.userData.foam = bub;
+    L.userData.boat = bell;
+  } else if (kind === 'moon') {
+    const moon = new THREE.Mesh(new THREE.CircleGeometry(0.85, 48), new THREE.MeshBasicMaterial({ color: 0x9c8058 })); moon.position.set(0.25, 2.3, -1.0); inner.add(moon);
+    const sky = sprite(0xff4a1c, 3.2, 0.55, smokeTex); sky.position.set(0, 1.9, -1.1); inner.add(sky); glow.push(sky);
+    const cliff = new THREE.Mesh(new THREE.DodecahedronGeometry(0.9, 1), std(0x2a2522, { roughness: 1, flatShading: true })); cliff.scale.set(1.2, 0.75, 0.9); cliff.position.set(-0.35, 0.35, 0.1); inner.add(cliff);
+    const s = swordsman(); s.scale.setScalar(0.5); s.position.set(-0.3, 0.98, 0.25); s.rotation.y = -0.5; inner.add(s);
+    const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.08, 1.3, 8), std(0x2b1a12)); trunk.scale.y = 0.7; trunk.position.set(0.75, 0.8, 0.35); trunk.rotation.z = -0.2; inner.add(trunk);
+    const blossom = sparkles(260, [1.0, 0.6, 0.8], 0xff8fb8, 0.07); blossom.position.set(0.95, 1.4, 0.35); inner.add(blossom);
+    const petals = sparkles(90, [2.2, 3.2, 2.0], 0xffa6c9, 0.05); inner.add(petals); L.userData.petals = petals;
+  }
+  L.userData = { ...L.userData, inner, block, ledStrip, light, halo, glow, base };
+  return L;
+}
+function setLED(L, color, k) {
+  const c = color.clone();
+  L.userData.ledStrip.material.color.copy(c).multiplyScalar(0.2 + 1.3 * k);
+  L.userData.light.color.copy(c); L.userData.light.intensity = 4.5 * k;
+  L.userData.halo.material.color.copy(c); L.userData.halo.material.opacity = 0.07 * k;
+  for (const g of L.userData.glow) g.material.opacity = 0.14 + 0.3 * k;
+  L.userData.block.material.color.copy(new THREE.Color(0xffffff).lerp(c, 0.25 * k));
+  L.userData.block.material.opacity = 0.12 + 0.08 * k;
+}
+
+// ---------- cast ---------------------------------------------------------------------------------
+const lamps = { space: lamp('space'), wave: lamp('wave'), moon: lamp('moon') };
+Object.values(lamps).forEach(l => scene.add(l));
+// pouring stream and pool for the opening
+const stream = new THREE.Mesh(new THREE.CylinderGeometry(0.045, 0.06, 10, 16, 1, true), new THREE.MeshBasicMaterial({ color: 0xffb347 }));
+const pool = new THREE.Mesh(new THREE.CircleGeometry(1, 64), new THREE.MeshPhysicalMaterial({ color: 0xffb347, emissive: 0xff8a1a, emissiveIntensity: 0.6, roughness: 0.05, clearcoat: 1, transparent: true, opacity: 0.9 }));
+pool.rotation.x = -Math.PI / 2; pool.position.y = 0.01;
+const drops = sparkles(140, [3, 0.3, 3], 0xffc46b, 0.06);
+scene.add(stream, pool, drops);
+// studio props for the process shots
+const printBed = new THREE.Mesh(new THREE.BoxGeometry(3.2, 0.12, 3.2), std(0x1b1d22, { metalness: 0.6, roughness: 0.35 })); scene.add(printBed);
+const printLine = new THREE.Mesh(new THREE.TorusGeometry(0.62, 0.012, 6, 60), new THREE.MeshBasicMaterial({ color: 0xff7a1a })); printLine.rotation.x = Math.PI / 2; scene.add(printLine);
+const hero = astronaut(); scene.add(hero);
+const grey = std(0x55585f, { roughness: 0.8 });
+const heroGrey = astronaut(); heroGrey.traverse(o => { if (o.isMesh) o.material = grey; }); scene.add(heroGrey);
+const mould = new THREE.Mesh(new RoundedBoxGeometry(2.6, 3.9, 2.6, 4, 0.05), new THREE.MeshPhysicalMaterial({ color: 0xbfd8ff, transparent: true, opacity: 0.1, roughness: 0.2, side: THREE.DoubleSide, depthWrite: false })); scene.add(mould);
+const layers = []; for (let i = 0; i < 4; i++) { const m = new THREE.Mesh(new THREE.BoxGeometry(2.5, 1, 2.5), new THREE.MeshPhysicalMaterial({ color: [0x6a3cff, 0x00b7ff, 0xff3fa8, 0xffffff][i], transparent: true, opacity: 0.16, roughness: 0.05, depthWrite: false })); scene.add(m); layers.push(m); }
+const pourStream = new THREE.Mesh(new THREE.CylinderGeometry(0.03, 0.05, 6, 12, 1, true), new THREE.MeshBasicMaterial({ color: 0xe8f2ff, transparent: true, opacity: 0.8 })); scene.add(pourStream);
+
+const clipUp = new THREE.Plane(new THREE.Vector3(0, -1, 0), 0);    // keeps geometry below y
+const clipDown = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);   // keeps geometry above y
+function clipGroup(g, planes) { g.traverse(o => { if (o.isMesh) { o.material = o.material.clone(); o.material.clippingPlanes = planes; } }); }
+clipGroup(heroGrey, [clipUp]);
+clipGroup(hero, [clipDown]);
+
+// ---------- text overlay ------------------------------------------------------------------------
+function text(str, x, y, { size = 60, font = 'Playfair', style = 'normal', weight = 400, color = '#f4ead9', alpha = 1, align = 'center', track = 0, rise = 0, glow = 0 } = {}) {
+  if (alpha <= 0) return;
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color; ctx.textAlign = align; ctx.textBaseline = 'alphabetic';
+  ctx.font = `${style} ${weight} ${size * S}px ${font}`;
+  if ('letterSpacing' in ctx) ctx.letterSpacing = `${track * S}px`;
+  if (glow) { ctx.shadowColor = color; ctx.shadowBlur = glow * S; }
+  ctx.fillText(str, x * S, (y + rise * (1 - alpha)) * S);
+  ctx.restore();
+}
+const label = (str, x, y, a, o = {}) => text(str.toUpperCase(), x, y, { font: 'Inter', weight: 500, size: 22, track: 7, color: '#d9b77e', alpha: a, ...o });
+
+// ---------- shots -------------------------------------------------------------------------------
+function hideAll() {
+  for (const o of [...Object.values(lamps), stream, pool, drops, printBed, printLine, hero, heroGrey, mould, pourStream, ...layers]) o.visible = false;
+}
+function cam(pos, look, fov = 32) { camera.position.set(...pos); camera.lookAt(new THREE.Vector3(...look)); camera.fov = fov; camera.updateProjectionMatrix(); }
+const ledCycle = (t, speed = 0.12, phase = 0) => hue(t * speed + phase, 0.95, 0.55);
+
+const shots = [
+  // 0 — resin pours out of the dark
+  [0, 6.2, (t) => {
+    stream.visible = pool.visible = drops.visible = true; stream.position.x = pool.position.x = drops.position.x = 1.4;
+    const pourK = ease(win(t, 0.3, 1.4));
+    stream.scale.y = pourK; stream.position.y = 10 - 5 * pourK;
+    const spread = 0.15 + 1.05 * easeOut(win(t, 0.8, 5.5));
+    pool.scale.setScalar(spread); pool.material.emissiveIntensity = 0.4 + 0.3 * Math.sin(t * 3);
+    drops.position.y = 0.05; drops.scale.set(spread * 0.6, 1, spread * 0.6); drops.material.opacity = 0.5 + 0.5 * Math.sin(t * 7);
+    key.intensity = 6;
+    cam([0.4, 1.3 + t * 0.08, 7.2 - t * 0.3], [0.4, 0.9 + t * 0.05, 0], 30);
+    bloom.strength = 1.2;
+  }, (t) => {
+    text('Freezing time,', 600, 560, { size: 92, style: 'italic', alpha: fade(t, 1.6, 6.2, 0.8), rise: 20 });
+  }],
+  // 1 — the first lamp switches on
+  [6.2, 11.2, (t, lt) => {
+    const L = lamps.space; L.visible = true; L.position.set(0, 0, 0); L.rotation.y = -0.4 + lt * 0.08;
+    const on = ease(win(lt, 0.6, 1.8));
+    setLED(L, ledCycle(t, 0.05, 0.62), on);
+    L.userData.stars.material.opacity = 0.35 + 0.6 * on;
+    key.intensity = 8 + 6 * on;
+    cam([Math.sin(lt * 0.1) * 1.5, 3.1, 10.4 - lt * 0.25], [0, 2.3, 0], 30);
+    bloom.strength = 0.4 + 0.4 * on;
+  }, (t, lt) => {
+    text('illuminating moments.', 960, 190, { size: 76, style: 'italic', alpha: fade(lt, 0.9, 5.0, 0.7), rise: 16 });
+    const a = fade(lt, 2.4, 5.0, 0.6);
+    text('ResinEpic', 170, 600, { size: 84, weight: 700, alpha: a, track: 2, align: 'left' });
+    label('Handmade resin lamps', 172, 648, a, { align: 'left' });
+  }],
+  // 2 — designed and 3D-printed
+  [11.2, 14.4, (t, lt) => {
+    printBed.visible = printLine.visible = heroGrey.visible = true;
+    printBed.position.y = 0.06; heroGrey.position.set(0, 0.12, 0); heroGrey.rotation.y = 0.5 + lt * 0.25; heroGrey.scale.setScalar(1);
+    const h = 0.12 + 2.25 * ease(win(lt, 0.2, 2.8)); clipUp.constant = h; printLine.position.set(0, h, 0);
+    printLine.scale.setScalar(0.8 + 0.1 * Math.sin(lt * 20));
+    key.intensity = 25;
+    cam([2.2, 1.9, 4.0], [-0.9, 1.2, 0], 34); bloom.strength = 0.5; printBed.material.color.set(0x2a2d34);
+  }, (t, lt) => { label('Step 1', 200, 470, fade(lt, 0.2, 3.2, 0.4), { align: 'left' }); text('Designed & 3D-printed', 200, 550, { size: 64, align: 'left', alpha: fade(lt, 0.3, 3.2, 0.4), rise: 12 }); }],
+  // 3 — painted by hand
+  [14.4, 17.6, (t, lt) => {
+    printBed.visible = heroGrey.visible = hero.visible = true;
+    printBed.position.y = 0.06;
+    for (const g of [hero, heroGrey]) { g.position.set(0, 0.12, 0); g.rotation.y = 1.2 + lt * 0.25; g.scale.setScalar(1); }
+    const h = 2.45 - 2.4 * ease(win(lt, 0.2, 2.8)); clipDown.constant = -h; clipUp.constant = h;
+    key.intensity = 25;
+    cam([-2.2, 2.0, 4.1], [0.9, 1.25, 0], 34); bloom.strength = 0.5;
+  }, (t, lt) => { label('Step 2', 1720, 470, fade(lt, 0.2, 3.2, 0.4), { align: 'right' }); text('Painted by hand', 1720, 550, { size: 64, align: 'right', alpha: fade(lt, 0.3, 3.2, 0.4), rise: 12 }); }],
+  // 4 — cast in layers of epoxy
+  [17.6, 20.8, (t, lt) => {
+    mould.visible = hero.visible = pourStream.visible = true; clipDown.constant = -10;
+    mould.position.set(0, 1.95 + 0.05, 0); hero.position.set(0, 0.35, 0); hero.scale.setScalar(0.72); hero.rotation.y = 0.35;
+    const fill = 3.8 * ease(win(lt, 0.1, 3.0));
+    layers.forEach((m, i) => { const bottom = i * 0.95, top = Math.min(fill, bottom + 0.95); m.visible = top > bottom; m.scale.y = Math.max(0.001, top - bottom); m.position.set(0, 0.05 + bottom + (top - bottom) / 2, 0); });
+    pourStream.position.set(0.3, 0.05 + fill + 3, 0.2);
+    key.intensity = 22;
+    cam([3.6, 3.4, 7.6], [-2.3, 1.7, 0], 34); bloom.strength = 0.5;
+  }, (t, lt) => { label('Step 3', 200, 470, fade(lt, 0.2, 3.2, 0.4), { align: 'left' }); text('Cast in layers of clear epoxy', 200, 550, { size: 64, align: 'left', alpha: fade(lt, 0.3, 3.2, 0.4), rise: 12 }); }],
+  // 5 — set on wood, lit from within
+  [20.8, 24.0, (t, lt) => {
+    const L = lamps.space; L.visible = true; L.rotation.y = 0.2 + lt * 0.1;
+    const drop = easeOut(win(lt, 0.1, 1.2)); L.userData.block.position.y = 2.53 + 1.5 * (1 - drop); L.userData.inner.position.y = 0.6 + 1.5 * (1 - drop);
+    const on = ease(win(lt, 1.3, 2.2)); setLED(L, ledCycle(t, 0.25), on);
+    key.intensity = 18;
+    cam([-3.2, 2.4, 7.6], [1.8, 1.9, 0], 32); bloom.strength = 0.4 + 0.4 * on;
+  }, (t, lt) => { label('Step 4', 1720, 470, fade(lt, 0.2, 3.2, 0.4), { align: 'right' }); text('Set on wood, lit from within', 1720, 550, { size: 64, align: 'right', alpha: fade(lt, 0.3, 3.2, 0.4), rise: 12 }); }],
+  // 6 — the collection
+  [24.0, 35.0, (t, lt) => {
+    const order = ['wave', 'space', 'moon'];
+    order.forEach((k, i) => { const L = lamps[k]; L.visible = true; L.userData.block.position.y = 2.53; L.userData.inner.position.y = 0.6;
+      L.position.set((i - 1) * 4.2, 0, i === 1 ? -0.6 : 0); L.rotation.y = (i - 1) * -0.35 + Math.sin(t * 0.3 + i) * 0.05;
+      const modeT = Math.floor(lt / 2.2);                    // step through light modes like the remote does
+      const col = lt < 6.6 ? ledCycle(t, 0.1, i * 0.33) : hue([0.58, 0.0, 0.83, 0.33, 0.12][(modeT + i) % 5], 0.95, 0.55);
+      setLED(L, col, 0.75 + 0.25 * Math.sin(t * 2 + i)); });
+    const jb = Math.sin(t * 1.6); lamps.wave.userData.bell.scale.set(1 + 0.06 * jb, 0.75 - 0.06 * jb, 1 + 0.06 * jb); lamps.wave.userData.bell.position.y = 2.25 + 0.08 * Math.sin(t * 0.8); lamps.wave.userData.tent.position.y = lamps.wave.userData.bell.position.y - 0.25; lamps.wave.userData.foam.position.y = (t * 0.2) % 0.6;
+    lamps.moon.userData.petals.position.y = -((t * 0.15) % 0.5);
+    lamps.space.userData.figure.position.y = 0.62 + Math.sin(t * 1.5) * 0.04;
+    key.intensity = 12;
+    const k = ease(win(lt, 0, 11));
+    cam([lerp(-6, 6, k), lerp(3.6, 2.8, k), lerp(13.5, 12.2, k)], [lerp(-1.5, 1.5, k), 2.35, 0], 34);
+    bloom.strength = 0.6;
+  }, (t, lt) => {
+    text('Every lamp is a small world', 960, 120, { size: 68, style: 'italic', alpha: fade(lt, 0.4, 5.6, 0.6), rise: 14 });
+    label('Space · Deep sea · Legends · and more', 960, 165, fade(lt, 0.9, 5.6, 0.6));
+    text('16 light modes, one remote', 960, 120, { size: 68, style: 'italic', alpha: fade(lt, 6.0, 11, 0.6), rise: 14 });
+    label('Remote-controlled RGB LEDs in the wooden base', 960, 165, fade(lt, 6.4, 11, 0.6));
+  }],
+  // 7 — handmade in Hà Nội
+  [35.0, 40.4, (t, lt) => {
+    const L = lamps.moon; L.visible = true; L.position.set(0, 0, 0); L.rotation.y = -0.2 + lt * 0.05;
+    L.userData.block.position.y = 2.53; L.userData.inner.position.y = 0.6;
+    setLED(L, new THREE.Color(0xff9a3c), 0.6); L.userData.petals.position.y = -((t * 0.15) % 0.5);
+    key.intensity = 8;
+    cam([2.4 - lt * 0.25, 2.4, 10.6 - lt * 0.2], [-2.1, 2.1, 0], 30); bloom.strength = 0.5;
+  }, (t, lt) => {
+    const a = fade(lt, 0.4, 5.4, 0.6);
+    label('Made by hand, one at a time', 150, 440, a, { align: 'left' });
+    text('in Hà Nội, Việt Nam', 150, 530, { size: 72, align: 'left', alpha: a, rise: 12 });
+    text('Shipped worldwide with care', 150, 600, { size: 34, font: 'Inter', weight: 500, color: '#c9c1b4', align: 'left', alpha: fade(lt, 1.2, 5.4, 0.6) });
+  }],
+  // 8 — end card
+  [40.4, 45.01, (t, lt) => {
+    const L = lamps.space; L.visible = true; L.position.set(0, 0, 0); L.rotation.y = 0.6 + lt * 0.12;
+    L.userData.block.position.y = 2.53; L.userData.inner.position.y = 0.6;
+    setLED(L, ledCycle(t, 0.1), 0.85 * (1 - win(lt, 4.0, 4.6)) + 0.15);
+    key.intensity = 5;
+    cam([0, 2.7, 11.5], [0, 2.2, 0], 30); L.position.x = 3.2; bloom.strength = 0.6;
+  }, (t, lt) => {
+    const a = fade(lt, 0.3, 4.61, 0.5);
+    text('ResinEpic', 640, 520, { size: 120, weight: 700, alpha: a, track: 3, rise: 10 });
+    text('Freezing Time, Illuminating Moments', 640, 590, { size: 40, style: 'italic', alpha: fade(lt, 0.8, 4.61, 0.5) });
+    label('etsy.com/shop/ResinEpic', 640, 680, fade(lt, 1.3, 4.61, 0.5), { size: 26, color: '#f4ead9' });
+  }],
+];
+
+// fade to black between shots
+window.frame = async (t) => {
+  hideAll();
+  const shot = shots.find(([a, b]) => t >= a && t < b) || shots.at(-1);
+  const [a, b, draw3d, draw2d] = shot;
+  draw3d(t, t - a, b - a);
+  scene.traverse(o => { if (o.userData.billboard) o.quaternion.copy(camera.quaternion); });
+  composer.render();
+  ctx.globalAlpha = 1; ctx.drawImage(gl.domElement, 0, 0);
+  draw2d(t, t - a, b - a);
+  // dip to black at every cut, fade in at the start and out at the end
+  const cuts = shots.slice(1).map(sh => sh[0]);
+  const d = Math.min(...cuts.map(c => Math.abs(t - c)));
+  const k = Math.max(clamp(1 - d / 0.25), clamp(1 - t / 0.5), clamp((t - (DUR - 0.8)) / 0.8));
+  if (k > 0) { ctx.fillStyle = `rgba(0,0,0,${k})`; ctx.fillRect(0, 0, W, H); }
+  return true;
+};
+window.DUR = DUR;
+await document.fonts.load('italic 40px Playfair'); await document.fonts.load('700 40px Playfair'); await document.fonts.load('500 20px Inter');
+await document.fonts.load('400 40px Playfair', 'Hà Nội, Việt Nam');
+window.ready = true;
+</script>
+</body></html>

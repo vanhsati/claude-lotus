@@ -1,0 +1,4 @@
+parts: 1829, steps: 128
+collisions: 0
+not connected to the base: 0
+parts held by a single neighbour: 328
