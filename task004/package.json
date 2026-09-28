@@ -1,0 +1,6 @@
+{
+  "name": "resinepic-video",
+  "private": true,
+  "type": "module",
+  "dependencies": { "three": "0.170.0", "playwright-core": "1.56.0" }
+}
