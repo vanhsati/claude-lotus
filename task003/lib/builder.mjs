@@ -12,6 +12,7 @@ export const C = {
   pearlGold: 297, sandGreen: 378, darkGreen: 288, brightGreen: 10, oliveGreen: 330,
   darkOrange: 484, darkBlue: 272, medNougat: 84, brightPink: 29, darkPink: 5,
   transLightBlue: 43, transClear: 47, transYellow: 46, transOrange: 57, lime: 27,
+  brightLightOrange: 191, nougat: 92,
 };
 
 export const PLATE = { '1x1': '3024', '1x2': '3023', '1x3': '3623', '1x4': '3710', '1x6': '3666', '1x8': '3460', '1x10': '4477', '1x12': '60479',

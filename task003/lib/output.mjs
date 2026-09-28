@@ -1,6 +1,5 @@
 // Writes the generated model as JSON (for the renderer/checker) and as an LDraw MPD with steps and sub-models.
 import fs from 'node:fs';
-const OUT = new URL('../build/', import.meta.url).pathname;
 const fmt = v => (Math.round(v * 1000) / 1000).toString();
 const line = p => `1 ${p.color} ${p.pos.map(fmt).join(' ')} ${p.R.map(fmt).join(' ')} ${p.part}.dat`;
 const slug = s => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') + '.ldr';
@@ -25,7 +24,7 @@ function splitSteps(m, max = 20) {
   m.steps = steps;
 }
 
-export function writeOutputs(m) {
+export function writeOutputs(m, OUT, mpdName = 'model') {
   fs.mkdirSync(OUT, { recursive: true });
   splitSteps(m);
   const parts = m.parts.map(({ cells, ...p }) => p);
@@ -47,13 +46,13 @@ export function writeOutputs(m) {
     }
     return out;
   };
-  const main = head('one-pillar-pagoda.ldr', 'One-Pillar Pagoda (Chua Mot Cot), Ha Noi');
+  const main = head(mpdName + '.ldr', m.name);
   main.push(...body(p => !p.sub));
   files.push(main.join('\n'), '0 NOFILE');
   for (const s of subs) {
     const f = p => p.sub === s; f.isSub = true;
     files.push([...head(slug(s), s), ...body(f)].join('\n'), '0 NOFILE');
   }
-  fs.writeFileSync(OUT + 'one-pillar-pagoda.mpd', files.join('\n') + '\n');
+  fs.writeFileSync(OUT + mpdName + '.mpd', files.join('\n') + '\n');
   console.log(`model: ${parts.length} parts, ${m.steps.length} steps, sub-models: ${subs.join(', ') || 'none'}`);
 }

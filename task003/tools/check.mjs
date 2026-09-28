@@ -5,8 +5,9 @@
 //                    Technic axles/holes, or explicitly declared joints.
 import fs from 'node:fs';
 import { partInfo } from '../lib/ldraw.mjs';
+import { PDIR } from '../lib/project.mjs';
 
-const model = JSON.parse(fs.readFileSync(new URL('../build/model.json', import.meta.url), 'utf8'));
+const model = JSON.parse(fs.readFileSync(PDIR + 'build/model.json', 'utf8'));
 const P = model.parts;
 const TOL = 1.0;
 
@@ -113,10 +114,10 @@ report.push(`parts: ${P.length}, steps: ${model.steps.length}`);
 report.push(`collisions: ${collisions.length}`);
 for (const [a, b] of collisions.slice(0, 60)) report.push(`  ${fmtP(a)}  <->  ${fmtP(b)}`);
 report.push(`not connected to the base: ${floating.length}`);
-for (const i of floating.slice(0, 60)) report.push(`  ${fmtP(i)}`);
+for (const i of floating.slice(0, 5000)) report.push(`  ${fmtP(i)}`);
 const weak = P.map((p, i) => i).filter(i => seen.has(i) && adj[i].size === 1 && !P[i].free);
 report.push(`parts held by a single neighbour: ${weak.length}`);
-fs.writeFileSync(new URL('../build/check.txt', import.meta.url), report.join('\n') + '\n');
+fs.writeFileSync(PDIR + 'build/check.txt', report.join('\n') + '\n');
 console.log(report.slice(0, 3).join('\n') + '\n' + report.find(l => l.startsWith('not connected')) );
 if (process.argv.includes('-v')) console.log(report.join('\n'));
 process.exitCode = collisions.length || floating.length ? 1 : 0;

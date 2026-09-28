@@ -1,5 +1,5 @@
 import { m, C, PLATE, BRICK, TILE, rect, rotY, X, Y, Z, GROUND } from './ctx.mjs';
-import { partInfo } from '../lib/ldraw.mjs';
+import { partInfo } from '../../lib/ldraw.mjs';
 
 // =============================================================================
 // BAG 8 — Garden: bodhi tree, frangipani, stone lanterns, incense urn, stele

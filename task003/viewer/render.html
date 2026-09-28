@@ -25,10 +25,10 @@ scene.add(sun); scene.add(sun.target);
 const camera = new THREE.PerspectiveCamera(30, 1, 1, 100000);
 let lib, model, built, groundMesh;
 
-window.init = async (modelUrl) => {
+window.init = async (modelUrl, base = '../build/') => {
   model = await (await fetch(modelUrl)).json();
-  const libText = await (await fetch('../build/library.ldr')).text();
-  lib = await createLibrary(libText, '../build/LDConfig.ldr');
+  const libText = await (await fetch(base + 'library.ldr')).text();
+  lib = await createLibrary(libText, base + 'LDConfig.ldr');
   built = await buildModel(lib, model);
   scene.add(built.root);
   const g = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({ opacity: 0.18 }));
@@ -137,6 +137,17 @@ window.thumb = async (part, color, size = 160) => {
   const url = renderer.domElement.toDataURL('image/png');
   scene.remove(thumbRoot); thumbRoot = null; built.root.visible = true;
   return url;
+};
+// turn a group of moving parts (e.g. the cat's head) about a vertical axis through its pivot
+window.setMoving = (name, deg) => {
+  built.objects.forEach((o, i) => {
+    const p = model.parts[i];
+    if (p.moving !== name || !p.pivot) return;
+    o.userData.base ??= o.matrix.clone();
+    const [px, pz] = p.pivot;
+    const R = new THREE.Matrix4().makeTranslation(px, 0, pz).multiply(new THREE.Matrix4().makeRotationY(THREE.MathUtils.degToRad(deg))).multiply(new THREE.Matrix4().makeTranslation(-px, 0, -pz));
+    o.matrix.copy(R.multiply(o.userData.base));
+  });
 };
 window.ready = true;
 </script></body></html>

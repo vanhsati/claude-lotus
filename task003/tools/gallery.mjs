@@ -1,4 +1,53 @@
-<!doctype html>
+// Builds task003/index.html: a gallery of every model in task003 with links to its viewer, manual and parts.
+//   node tools/gallery.mjs
+import fs from 'node:fs';
+const ROOT = new URL('../', import.meta.url).pathname;
+const REPO = 'https://github.com/vanhsati/claude-lotus/blob/claude/one-pillar-pagoda-lego-7u8m75/task003/';
+
+const projects = [
+  { dir: 'pagoda', name: 'Chùa Một Cột', en: 'One-Pillar Pagoda, Hà Nội', mpd: 'one-pillar-pagoda.mpd',
+    blurb: 'Ngôi chùa trên một cột đá giữa hồ Linh Chiểu, dựng từ năm 1049. Có hồ sen, lan can men xanh, 13 bậc thang, cây bồ đề và mái cong với lưỡng long chầu nguyệt.',
+    moves: ['Quay tay quay: tượng Quan Âm xoay nhờ bánh vít giấu dưới hồ', 'Cửa mở vào trong', 'Nhấc mái ra để nhìn vào điện'],
+    size: '32 × 40 stud · cao khoảng 35 cm' },
+  { dir: 'cat', name: 'Mèo Anh lông ngắn', en: 'British Shorthair Cat', mpd: 'british-shorthair-cat.mpd',
+    blurb: 'Tượng mèo cỡ thật dựng theo ảnh: lông xám xanh có vằn tabby, mắt hổ phách, mũi hồng, vòng cổ cam đào có khóa đỏ, ngồi trên sàn gỗ.',
+    moves: ['Đầu xoay trái phải trên bàn xoay giấu trong cổ'],
+    size: '24 × 24 stud · cao khoảng 23 cm' },
+];
+
+const cards = projects.map(p => {
+  const dir = ROOT + p.dir + '/';
+  const model = JSON.parse(fs.readFileSync(dir + 'build/model.json', 'utf8'));
+  const cfg = fs.readFileSync(dir + 'project.mjs', 'utf8');
+  const pdf = cfg.match(/pdfName: '([^']+)'/)[1];
+  const lots = fs.readFileSync(dir + 'parts/parts-list.csv', 'utf8').trim().split('\n').length - 1;
+  return `
+  <article class="card">
+    <a class="shot" href="${p.dir}/"><img src="${p.dir}/renders/hero-front.png" alt="Ảnh render mô hình ${p.name}" loading="lazy"></a>
+    <div class="body">
+      <p class="en">${p.en}</p>
+      <h2>${p.name}</h2>
+      <p>${p.blurb}</p>
+      <dl class="facts">
+        <div><dt>Chi tiết</dt><dd>${model.parts.length.toLocaleString('vi-VN')}</dd></div>
+        <div><dt>Loại</dt><dd>${lots}</dd></div>
+        <div><dt>Bước lắp</dt><dd>${model.steps.length}</dd></div>
+      </dl>
+      <p class="size">${p.size}</p>
+      <ul class="moves">${p.moves.map(m => `<li>${m}</li>`).join('')}</ul>
+      <nav class="links">
+        <a class="primary" href="${p.dir}/">Xem 3D</a>
+        <a href="${p.dir}/instructions/${pdf}">Sách hướng dẫn (PDF)</a>
+        <a href="${REPO}${p.dir}/parts/parts-list.md">Danh sách linh kiện</a>
+        <a href="${p.dir}/parts/bricklink-wanted-list.xml">BrickLink XML</a>
+        <a href="${p.dir}/${p.mpd}">File LDraw (Studio)</a>
+        <a href="${REPO}${p.dir}/renders">Ảnh render</a>
+      </nav>
+    </div>
+  </article>`;
+}).join('\n');
+
+const html = `<!doctype html>
 <html lang="vi">
 <head>
 <meta charset="utf-8">
@@ -53,56 +102,12 @@
     <h1>Mô hình LEGO tự thiết kế</h1>
     <p>Mỗi mô hình có bản xem 3D tương tác, sách hướng dẫn lắp từng bước, danh sách linh kiện để đặt mua trên BrickLink, và file LDraw mở được bằng BrickLink Studio.</p>
   </header>
-  <main class="grid">
-  <article class="card">
-    <a class="shot" href="pagoda/"><img src="pagoda/renders/hero-front.png" alt="Ảnh render mô hình Chùa Một Cột" loading="lazy"></a>
-    <div class="body">
-      <p class="en">One-Pillar Pagoda, Hà Nội</p>
-      <h2>Chùa Một Cột</h2>
-      <p>Ngôi chùa trên một cột đá giữa hồ Linh Chiểu, dựng từ năm 1049. Có hồ sen, lan can men xanh, 13 bậc thang, cây bồ đề và mái cong với lưỡng long chầu nguyệt.</p>
-      <dl class="facts">
-        <div><dt>Chi tiết</dt><dd>1.366</dd></div>
-        <div><dt>Loại</dt><dd>155</dd></div>
-        <div><dt>Bước lắp</dt><dd>113</dd></div>
-      </dl>
-      <p class="size">32 × 40 stud · cao khoảng 35 cm</p>
-      <ul class="moves"><li>Quay tay quay: tượng Quan Âm xoay nhờ bánh vít giấu dưới hồ</li><li>Cửa mở vào trong</li><li>Nhấc mái ra để nhìn vào điện</li></ul>
-      <nav class="links">
-        <a class="primary" href="pagoda/">Xem 3D</a>
-        <a href="pagoda/instructions/One-Pillar-Pagoda-Instructions.pdf">Sách hướng dẫn (PDF)</a>
-        <a href="https://github.com/vanhsati/claude-lotus/blob/claude/one-pillar-pagoda-lego-7u8m75/task003/pagoda/parts/parts-list.md">Danh sách linh kiện</a>
-        <a href="pagoda/parts/bricklink-wanted-list.xml">BrickLink XML</a>
-        <a href="pagoda/one-pillar-pagoda.mpd">File LDraw (Studio)</a>
-        <a href="https://github.com/vanhsati/claude-lotus/blob/claude/one-pillar-pagoda-lego-7u8m75/task003/pagoda/renders">Ảnh render</a>
-      </nav>
-    </div>
-  </article>
-
-  <article class="card">
-    <a class="shot" href="cat/"><img src="cat/renders/hero-front.png" alt="Ảnh render mô hình Mèo Anh lông ngắn" loading="lazy"></a>
-    <div class="body">
-      <p class="en">British Shorthair Cat</p>
-      <h2>Mèo Anh lông ngắn</h2>
-      <p>Tượng mèo cỡ thật dựng theo ảnh: lông xám xanh có vằn tabby, mắt hổ phách, mũi hồng, vòng cổ cam đào có khóa đỏ, ngồi trên sàn gỗ.</p>
-      <dl class="facts">
-        <div><dt>Chi tiết</dt><dd>1.829</dd></div>
-        <div><dt>Loại</dt><dd>96</dd></div>
-        <div><dt>Bước lắp</dt><dd>128</dd></div>
-      </dl>
-      <p class="size">24 × 24 stud · cao khoảng 23 cm</p>
-      <ul class="moves"><li>Đầu xoay trái phải trên bàn xoay giấu trong cổ</li></ul>
-      <nav class="links">
-        <a class="primary" href="cat/">Xem 3D</a>
-        <a href="cat/instructions/British-Shorthair-Cat-Instructions.pdf">Sách hướng dẫn (PDF)</a>
-        <a href="https://github.com/vanhsati/claude-lotus/blob/claude/one-pillar-pagoda-lego-7u8m75/task003/cat/parts/parts-list.md">Danh sách linh kiện</a>
-        <a href="cat/parts/bricklink-wanted-list.xml">BrickLink XML</a>
-        <a href="cat/british-shorthair-cat.mpd">File LDraw (Studio)</a>
-        <a href="https://github.com/vanhsati/claude-lotus/blob/claude/one-pillar-pagoda-lego-7u8m75/task003/cat/renders">Ảnh render</a>
-      </nav>
-    </div>
-  </article>
+  <main class="grid">${cards}
   </main>
   <footer>Hình khối lấy từ thư viện chi tiết <a href="https://www.ldraw.org">LDraw</a> (CC BY 2.0), dựng hình bằng three.js. LEGO® là thương hiệu của LEGO Group; các mô hình này không được LEGO Group tài trợ hay xác nhận.</footer>
 </div>
 </body>
 </html>
+`;
+fs.writeFileSync(ROOT + 'index.html', html);
+console.log('gallery: ' + projects.map(p => p.dir).join(', '));

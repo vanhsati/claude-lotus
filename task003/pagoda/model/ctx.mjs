@@ -1,6 +1,6 @@
 // One-Pillar Pagoda (Chùa Một Cột, Hà Nội) — LEGO model generator.
 // Writes build/model.json (placements + steps) and build/one-pillar-pagoda.mpd (LDraw, opens in BrickLink Studio).
-import { Model, C, PLATE, BRICK, TILE, rect, ring, minus, union, rotX, rotY, rotZ, m3mul } from '../lib/builder.mjs';
+import { Model, C, PLATE, BRICK, TILE, rect, ring, minus, union, rotX, rotY, rotZ, m3mul } from '../../lib/builder.mjs';
 
 export const m = new Model('One-Pillar Pagoda');
 const X = v => v * 20, Y = h => -8 * h, Z = v => v * 20; // grid -> LDU

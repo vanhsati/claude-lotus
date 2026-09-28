@@ -2,6 +2,11 @@
 export const COLORS = {
   // ldraw: [BrickLink id, BrickLink name, LEGO (Pick a Brick) name, hex]
   0: [11, 'Black', 'Black', '#1B2A34'],
+  4: [5, 'Red', 'Bright Red', '#B40000'],
+  5: [47, 'Dark Pink', 'Bright Purple', '#C870A0'],
+  25: [4, 'Orange', 'Bright Orange', '#D67923'],
+  92: [28, 'Nougat', 'Nougat', '#BB805A'],
+  191: [110, 'Bright Light Orange', 'Flame Yellowish Orange', '#F8BB3D'],
   2: [6, 'Green', 'Dark Green', '#00852B'],
   10: [36, 'Bright Green', 'Bright Green', '#58AB41'],
   14: [3, 'Yellow', 'Bright Yellow', '#FAC80A'],
