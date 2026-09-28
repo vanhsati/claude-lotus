@@ -1,0 +1,142 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>render</title>
+<style>html,body{margin:0;background:#fff}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"../node_modules/three/build/three.module.js","three/addons/":"../node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { createLibrary, buildModel } from './scene.js';
+
+const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, alpha: true });
+renderer.setPixelRatio(1);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure = 1.0;
+document.body.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+const hemi = new THREE.HemisphereLight(0xffffff, 0x8a8070, 0.6); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xfff4e0, 2.2); sun.castShadow = true;
+sun.shadow.mapSize.set(4096, 4096); sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.6;
+scene.add(sun); scene.add(sun.target);
+const camera = new THREE.PerspectiveCamera(30, 1, 1, 100000);
+let lib, model, built, groundMesh;
+
+window.init = async (modelUrl) => {
+  model = await (await fetch(modelUrl)).json();
+  const libText = await (await fetch('../build/library.ldr')).text();
+  lib = await createLibrary(libText, '../build/LDConfig.ldr');
+  built = await buildModel(lib, model);
+  scene.add(built.root);
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.ShadowMaterial({ opacity: 0.18 }));
+  g.rotation.x = -Math.PI / 2; g.receiveShadow = true; scene.add(g); groundMesh = g;
+  return { parts: model.parts.length, steps: model.steps.length };
+};
+
+function visibleBox(objs) {
+  const box = new THREE.Box3();
+  built.root.updateMatrixWorld(true);
+  for (const o of objs) box.expandByObject(o);
+  return box;
+}
+const fadedCache = new Map();
+function fadedMaterial(mat) {
+  if (!fadedCache.has(mat.uuid)) {
+    const f = mat.clone();
+    if (f.color) f.color = f.color.clone().lerp(new THREE.Color(0xffffff), 0.55);
+    if (f.opacity !== undefined && !mat.transparent) { f.transparent = false; }
+    fadedCache.set(mat.uuid, f);
+  }
+  return fadedCache.get(mat.uuid);
+}
+function setFaded(o, faded) {
+  o.traverse(c => {
+    if (!c.material || c.isLineSegments) return;
+    if (!c.userData.origMat) c.userData.origMat = c.material;
+    c.material = faded ? (Array.isArray(c.userData.origMat) ? c.userData.origMat.map(fadedMaterial) : fadedMaterial(c.userData.origMat)) : c.userData.origMat;
+  });
+}
+// opts: {size, dir, maxStep, sub, mainView, newSteps, fade, edges, bg, zoom, target, fov, format, focus}
+window.view = async (opts = {}) => {
+  const [w, h] = opts.size || [1200, 900];
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h; camera.fov = opts.fov || 30;
+  const attachStep = {};
+  for (const s of model.steps) if (s.attach) attachStep[s.attach] = s.i;
+  const isVisible = (p) => {
+    if (opts.sub) return p.sub === opts.sub && p.step <= opts.maxStep;
+    if (opts.mainView) return p.sub ? attachStep[p.sub] <= opts.maxStep : p.step <= opts.maxStep;
+    return opts.maxStep === undefined || p.step <= opts.maxStep;
+  };
+  const isNew = (p) => (opts.newSteps || []).includes(p.step) || (opts.newSub && p.sub === opts.newSub);
+  const vis = [], fresh = [];
+  built.objects.forEach((o, i) => {
+    const p = model.parts[i];
+    const v = isVisible(p) && !(opts.hideMoving || []).includes(p.moving) && !(opts.onlyMechanism && window.__hide && window.__hide.has(i));
+    o.visible = v;
+    o.traverse(c => { if (c.isLineSegments) c.visible = opts.edges !== false; });
+    setFaded(o, !!(v && opts.fade && !isNew(p)));
+    if (v) { vis.push(o); if (isNew(p)) fresh.push(o); }
+  });
+  const allBox = visibleBox(vis);
+  let box = allBox;
+  if (opts.focus && fresh.length) {
+    const nb = visibleBox(fresh);
+    const ratio = nb.getSize(new THREE.Vector3()).length() / allBox.getSize(new THREE.Vector3()).length();
+    if (ratio < opts.focus) {
+      const c = nb.getCenter(new THREE.Vector3());
+      const r = Math.max(nb.getSize(new THREE.Vector3()).length() * 1.1, allBox.getSize(new THREE.Vector3()).length() * opts.focus * 0.9);
+      box = new THREE.Box3().setFromCenterAndSize(c, new THREE.Vector3(r, r, r).multiplyScalar(0.577));
+    }
+  }
+  const center = opts.target ? new THREE.Vector3(opts.target[0], opts.target[1], -opts.target[2]) : box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
+  const radius = Math.max(size.length() / 2, 40);
+  const md = opts.dir || [-0.7, 0.8, 1.2];
+  const dir = new THREE.Vector3(md[0], md[1], -md[2]).normalize();
+  const dist = radius / Math.sin(THREE.MathUtils.degToRad(camera.fov / 2)) * (opts.zoom || 1) * (Math.min(1, camera.aspect) ** -0.5);
+  camera.position.copy(center).addScaledVector(dir, dist);
+  camera.near = dist / 50; camera.far = dist * 10;
+  camera.lookAt(center); camera.updateProjectionMatrix();
+  const ab = Math.max(allBox.getSize(new THREE.Vector3()).length(), 100);
+  const ac = allBox.getCenter(new THREE.Vector3());
+  const sd = opts.sunDir || [-0.5, 1.3, 0.9];
+  sun.position.copy(ac).add(new THREE.Vector3(sd[0], sd[1], -sd[2]).normalize().multiplyScalar(ab * 1.5));
+  sun.target.position.copy(ac);
+  sun.intensity = opts.sun ?? 2.2; hemi.intensity = opts.hemi ?? 0.6; scene.environmentIntensity = opts.env ?? 0.55;
+  const sc = sun.shadow.camera; sc.left = sc.bottom = -ab * 0.7; sc.right = sc.top = ab * 0.7; sc.near = 1; sc.far = ab * 4; sc.updateProjectionMatrix();
+  groundMesh.position.set(ac.x, allBox.min.y - 0.5, ac.z); groundMesh.scale.set(ab * 6, ab * 6, 1);
+  groundMesh.visible = opts.ground !== false;
+  scene.background = opts.bg ? new THREE.Color(opts.bg) : null;
+  renderer.toneMappingExposure = opts.exposure || 1.0;
+  renderer.render(scene, camera);
+  return renderer.domElement.toDataURL(opts.format === 'jpeg' ? 'image/jpeg' : 'image/png', 0.86);
+};
+
+// thumbnail of a single part/colour for parts lists
+let thumbRoot = null;
+window.thumb = async (part, color, size = 160) => {
+  hemi.intensity = 0.6; scene.environmentIntensity = 0.55; sun.intensity = 2.2;
+  if (thumbRoot) scene.remove(thumbRoot);
+  built.root.visible = false;
+  const t = (await lib.template(part, color)).clone();
+  thumbRoot = new THREE.Group(); thumbRoot.rotation.x = Math.PI; thumbRoot.add(t); scene.add(thumbRoot);
+  renderer.setSize(size, size, false); camera.aspect = 1; camera.fov = 20;
+  thumbRoot.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(thumbRoot);
+  const c = box.getCenter(new THREE.Vector3()), r = Math.max(box.getSize(new THREE.Vector3()).length() / 2, 8);
+  const d = new THREE.Vector3(1, 0.9, 1.4).normalize();
+  const dist = r / Math.sin(THREE.MathUtils.degToRad(10)) * 1.02;
+  camera.position.copy(c).addScaledVector(d, dist); camera.near = dist / 20; camera.far = dist * 5; camera.lookAt(c); camera.updateProjectionMatrix();
+  sun.position.copy(c).add(new THREE.Vector3(-0.6, 1.2, 0.8).multiplyScalar(r * 4)); sun.target.position.copy(c);
+  groundMesh.visible = false; scene.background = null;
+  renderer.render(scene, camera);
+  const url = renderer.domElement.toDataURL('image/png');
+  scene.remove(thumbRoot); thumbRoot = null; built.root.visible = true;
+  return url;
+};
+window.ready = true;
+</script></body></html>

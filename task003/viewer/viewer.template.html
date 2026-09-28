@@ -1,0 +1,279 @@
+<title>Chùa Một Cột in Bricks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Noto+Serif+Display:ital,wght@0,500;1,400&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --lake: #111c26; --water: #1b2b38; --line: #2c4152; --ink: #ece6da; --muted: #9fb0bb;
+    --lotus: #e58faa; --gold: #c9a24a; --gold-ink: #1c1406;
+    --ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+    --display: 'Noto Serif Display', 'Noto Serif', Georgia, serif;
+  }
+  html, body { height: 100%; }
+  body { background: var(--lake); color: var(--ink); font-family: var(--ui); overflow: hidden; }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .plate { position: fixed; left: 16px; top: calc(env(safe-area-inset-top, 0px) + 16px); max-width: min(360px, calc(100% - 32px)); pointer-events: none; }
+  .plate .kicker { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); }
+  .plate h1 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 4px 0 2px; text-wrap: balance; }
+  .plate p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .plate .facts { margin-top: 8px; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); }
+  .dock { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; justify-content: center; pointer-events: none; }
+  .panel { pointer-events: auto; background: color-mix(in srgb, var(--water) 88%, transparent); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(6px); min-width: 0; }
+  .panel h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { font: 500 13px var(--ui); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 7px; padding: 7px 11px; cursor: pointer; }
+  button:hover { border-color: var(--gold); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--lotus); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  input[type=range] { accent-color: var(--lotus); width: 160px; max-width: 100%; }
+  .readout { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; min-width: 6.5em; }
+  .build { flex: 1 1 300px; max-width: 520px; }
+  .build input[type=range] { width: 100%; }
+  .build .title { font-size: 13px; min-height: 1.4em; }
+  .build .title b { color: var(--lotus); font-weight: 600; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); }
+  @media (max-width: 640px) {
+    .plate p { display: none; }
+    .panel { padding: 8px 10px; }
+    input[type=range] { width: 120px; }
+  }
+</style>
+
+<div id="stage"></div>
+<div id="loading">Laying 1,366 bricks…</div>
+<div class="plate">
+  <div class="kicker">Hà Nội · 1049 · LEGO model</div>
+  <h1>Chùa Một Cột</h1>
+  <p>The One-Pillar Pagoda: a shrine on a single stone pillar in the Linh Chiểu lotus pond. Drag to orbit, scroll or pinch to zoom.</p>
+  <div class="facts" id="facts"></div>
+</div>
+<div class="dock">
+  <div class="panel">
+    <h2>Crank</h2>
+    <div class="row">
+      <button id="spin" aria-pressed="false">Turn the crank</button>
+      <input id="crank" type="range" min="0" max="8640" step="1" value="0" aria-label="Crank angle">
+    </div>
+    <div class="readout" id="crankOut">Quan Âm faces 0°</div>
+  </div>
+  <div class="panel">
+    <h2>Shrine</h2>
+    <div class="row">
+      <button id="door" aria-pressed="false">Open door</button>
+      <button id="roof" aria-pressed="false">Lift roof</button>
+      <button id="xray" aria-pressed="false">See the drive</button>
+      <button id="night" aria-pressed="false">Night</button>
+    </div>
+  </div>
+  <div class="panel build">
+    <h2>Build it</h2>
+    <div class="row"><button id="play" aria-pressed="false">Play</button><input id="step" type="range" min="1" max="1" value="1" aria-label="Build step"></div>
+    <div class="title" id="stepOut"></div>
+  </div>
+</div>
+
+<script type="application/json" id="model-data">/*MODEL*/</script>
+<script type="text/plain" id="lib-data">/*LIBRARY*/</script>
+<script type="text/plain" id="ldconfig-data">/*LDCONFIG*/</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { LDrawLoader } from 'three/addons/loaders/LDrawLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { LDrawConditionalLineMaterial } from 'three/addons/materials/LDrawConditionalLineMaterial.js';
+
+const model = JSON.parse(document.getElementById('model-data').textContent);
+const libText = document.getElementById('lib-data').textContent;
+const ldconfig = document.getElementById('ldconfig-data').textContent;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- renderer & scene
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+const camera = new THREE.PerspectiveCamera(32, 1, 5, 20000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 150; controls.maxDistance = 3500;
+const hemi = new THREE.HemisphereLight(0xfff6e8, 0x3a4a44, 0.7); scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffefd6, 2.4); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.8;
+Object.assign(sun.shadow.camera, { left: -700, right: 700, top: 700, bottom: -700, near: 10, far: 4000 });
+scene.add(sun, sun.target);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(3000, 64), new THREE.MeshStandardMaterial({ color: 0x1a2733, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.5; ground.receiveShadow = true; scene.add(ground);
+
+// ---------- LDraw library (all part files are embedded in the page)
+THREE.Cache.enabled = false;
+const loader = new LDrawLoader();
+loader.setConditionalLineMaterial(LDrawConditionalLineMaterial);
+loader.smoothNormals = true;
+const origLoad = THREE.FileLoader.prototype.loadAsync;
+THREE.FileLoader.prototype.loadAsync = function (url, p) { return url === 'embedded:ldconfig' ? Promise.resolve(ldconfig) : origLoad.call(this, url, p); };
+await loader.preloadMaterials('embedded:ldconfig');
+THREE.FileLoader.prototype.loadAsync = origLoad;
+const cache = loader.partsCache.parseCache;
+{ const re = /^0 FILE (.+)$/gm; let m; const blocks = [];
+  while ((m = re.exec(libText))) blocks.push([m[1].trim(), m.index + m[0].length]);
+  blocks.forEach(([name, at], i) => { const end = i + 1 < blocks.length ? libText.lastIndexOf('0 NOFILE', blocks[i + 1][1]) : libText.length; cache.setData(name, libText.slice(at, end)); }); }
+const templates = new Map();
+const template = (part, color) => {
+  const k = part + '|' + color;
+  if (!templates.has(k)) templates.set(k, new Promise((res, rej) => loader.parse(`1 ${color} 0 0 0 1 0 0 0 1 0 0 0 1 ${part}.dat\n`, res, rej)));
+  return templates.get(k);
+};
+
+const root = new THREE.Group(); root.rotation.x = Math.PI; scene.add(root);
+const parts = model.parts;
+await Promise.all([...new Set(parts.map(p => p.part + '|' + p.color))].map(k => template(...k.split('|'))));
+const attachStep = {}; model.steps.forEach(s => { if (s.attach) attachStep[s.attach] = s.i; });
+const shownFrom = p => p.sub ? attachStep[p.sub] : p.step;   // build step at which the part appears in the full model
+
+// moving parts stay separate; everything else is merged per (build step, material) for speed
+const movers = [];
+const batches = new Map();
+const tmp = new THREE.Matrix4();
+for (const p of parts) {
+  const t = await template(p.part, p.color);
+  const R = p.R, P = p.pos;
+  const M = new THREE.Matrix4().set(R[0], R[1], R[2], P[0], R[3], R[4], R[5], P[1], R[6], R[7], R[8], P[2], 0, 0, 0, 1);
+  if (p.moving) {
+    const o = t.clone(); o.matrixAutoUpdate = false; o.matrix.copy(M); o.userData = { p, base: M.clone() };
+    o.traverse(c => { if (c.isMesh) { c.castShadow = c.receiveShadow = true; } if (c.isLineSegments) c.userData.edge = true; });
+    root.add(o); movers.push(o); continue;
+  }
+  t.updateMatrixWorld(true);
+  t.traverse(c => {
+    if (!(c.isMesh || (c.isLineSegments && !c.isConditionalLine && !c.material.isLDrawConditionalLineMaterial))) return;
+    if (c.isLineSegments && c.geometry.attributes.control0) return;
+    const geo = c.geometry.index ? c.geometry.toNonIndexed() : c.geometry;
+    const mats = Array.isArray(c.material) ? c.material : [c.material];
+    const groups = geo.groups.length ? geo.groups : [{ start: 0, count: geo.attributes.position.count, materialIndex: 0 }];
+    tmp.multiplyMatrices(M, c.matrixWorld);
+    for (const g of groups) {
+      const mat = mats[g.materialIndex]; if (!mat) continue;
+      const key = shownFrom(p) + '|' + (c.isMesh ? 'm' : 'l') + '|' + mat.uuid;
+      const sub = new THREE.BufferGeometry();
+      for (const name of c.isMesh ? ['position', 'normal'] : ['position']) {
+        const a = geo.attributes[name]; if (!a) continue;
+        sub.setAttribute(name, new THREE.BufferAttribute(a.array.slice(g.start * 3, (g.start + g.count) * 3), 3));
+      }
+      sub.applyMatrix4(tmp);
+      if (!batches.has(key)) batches.set(key, { step: shownFrom(p), mesh: c.isMesh, mat, geos: [] });
+      batches.get(key).geos.push(sub);
+    }
+  });
+}
+const statics = [];
+for (const b of batches.values()) {
+  const g = mergeGeometries(b.geos); if (!g) continue;
+  const o = b.mesh ? new THREE.Mesh(g, b.mat) : new THREE.LineSegments(g, b.mat);
+  if (b.mesh) { o.castShadow = o.receiveShadow = true; } else o.userData.edge = true;
+  o.userData.step = b.step; root.add(o); statics.push(o);
+}
+document.getElementById('loading').hidden = true;
+document.getElementById('facts').textContent = `${parts.length.toLocaleString('en')} pieces · ${model.steps.length} steps · 32 × 40 studs`;
+
+// ---------- camera framing
+const toThree = (x, h, z) => new THREE.Vector3(x, h, -z);   // LDraw x, height (up), z -> world
+controls.target.copy(toThree(320, 300, 420));
+camera.position.copy(toThree(-420, 820, 1650));
+sun.position.copy(toThree(-600, 1400, 1200)); sun.target.position.copy(toThree(320, 0, 400));
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+// ---------- mechanism
+const WORM = { y: -46, z: 260 }, AXIS = { x: 320, z: 300 };
+let crankDeg = 0, doorT = 0, doorTarget = 0, roofT = 0, roofTarget = 0, spinning = false;
+const rotAbout = (base, pre, rot, post) => new THREE.Matrix4().multiplyMatrices(pre, rot).multiply(post).multiply(base);
+function pose() {
+  const a = THREE.MathUtils.degToRad(crankDeg), s = -a / 24;
+  const crankM = [new THREE.Matrix4().makeTranslation(0, WORM.y, WORM.z), new THREE.Matrix4().makeRotationX(a), new THREE.Matrix4().makeTranslation(0, -WORM.y, -WORM.z)];
+  const driveM = [new THREE.Matrix4().makeTranslation(AXIS.x, 0, AXIS.z), new THREE.Matrix4().makeRotationY(s), new THREE.Matrix4().makeTranslation(-AXIS.x, 0, -AXIS.z)];
+  for (const o of movers) {
+    const p = o.userData.p;
+    if (p.moving === 'crank') o.matrix.copy(rotAbout(o.userData.base, ...crankM));
+    else if (p.moving === 'drive' || p.moving === 'statue') o.matrix.copy(rotAbout(o.userData.base, ...driveM));
+    else if (p.moving === 'door') {
+      const [px, pz] = p.pivot;
+      o.matrix.copy(rotAbout(o.userData.base, new THREE.Matrix4().makeTranslation(px, 0, pz), new THREE.Matrix4().makeRotationY(doorT * 1.45), new THREE.Matrix4().makeTranslation(-px, 0, -pz)));
+    } else if (p.moving === 'roof') {
+      const e = roofT * roofT * (3 - 2 * roofT);
+      o.matrix.copy(new THREE.Matrix4().makeTranslation(-e * 380, -e * 260, 0).multiply(o.userData.base));
+    }
+  }
+  const face = (((-crankDeg / 24) % 360) + 360) % 360;
+  document.getElementById('crankOut').textContent = `Quan Âm faces ${Math.round(face)}° · crank ${Math.floor(crankDeg / 360)} turns`;
+}
+const crankEl = document.getElementById('crank');
+crankEl.addEventListener('input', () => { crankDeg = +crankEl.value; pose(); });
+const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener('click', () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); fn(on, b); }); return b; };
+toggle('spin', (on, b) => { spinning = on; b.textContent = on ? 'Stop' : 'Turn the crank'; });
+toggle('door', (on, b) => { doorTarget = on ? 1 : 0; b.textContent = on ? 'Close door' : 'Open door'; });
+toggle('roof', (on, b) => { roofTarget = on ? 1 : 0; b.textContent = on ? 'Replace roof' : 'Lift roof'; });
+
+// ---------- x-ray: ghost everything except the drive train
+const ghostCache = new Map();
+const ghost = m => { if (!ghostCache.has(m.uuid)) { const g = m.clone(); g.transparent = true; g.opacity = 0.1; g.depthWrite = false; ghostCache.set(m.uuid, g); } return ghostCache.get(m.uuid); };
+const setGhost = (o, on) => o.traverse(c => { if (!c.isMesh) return; c.userData.orig ??= c.material; c.material = on ? (Array.isArray(c.userData.orig) ? c.userData.orig.map(ghost) : ghost(c.userData.orig)) : c.userData.orig; c.castShadow = !on; });
+toggle('xray', on => {
+  statics.forEach(o => { if (o.isMesh) setGhost(o, on); else o.visible = !on && o.userData.step <= buildStep; });
+  movers.forEach(o => { if (o.userData.p.moving === 'door' || o.userData.p.moving === 'roof') setGhost(o, on); });
+});
+
+// ---------- night: lanterns, urn embers and the shrine glow
+const lights = [[230, 170, 670], [410, 170, 670], [320, 140, 760], [320, 390, 300]].map(([x, h, z], i) => {
+  const l = new THREE.PointLight(i === 3 ? 0xffc46b : 0xffb347, 0, i === 3 ? 260 : 360, 0); l.position.copy(toThree(x, h, z)); scene.add(l); return l;
+});
+const glowMats = new Set();
+[...movers, ...statics].forEach(o => o.traverse(c => { if (c.isMesh) [c.material].flat().forEach(m => { if (m.transparent && m.color && (m.color.r > 0.9 && m.color.g > 0.5 && m.color.b < 0.4)) glowMats.add(m); }); }));
+toggle('night', on => {
+  scene.background = new THREE.Color(on ? 0x070b12 : 0x111c26);
+  ground.material.color.set(on ? 0x0b1118 : 0x1a2733);
+  sun.intensity = on ? 0.25 : 2.4; sun.color.set(on ? 0x9fb7ff : 0xffefd6);
+  hemi.intensity = on ? 0.12 : 0.7; scene.environmentIntensity = on ? 0.12 : 1;
+  lights.forEach((l, i) => l.intensity = on ? (i === 3 ? 2.2 : 1.6) : 0);
+  [...statics, ...movers].forEach(o => o.traverse(c => { if (c.userData.edge) c.material.visible = !on; }));
+  glowMats.forEach(m => { m.emissive = new THREE.Color(on ? 0xffa030 : 0x000000); m.emissiveIntensity = on ? 1.5 : 0; });
+});
+scene.background = new THREE.Color(0x111c26);
+
+// ---------- build steps
+const stepEl = document.getElementById('step'), stepOut = document.getElementById('stepOut');
+stepEl.max = model.steps.length; stepEl.value = model.steps.length;
+let buildStep = model.steps.length - 1, playing = false, playClock = 0;
+function showStep(i) {
+  buildStep = i;
+  const xray = document.getElementById('xray').getAttribute('aria-pressed') === 'true';
+  statics.forEach(o => o.visible = o.userData.step <= i && !(xray && o.userData.edge));
+  movers.forEach(o => o.visible = shownFrom(o.userData.p) <= i);
+  const s = model.steps[i];
+  stepOut.innerHTML = `<b>Step ${i + 1}</b> of ${model.steps.length} · Bag ${s.bag}: ${model.bags[s.bag]} — ${s.attach ? s.title : s.title}${s.part ? ` (${s.part})` : ''}`;
+}
+stepEl.addEventListener('input', () => showStep(+stepEl.value - 1));
+toggle('play', (on, b) => { playing = on; b.textContent = on ? 'Pause' : 'Play'; if (on && buildStep >= model.steps.length - 1) { showStep(0); stepEl.value = 1; } });
+showStep(buildStep); pose();
+
+// ---------- loop
+const clock = new THREE.Clock();
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.1);
+  if (spinning) { crankDeg = (crankDeg + dt * (reduceMotion ? 120 : 240)) % 8640; crankEl.value = crankDeg; }
+  doorT += Math.sign(doorTarget - doorT) * Math.min(Math.abs(doorTarget - doorT), dt * 1.2);
+  roofT += Math.sign(roofTarget - roofT) * Math.min(Math.abs(roofTarget - roofT), dt * 0.9);
+  if (playing) { playClock += dt; if (playClock > 0.45) { playClock = 0; const n = buildStep + 1; if (n >= model.steps.length) { playing = false; document.getElementById('play').click(); } else { showStep(n); stepEl.value = n + 1; } } }
+  pose();
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>

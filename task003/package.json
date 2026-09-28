@@ -1,0 +1,15 @@
+{
+  "name": "one-pillar-pagoda-lego",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "fetch": "node tools/fetch_ldraw.mjs",
+    "build": "node model/build.mjs && node tools/check.mjs && node tools/bom.mjs",
+    "render": "node tools/render.mjs",
+    "manual": "node tools/manual.mjs"
+  },
+  "dependencies": {
+    "three": "0.170.0",
+    "playwright-core": "1.56.0"
+  }
+}

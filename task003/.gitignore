@@ -1,0 +1,6 @@
+node_modules/
+ldraw/
+build/library.ldr
+build/LDConfig.ldr
+instructions/img/
+instructions/manual.html
