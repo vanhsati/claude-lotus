@@ -1,0 +1,148 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>html,body{margin:0;background:transparent}canvas{display:block}</style>
+<script type="importmap">{"imports":{"three":"http://local/node_modules/three/build/three.module.js","three/addons/":"http://local/node_modules/three/examples/jsm/"}}</script>
+</head><body>
+<script type="module">
+import * as THREE from 'three';
+import { LDrawLoader } from 'three/addons/loaders/LDrawLoader.js';
+import { LDrawConditionalLineMaterial } from 'three/addons/materials/LDrawConditionalLineMaterial.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+
+let renderer, scene, model, parts = [], fadeCache = new Map(), hiCache = new Map();
+
+window.setup = async (opts) => {
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1);
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = opts.exposure ?? 1.0;
+  renderer.shadowMap.enabled = !!opts.shadows;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+  scene = new THREE.Scene();
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = opts.env ?? 0.45;
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x807868, opts.hemi ?? 0.5));
+  const sun = new THREE.DirectionalLight(0xfff4e0, opts.sun ?? 2.2);
+  sun.position.set(-300, 900, 600);
+  sun.castShadow = !!opts.shadows;
+  sun.shadow.mapSize.set(4096, 4096);
+  window.sun = sun;
+  scene.add(sun); scene.add(sun.target);
+  const loader = new LDrawLoader();
+  loader.setConditionalLineMaterial(LDrawConditionalLineMaterial);
+  loader.smoothNormals = true;
+  loader.setPartsLibraryPath('http://local/ldraw/');
+  await loader.preloadMaterials('http://local/ldraw/LDConfig.ldr');
+  const text = await (await fetch(opts.mpd)).text();
+  model = await new Promise((res, rej) => loader.parse(text, res, rej));
+  model.rotation.x = Math.PI;
+  scene.add(model);
+  parts = model.children.filter(c => c.isGroup);
+  const seenM = new Set();
+  for (const p of parts) p.traverse(o => { if (o.isMesh && !seenM.has(o.material)) { seenM.add(o.material); const mm = o.material; if (mm.roughness !== undefined && !mm.transparent && mm.metalness < 0.5) mm.roughness = Math.max(mm.roughness, opts.rough ?? 0.6); } });
+  for (const p of parts) p.traverse(o => { if (o.isMesh || o.isLineSegments) { o.userData.orig = o.material; if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } } });
+  if (opts.ground) {
+    const g = new THREE.Mesh(new THREE.PlaneGeometry(20000, 20000), new THREE.ShadowMaterial({ opacity: 0.25 }));
+    g.rotation.x = -Math.PI / 2; g.position.y = opts.groundY ?? 0; g.receiveShadow = true; scene.add(g);
+  }
+  return { parts: parts.length, steps: model.userData.numBuildingSteps };
+};
+
+function fadeMat(m, amt) {
+  const key = m.uuid + amt;
+  if (!fadeCache.has(key)) {
+    const c = m.clone();
+    if (c.color) c.color = c.color.clone().lerp(new THREE.Color(0xffffff), amt);
+    if (c.opacity !== undefined && !m.transparent) {}
+    fadeCache.set(key, c);
+  }
+  return fadeCache.get(key);
+}
+
+let boxes = null;
+function ensureBoxes() {
+  if (boxes) return;
+  model.updateMatrixWorld(true);
+  boxes = parts.map(p => new THREE.Box3().setFromObject(p));
+}
+window.render = (o) => {
+  const W = o.width || 1200, H = o.height || 900;
+  renderer.setSize(W, H, false);
+  model.updateMatrixWorld(true);
+  ensureBoxes();
+  const step = o.step ?? 1e9;
+  const upto = o.upto ?? parts.length;
+  const newSet = new Set(o.newIdx || []);
+  const hide = new Set(o.hide || []);
+  const box = new THREE.Box3();
+  const focus = new THREE.Box3();
+  parts.forEach((p, i) => {
+    let vis = i < upto && !hide.has(i);
+    if (o.onlyIdx) vis = o.onlyIdx.includes(i);
+    if (o.upto === undefined && o.step !== undefined) vis = vis && ((p.userData.buildingStep ?? 0) + 1) <= step;
+    p.visible = vis;
+    if (!vis) return;
+    const isNew = newSet.has(i);
+    const fade = (o.fade && newSet.size && !isNew) ? o.fade : 0;
+    p.traverse(m => { if (m.isMesh || m.isLineSegments) m.material = fade && m.isMesh ? fadeMat(m.userData.orig, fade) : m.userData.orig; });
+    box.union(boxes[i]);
+    if (isNew) focus.union(boxes[i]);
+  });
+  // temporary transforms (play features): rotate groups of parts about a pivot (LDraw coords)
+  const saved = [];
+  for (const t of (o.transforms || [])) {
+    const q = new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(...t.axis).normalize(), THREE.MathUtils.degToRad(t.angle || 0));
+    const piv = new THREE.Vector3(...(t.pivot || [0, 0, 0]));
+    const off = new THREE.Vector3(...(t.offset || [0, 0, 0]));
+    for (const i of t.idx) {
+      const p = parts[i];
+      saved.push([p, p.position.clone(), p.quaternion.clone()]);
+      p.position.sub(piv).applyQuaternion(q).add(piv).add(off);
+      p.quaternion.premultiply(q);
+      p.updateMatrixWorld(true);
+      if (p.visible) box.union(new THREE.Box3().setFromObject(p));
+    }
+  }
+  let fb = box;
+  if (o.fitIdx) { fb = new THREE.Box3(); for (const i of o.fitIdx) fb.union(boxes[i]); }
+  else if (o.fit === 'focus' && !focus.isEmpty()) {
+    fb = focus.clone();
+    const size = fb.getSize(new THREE.Vector3());
+    const minS = o.minSize ?? 300;
+    const grow = new THREE.Vector3(Math.max(0, minS - size.x) / 2, Math.max(0, minS - size.y) / 2, Math.max(0, minS - size.z) / 2);
+    fb.expandByVector(grow);
+    fb.expandByScalar(o.pad ?? 40);
+    fb.intersect(box.clone().expandByScalar(40));
+  }
+  const center = fb.getCenter(new THREE.Vector3());
+  if (o.target) center.set(...o.target);
+  const az = THREE.MathUtils.degToRad(o.az ?? 35), el = THREE.MathUtils.degToRad(o.el ?? 28);
+  const dir = new THREE.Vector3(Math.sin(az) * Math.cos(el), Math.sin(el), Math.cos(az) * Math.cos(el));
+  const fov = o.fov ?? 25;
+  const cam = new THREE.PerspectiveCamera(fov, W / H, 1, 100000);
+  const pts = [];
+  for (const x of [fb.min.x, fb.max.x]) for (const y of [fb.min.y, fb.max.y]) for (const z of [fb.min.z, fb.max.z]) pts.push(new THREE.Vector3(x, y, z));
+  const sph = fb.getBoundingSphere(new THREE.Sphere());
+  let lo = sph.radius * 0.3, hi = sph.radius / Math.sin(THREE.MathUtils.degToRad(fov / 2)) * 3;
+  const mg = o.margin ?? 0.9;
+  const fits = (dd) => { cam.position.copy(center).addScaledVector(dir, dd); cam.lookAt(center); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    for (const p of pts) { const v = p.clone().applyMatrix4(cam.matrixWorldInverse); if (v.z > -1) return false; const q = p.clone().project(cam); if (Math.abs(q.x) > mg || Math.abs(q.y) > mg) return false; } return true; };
+  for (let it = 0; it < 40; it++) { const mid = (lo + hi) / 2; if (fits(mid)) hi = mid; else lo = mid; }
+  fits(hi);
+  const s = box.getSize(new THREE.Vector3()).length();
+  sun.position.copy(center).add(new THREE.Vector3(o.sunX ?? -0.55, 1.2, o.sunZ ?? 0.75).normalize().multiplyScalar(s * 1.5 + 500));
+  sun.target.position.copy(center);
+  const sc = sun.shadow.camera; sc.left = -s; sc.right = s; sc.top = s; sc.bottom = -s; sc.near = 1; sc.far = s * 5 + 2000; sc.updateProjectionMatrix();
+  sun.shadow.bias = -0.0004; sun.shadow.normalBias = 0.5;
+  scene.background = o.bg ? new THREE.Color(o.bg) : null;
+  renderer.render(scene, cam);
+  const url = renderer.domElement.toDataURL(o.jpeg ? 'image/jpeg' : 'image/png', 0.9);
+  for (const [p, pos, qq] of saved.reverse()) { p.position.copy(pos); p.quaternion.copy(qq); p.updateMatrixWorld(true); }
+  return url;
+};
+
+window.partBoxes = () => parts.map(p => { const b = new THREE.Box3().setFromObject(p); return [b.min.toArray(), b.max.toArray()]; });
+window.ready = true;
+</script></body></html>
