@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Nhà thờ Lớn Hà Nội bằng LEGO</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Noto+Serif+Display:ital,wght@0,500;1,400&display=swap">
+<style>
+  :root {
+    color-scheme: dark;
+    --night: #181b21; --panel: #242833; --line: #3d4453; --ink: #ebe8e1; --muted: #a3acbb;
+    --glass: #e0a458; --gold: #d9b48a; --gold-ink: #1c1406;
+    --ui: 'Be Vietnam Pro', 'Segoe UI', system-ui, sans-serif;
+    --display: 'Noto Serif Display', 'Noto Serif', Georgia, serif;
+  }
+  html, body { height: 100%; margin: 0; }
+  [hidden] { display: none !important; }
+  body { background: var(--night); color: var(--ink); font-family: var(--ui); overflow: hidden; }
+  #stage { position: fixed; inset: 0; }
+  #stage canvas { display: block; width: 100%; height: 100%; touch-action: none; }
+  .plate { position: fixed; left: 16px; top: calc(env(safe-area-inset-top, 0px) + 16px); max-width: min(380px, calc(100% - 32px)); pointer-events: none; }
+  .plate .kicker { font-size: 11px; letter-spacing: .22em; text-transform: uppercase; color: var(--gold); }
+  .plate h1 { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 5vw, 44px); line-height: 1.05; margin: 4px 0 4px; text-wrap: balance; }
+  .plate p { margin: 0; color: var(--muted); font-size: 13px; line-height: 1.5; }
+  .plate .facts { margin-top: 8px; font-variant-numeric: tabular-nums; font-size: 12px; color: var(--muted); }
+  .plate a { pointer-events: auto; color: var(--gold); }
+  .dock { position: fixed; left: 16px; right: 16px; bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+    display: flex; flex-wrap: wrap; gap: 10px; align-items: stretch; justify-content: center; pointer-events: none; }
+  .panel { pointer-events: auto; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--line);
+    border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; backdrop-filter: blur(6px); min-width: 0; }
+  .panel h2 { margin: 0; font-size: 11px; font-weight: 600; letter-spacing: .14em; text-transform: uppercase; color: var(--gold); }
+  .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+  button { font: 500 13px var(--ui); color: var(--ink); background: transparent; border: 1px solid var(--line); border-radius: 7px; padding: 7px 11px; cursor: pointer; }
+  button:hover { border-color: var(--gold); }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--glass); outline-offset: 2px; }
+  button[aria-pressed="true"] { background: var(--gold); color: var(--gold-ink); border-color: var(--gold); }
+  input[type=range] { accent-color: var(--glass); width: 100%; }
+  .build { flex: 1 1 300px; max-width: 520px; }
+  .build .title { font-size: 13px; min-height: 1.4em; color: var(--muted); }
+  .build .title b { color: var(--glass); font-weight: 600; }
+  #loading { position: fixed; inset: 0; display: grid; place-items: center; font-size: 14px; color: var(--muted); }
+  @media (max-width: 640px) {
+    .plate p { display: none; }
+    .panel { padding: 8px 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="loading">Đang xếp 2.805 viên gạch…</div>
+<div class="plate">
+  <div class="kicker">Mô hình LEGO · tỉ lệ khoảng 1:100</div>
+  <h1>Nhà thờ Lớn Hà Nội</h1>
+  <p>Nhà thờ Chính tòa Thánh Giuse, khánh thành năm 1886, kiểu Gothic Phục hưng. Kéo để xoay, cuộn hoặc chụm hai ngón để phóng to.</p>
+  <div class="facts" id="facts"></div>
+  <p style="margin-top:6px"><a href="../">← Về bộ sưu tập</a></p>
+</div>
+<div class="dock">
+  <div class="panel">
+    <h2>Chuyển động</h2>
+    <div class="row">
+      <button id="bells" aria-pressed="false">Rung chuông</button>
+      <button id="doors" aria-pressed="false">Mở cửa</button>
+      <button id="roof" aria-pressed="false">Nhấc mái</button>
+    </div>
+  </div>
+  <div class="panel build">
+    <h2>Lắp từng bước</h2>
+    <div class="row" style="flex-wrap:nowrap"><button id="play" aria-pressed="false">Chạy</button><input id="step" type="range" min="1" max="1" value="1" aria-label="Bước lắp"></div>
+    <div class="title" id="stepOut"></div>
+  </div>
+</div>
+
+<script type="application/json" id="meta-data">/*META*/</script>
+<script type="text/plain" id="mpd-data">/*MPD*/</script>
+<script type="text/plain" id="ldconfig-data">/*LDCONFIG*/</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { LDrawLoader } from 'three/addons/loaders/LDrawLoader.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
+import { LDrawConditionalLineMaterial } from 'three/addons/materials/LDrawConditionalLineMaterial.js';
+
+const meta = JSON.parse(document.getElementById('meta-data').textContent);
+const mpd = document.getElementById('mpd-data').textContent;
+const ldconfig = document.getElementById('ldconfig-data').textContent;
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+// ---------- renderer & scene
+const stage = document.getElementById('stage');
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+renderer.shadowMap.enabled = true; renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.NeutralToneMapping;
+stage.appendChild(renderer.domElement);
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x181b21);
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+scene.environmentIntensity = 0.55;
+const camera = new THREE.PerspectiveCamera(30, 1, 5, 30000);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true; controls.maxPolarAngle = Math.PI * 0.49; controls.minDistance = 200; controls.maxDistance = 6000;
+scene.add(new THREE.HemisphereLight(0xfff6e8, 0x3a4050, 0.6));
+const sun = new THREE.DirectionalLight(0xfff0dc, 2.4); sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048); sun.shadow.bias = -0.0005; sun.shadow.normalBias = 0.8;
+Object.assign(sun.shadow.camera, { left: -1100, right: 1100, top: 1100, bottom: -1100, near: 10, far: 6000 });
+scene.add(sun, sun.target);
+const ground = new THREE.Mesh(new THREE.CircleGeometry(5000, 64), new THREE.MeshStandardMaterial({ color: 0x232731, roughness: 1 }));
+ground.rotation.x = -Math.PI / 2; ground.position.y = -0.5; ground.receiveShadow = true; scene.add(ground);
+
+// ---------- parse the packed model (every part file is embedded in the MPD)
+THREE.Cache.enabled = false;
+const loader = new LDrawLoader();
+loader.setConditionalLineMaterial(LDrawConditionalLineMaterial);
+loader.smoothNormals = true;
+const origLoad = THREE.FileLoader.prototype.loadAsync;
+THREE.FileLoader.prototype.loadAsync = function (url, p) { return url === 'embedded:ldconfig' ? Promise.resolve(ldconfig) : origLoad.call(this, url, p); };
+await loader.preloadMaterials('embedded:ldconfig');
+THREE.FileLoader.prototype.loadAsync = origLoad;
+// register every embedded file under the names LDrawLoader resolves (s/ -> parts/s/, 48/ -> p/48/)
+const cache = loader.partsCache.parseCache;
+const blocks = [];
+{ const re = /^0 FILE (.+)$/gm; let m; while ((m = re.exec(mpd))) blocks.push([m[1].trim().toLowerCase(), m.index, m.index + m[0].length]); }
+const texts = blocks.map(([name, , at], i) => [name, mpd.slice(at, i + 1 < blocks.length ? blocks[i + 1][1] : mpd.length)]);
+const key = n => n.startsWith('s/') ? 'parts/' + n : n.startsWith('48/') || n.startsWith('8/') ? 'p/' + n : n;
+for (const [name, text] of texts.slice(1)) { cache.setData(name, text); if (key(name) !== name) cache.setData(key(name), text); }
+const model = await new Promise((res, rej) => loader.parse(texts[0][1], res, rej));
+model.updateMatrixWorld(true);
+for (const m of loader.materialLibrary ? Object.values(loader.materialLibrary) : []) if (m.roughness !== undefined && !m.transparent) m.roughness = Math.max(m.roughness, 0.6);
+const parts = model.children.filter(c => c.isGroup);
+const stepOf = meta.stepOf;           // part index -> build step (0-based)
+const moverOf = new Map();            // part index -> mover group name
+for (const [name, g] of Object.entries(meta.movers)) for (const i of g.idx) moverOf.set(i, name);
+
+const root = new THREE.Group(); root.rotation.x = Math.PI; scene.add(root);   // LDraw -Y is up
+const movers = {};
+const batches = new Map();
+parts.forEach((part, i) => {
+  const name = moverOf.get(i);
+  if (name) {
+    const o = part.clone(); o.matrixAutoUpdate = false; o.matrix.copy(part.matrixWorld);
+    o.userData = { step: stepOf[i], base: part.matrixWorld.clone() };
+    o.traverse(c => { if (c.isMesh) c.castShadow = c.receiveShadow = true; });
+    root.add(o); (movers[name] ||= []).push(o); return;
+  }
+  part.traverse(c => {
+    if (!(c.isMesh || c.isLineSegments)) return;
+    if (c.isLineSegments && c.geometry.attributes.control0) return;   // skip conditional lines
+    const geo = c.geometry.index ? c.geometry.toNonIndexed() : c.geometry;
+    const mats = Array.isArray(c.material) ? c.material : [c.material];
+    const groups = geo.groups.length ? geo.groups : [{ start: 0, count: geo.attributes.position.count, materialIndex: 0 }];
+    for (const g of groups) {
+      const mat = mats[g.materialIndex]; if (!mat) continue;
+      const key = stepOf[i] + '|' + (c.isMesh ? 'm' : 'l') + '|' + mat.uuid;
+      const sub = new THREE.BufferGeometry();
+      for (const n of c.isMesh ? ['position', 'normal'] : ['position']) {
+        const a = geo.attributes[n]; if (!a) continue;
+        sub.setAttribute(n, new THREE.BufferAttribute(a.array.slice(g.start * 3, (g.start + g.count) * 3), 3));
+      }
+      sub.applyMatrix4(c.matrixWorld);
+      if (!batches.has(key)) batches.set(key, { step: stepOf[i], mesh: c.isMesh, mat, geos: [] });
+      batches.get(key).geos.push(sub);
+    }
+  });
+});
+const statics = [];
+for (const b of batches.values()) {
+  const g = mergeGeometries(b.geos); if (!g) continue;
+  const o = b.mesh ? new THREE.Mesh(g, b.mat) : new THREE.LineSegments(g, b.mat);
+  if (b.mesh) o.castShadow = o.receiveShadow = true;
+  o.userData.step = b.step; root.add(o); statics.push(o);
+}
+document.getElementById('loading').hidden = true;
+document.getElementById('facts').textContent = `${parts.length.toLocaleString('vi-VN')} chi tiết · ${meta.steps.length} bước lắp · 32 × 64 stud`;
+
+// ---------- camera framing
+root.updateMatrixWorld(true);
+const box = new THREE.Box3().setFromObject(root);
+const c = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3());
+ground.position.y = box.min.y - 0.5;
+controls.target.copy(c).add(new THREE.Vector3(0, -size.y * 0.12, 0));
+const dir = new THREE.Vector3(0.55, 0.42, 1).normalize();   // front-right, facade faces +z in the scene
+camera.position.copy(c).addScaledVector(dir, size.length() * 1.75);
+sun.position.copy(c).add(new THREE.Vector3(-900, 1800, 1300)); sun.target.position.copy(c);
+function resize() { const w = stage.clientWidth, h = stage.clientHeight; renderer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix(); }
+addEventListener('resize', resize); resize();
+
+// ---------- play features: bells swing, doors open, nave roof lifts (all in LDraw coordinates)
+const state = { bells: false, doors: false, roof: false }, amt = { doors: 0, roof: 0 };
+let bellClock = 0, bellAmp = 0;
+const axis = { x: new THREE.Vector3(1, 0, 0), y: new THREE.Vector3(0, 1, 0), z: new THREE.Vector3(0, 0, 1) };
+function place(name, deg, off = [0, 0, 0]) {
+  const g = meta.movers[name]; const list = movers[name]; if (!list) return;
+  const [px, py, pz] = g.pivot || [0, 0, 0];
+  const M = new THREE.Matrix4().makeTranslation(px + off[0], py + off[1], pz + off[2])
+    .multiply(new THREE.Matrix4().makeRotationAxis(axis[g.axis || 'y'], THREE.MathUtils.degToRad(deg)))
+    .multiply(new THREE.Matrix4().makeTranslation(-px, -py, -pz));
+  for (const o of list) o.matrix.multiplyMatrices(M, o.userData.base);
+}
+function pose() {
+  const swing = Math.sin(bellClock) * bellAmp;
+  place('bellsL', swing); place('bellsR', -swing);
+  for (const n of ['doorC1', 'doorC2', 'doorL', 'doorR']) place(n, meta.movers[n].open * amt.doors);
+  place('roof', 0, [0, -650 * amt.roof, 0]);
+}
+const toggle = (id, fn) => { const b = document.getElementById(id); b.addEventListener('click', () => { const on = b.getAttribute('aria-pressed') !== 'true'; b.setAttribute('aria-pressed', on); fn(on, b); }); return b; };
+toggle('bells', (on, b) => { state.bells = on; b.textContent = on ? 'Dừng chuông' : 'Rung chuông'; });
+toggle('doors', (on, b) => { state.doors = on; b.textContent = on ? 'Đóng cửa' : 'Mở cửa'; });
+toggle('roof', (on, b) => { state.roof = on; b.textContent = on ? 'Đặt mái lại' : 'Nhấc mái'; });
+
+// ---------- build steps
+const stepEl = document.getElementById('step'), stepOut = document.getElementById('stepOut');
+const N = meta.steps.length;
+stepEl.max = N; stepEl.value = N;
+let buildStep = N - 1, playing = false, playClock = 0;
+function showStep(i) {
+  buildStep = i;
+  statics.forEach(o => o.visible = o.userData.step <= i);
+  for (const list of Object.values(movers)) list.forEach(o => o.visible = o.userData.step <= i);
+  const s = meta.steps[i];
+  stepOut.innerHTML = `<b>Bước ${i + 1}</b> / ${N} · ${s.title} · ${s.count} chi tiết`;
+}
+stepEl.addEventListener('input', () => showStep(+stepEl.value - 1));
+toggle('play', (on, b) => { playing = on; b.textContent = on ? 'Dừng' : 'Chạy'; if (on && buildStep >= N - 1) { showStep(0); stepEl.value = 1; } });
+showStep(buildStep); pose();
+
+// ---------- loop
+const clock = new THREE.Clock();
+const ease = (v, target, dt) => v + Math.sign(target - v) * Math.min(Math.abs(target - v), dt * 1.2);
+renderer.setAnimationLoop(() => {
+  const dt = Math.min(clock.getDelta(), 0.1);
+  bellAmp = ease(bellAmp, state.bells ? 22 : 0, dt * 25);
+  if (bellAmp > 0) bellClock += dt * (reduceMotion ? 1.2 : 3.2);
+  amt.doors = ease(amt.doors, state.doors ? 1 : 0, dt);
+  amt.roof = ease(amt.roof, state.roof ? 1 : 0, dt);
+  if (playing) { playClock += dt; if (playClock > 0.3) { playClock = 0; const n = buildStep + 1; if (n >= N) document.getElementById('play').click(); else { showStep(n); stepEl.value = n + 1; } } }
+  pose();
+  controls.update();
+  renderer.render(scene, camera);
+});
+</script>
+</body>
+</html>

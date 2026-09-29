@@ -13,25 +13,32 @@ const projects = [
     blurb: 'Tượng mèo cỡ thật dựng theo ảnh: lông xám xanh có vằn tabby, mắt hổ phách, mũi hồng, vòng cổ cam đào có khóa đỏ, ngồi trên sàn gỗ.',
     moves: ['Đầu xoay trái phải trên bàn xoay giấu trong cổ'],
     size: '24 × 24 stud · cao khoảng 23 cm' },
+  { dir: 'cathedral', name: 'Nhà thờ Lớn Hà Nội', en: 'St. Joseph\'s Cathedral, Hà Nội', mpd: 'hanoi-cathedral.mpd',
+    blurb: 'Nhà thờ Chính tòa Thánh Giuse, khánh thành năm 1886, kiểu Gothic Phục hưng. Có hai tháp chuông, cửa sổ hoa hồng, đồng hồ, tượng Thánh Giuse, hơn 450 ô kính màu, hàng ghế, bàn thờ và quảng trường có tượng Đức Mẹ.',
+    moves: ['Quay bánh xe sau tháp để rung chuông', 'Bốn cánh cửa chính mở được', 'Nhấc cả mái gian giữa ra để nhìn vào trong'],
+    size: '32 × 64 stud · cao khoảng 34 cm', hero: 'renders/hero-front.jpg', stats: true },
 ];
 
 const cards = projects.map(p => {
   const dir = ROOT + p.dir + '/';
-  const model = JSON.parse(fs.readFileSync(dir + 'build/model.json', 'utf8'));
-  const cfg = fs.readFileSync(dir + 'project.mjs', 'utf8');
-  const pdf = cfg.match(/pdfName: '([^']+)'/)[1];
+  // models built with the shared tools carry build/model.json and project.mjs; others ship stats.json and one PDF
+  const stats = p.stats ? JSON.parse(fs.readFileSync(dir + 'stats.json', 'utf8')) : null;
+  const model = stats ? null : JSON.parse(fs.readFileSync(dir + 'build/model.json', 'utf8'));
+  const pdf = stats ? fs.readdirSync(dir + 'instructions').find(f => f.endsWith('.pdf'))
+    : fs.readFileSync(dir + 'project.mjs', 'utf8').match(/pdfName: '([^']+)'/)[1];
   const lots = fs.readFileSync(dir + 'parts/parts-list.csv', 'utf8').trim().split('\n').length - 1;
+  const nParts = stats ? stats.parts : model.parts.length, nSteps = stats ? stats.steps : model.steps.length;
   return `
   <article class="card">
-    <a class="shot" href="${p.dir}/"><img src="${p.dir}/renders/hero-front.png" alt="Ảnh render mô hình ${p.name}" loading="lazy"></a>
+    <a class="shot" href="${p.dir}/"><img src="${p.dir}/${p.hero || 'renders/hero-front.png'}" alt="Ảnh render mô hình ${p.name}" loading="lazy"></a>
     <div class="body">
       <p class="en">${p.en}</p>
       <h2>${p.name}</h2>
       <p>${p.blurb}</p>
       <dl class="facts">
-        <div><dt>Chi tiết</dt><dd>${model.parts.length.toLocaleString('vi-VN')}</dd></div>
+        <div><dt>Chi tiết</dt><dd>${nParts.toLocaleString('vi-VN')}</dd></div>
         <div><dt>Loại</dt><dd>${lots}</dd></div>
-        <div><dt>Bước lắp</dt><dd>${model.steps.length}</dd></div>
+        <div><dt>Bước lắp</dt><dd>${nSteps}</dd></div>
       </dl>
       <p class="size">${p.size}</p>
       <ul class="moves">${p.moves.map(m => `<li>${m}</li>`).join('')}</ul>

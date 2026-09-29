@@ -6,8 +6,9 @@ Custom LEGO models, each designed in code from real LDraw part geometry. Open [`
 |---|---:|---|
 | [Chùa Một Cột (One-Pillar Pagoda)](pagoda/) | 1,366 | Crank turns the Quan Âm statue; door opens; roof lifts off |
 | [Mèo Anh lông ngắn (British Shorthair Cat)](cat/) | 1,829 | Head turns on a hidden turntable |
+| [Nhà thờ Lớn Hà Nội (St. Joseph's Cathedral)](cathedral/) | 2,805 | Bells swing; four portal doors open; nave roof lifts off |
 
-Every model folder has the same layout: `model/` (generator), `project.mjs` (manual text, render angles), `build/` (model JSON, LDraw MPD, check report), `parts/` (BrickLink XML, Rebrickable CSV, parts list), `renders/`, `instructions/` (PDF), `viewer.template.html` and `index.html` (interactive 3D).
+The pagoda and the cat share the layout below; the cathedral was made with its own Python generator and describes its folder in [`cathedral/README.md`](cathedral/README.md). Shared-tool layout: `model/` (generator), `project.mjs` (manual text, render angles), `build/` (model JSON, LDraw MPD, check report), `parts/` (BrickLink XML, Rebrickable CSV, parts list), `renders/`, `instructions/` (PDF), `viewer.template.html` and `index.html` (interactive 3D).
 
 ## Shared tools
 
